@@ -1,0 +1,12 @@
+services:
+  spring:
+    build:
+      context: .
+      dockerfile: .docker/java/Dockerfile
+    volumes:
+      - .docker/java/watch.sh:/usr/share/watch.sh
+      - ./spring:/usr/share/app
+      - ~/.m2:/root/.m2
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/naavi_authentication
