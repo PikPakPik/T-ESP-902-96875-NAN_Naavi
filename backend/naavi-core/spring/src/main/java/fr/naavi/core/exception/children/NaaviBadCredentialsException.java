@@ -1,8 +1,9 @@
-package fr.naavi.core.exception;
+package fr.naavi.core.exception.children;
 
+import fr.naavi.core.exception.GenericHttpException;
 import org.springframework.http.HttpStatus;
 
-public class BadCredentialsException extends GenericHttpException {
+public class NaaviBadCredentialsException extends GenericHttpException {
     /**
      * Exception thrown when the user provides invalid credentials.
      * This exception is typically used to indicate that the provided
@@ -10,7 +11,7 @@ public class BadCredentialsException extends GenericHttpException {
      *
      * @param i18nKey The internationalization key for the error message.
      */
-    public BadCredentialsException(String i18nKey, String message) {
+    public NaaviBadCredentialsException(String i18nKey, String message) {
         super(HttpStatus.BAD_REQUEST, i18nKey, message);
     }
 
@@ -23,7 +24,7 @@ public class BadCredentialsException extends GenericHttpException {
      * @param message The detailed error message.
      * @param cause   The underlying cause of the exception.
      */
-    public BadCredentialsException(String i18nKey, String message, Throwable cause) {
+    public NaaviBadCredentialsException(String i18nKey, String message, Throwable cause) {
         super(HttpStatus.BAD_REQUEST, i18nKey, message, cause);
     }
 }
