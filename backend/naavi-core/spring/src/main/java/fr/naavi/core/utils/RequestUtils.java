@@ -12,7 +12,7 @@ public class RequestUtils {
      *
      * @return the client's IP address as a String
      */
-    public String getClientIpAddress() {
+    public static String getClientIpAddress() {
         ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
         HttpServletRequest request = attrs.getRequest();
 
@@ -34,7 +34,7 @@ public class RequestUtils {
      *
      * @return the User-Agent string from the request headers
      */
-    public String getUserAgent() {
+    public static String getUserAgent() {
         ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
         HttpServletRequest request = attrs.getRequest();
         return request.getHeader("User-Agent");
