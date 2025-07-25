@@ -14,7 +14,7 @@ public @interface EqualTo {
     /**
      * @return the error message
      */
-    String message() default "must be equal";
+    String message() default "must be equal to {targetProperty}";
 
     /**
      * @return the validation groups

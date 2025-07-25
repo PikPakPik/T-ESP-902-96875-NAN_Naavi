@@ -43,7 +43,7 @@ public class EqualToValidator implements ConstraintValidator<EqualTo, Object> {
         if (!isValid) {
             constraintValidatorContext.disableDefaultConstraintViolation();
 
-            String customMessage = String.format("%s must be equal to %s", sourceProperty, targetProperty);
+            String customMessage = String.format("must be equal to %s", targetProperty);
             constraintValidatorContext
                     .buildConstraintViolationWithTemplate(customMessage)
                     .addPropertyNode(sourceProperty)
