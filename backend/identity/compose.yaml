@@ -1,0 +1,47 @@
+services:
+  spring:
+    build:
+      context: .
+      dockerfile: .docker/java/dev.Dockerfile
+    volumes:
+      - .docker/java/watch.sh:/usr/share/watch.sh
+      - ./spring:/usr/share/app
+      - ~/.m2:/root/.m2
+    environment:
+      MAVEN_PROFILES: dev
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/naavi_identity
+      JWT_PASSPHRASE: "9vRK494wAVwDO8oBw1zppMnnE4f9WPYLE4lH7MECT1k="
+      SPRING_MAIL_HOST: mailer
+      SPRING_MAIL_PORT: 1025
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=naavi-network"
+
+      - "traefik.http.routers.identity.rule=Host(`api.naavi.local`) && PathPrefix(`/identity`) && !PathPrefix(`/identity/internal/`)"
+      - "traefik.http.routers.identity.entrypoints=web"
+      - "traefik.http.routers.identity.middlewares=identity-stripprefix"
+
+      - "traefik.http.services.identity.loadbalancer.server.port=8080"
+      - "traefik.http.services.identity.loadbalancer.healthcheck.path=/healthcheck"
+  
+      - "traefik.http.middlewares.identity-stripprefix.stripprefix.prefixes=/identity"
+    networks:
+      - default
+      - naavi-network
+
+  database:
+    image: postgres:latest
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: naavi
+      POSTGRES_PASSWORD: naavi
+      POSTGRES_DB: naavi_identity
+
+volumes:
+  postgres_data: {}
+
+networks:
+  naavi-network:
+    external: true

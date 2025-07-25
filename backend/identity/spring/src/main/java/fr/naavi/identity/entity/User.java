@@ -1,0 +1,173 @@
+package fr.naavi.identity.entity;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import fr.naavi.identity.converter.RolesConverter;
+import fr.naavi.identity.entitylistener.UserListener;
+import fr.naavi.identity.enums.StatusEnum;
+import jakarta.persistence.*;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity(name = "users")
+@EntityListeners(UserListener.class)
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonIgnore
+    private Long id;
+
+    @Column(nullable = false)
+    private String firstname;
+
+    @Column(nullable = false)
+    private String lastname;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false)
+    @JsonIgnore
+    private String password;
+
+    @Column(columnDefinition = "text")
+    @Convert(converter = RolesConverter.class)
+    private List<String> roles = new ArrayList<>();
+
+    @Enumerated(EnumType.ORDINAL)
+    private StatusEnum status;
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column
+    private LocalDateTime updatedAt;
+
+    /**
+     * @return The unique identifier of the user.
+     */
+    public Long getId() {
+        return id;
+    }
+
+    /**
+     * @return The first name of the user.
+     */
+    public String getFirstname() {
+        return firstname;
+    }
+
+    /**
+     * @param firstname The first name to set for the user.
+     */
+    public void setFirstname(String firstname) {
+        this.firstname = firstname;
+    }
+
+    /**
+     * @return The last name of the user.
+     */
+    public String getLastname() {
+        return lastname;
+    }
+
+    /**
+     * @param lastname The last name to set for the user.
+     */
+    public void setLastname(String lastname) {
+        this.lastname = lastname;
+    }
+
+    /**
+     * @return The full name of the user, combining first and last names.
+     */
+    public String getFullName() {
+        return firstname + " " + lastname;
+    }
+
+    /**
+     * @return The email address of the user.
+     */
+    public String getEmail() {
+        return email;
+    }
+
+    /**
+     * @param email The email address to set for the user.
+     */
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    /**
+     * @return The hashed password of the user.
+     */
+    public String getPassword() {
+        return password;
+    }
+
+    /**
+     * @param password The hashed password to set for the user.
+     */
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    /**
+     * @return The list of roles assigned to the user.
+     */
+    public List<String> getRoles() {
+        List<String> result = new ArrayList<>(roles);
+        return result.stream().distinct().toList();
+    }
+
+    /**
+     * @param roles The list of roles to set for the user.
+     */
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
+    }
+
+    /**
+     * @return The status of the user, indicating their verification and access level.
+     */
+    public StatusEnum getStatus() {
+        return status;
+    }
+
+    /**
+     * @param status The status to set for the user, indicating their verification and access level.
+     */
+    public void setStatus(StatusEnum status) {
+        this.status = status;
+    }
+
+    /**
+     * @return The timestamp when the user was created.
+     */
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    /**
+     * @param createdAt The timestamp to set for when the user was created.
+     */
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    /**
+     * @return The timestamp when the user was last updated.
+     */
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    /**
+     * @param updatedAt The timestamp to set for when the user was last updated.
+     */
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+}
