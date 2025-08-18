@@ -1,0 +1,49 @@
+services:
+  spring:
+    build:
+      context: .
+      dockerfile: .docker/java/dev.Dockerfile
+    volumes:
+      - .docker/java/watch.sh:/usr/share/watch.sh
+      - ./spring:/usr/share/app
+      - ~/.m2:/root/.m2
+      - naavi_shared_data:/usr/share/naavi_shared_data
+    environment:
+      MAVEN_PROFILES: dev
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/naavi_hike
+      SPRING_MAIL_HOST: mailer
+      SPRING_MAIL_PORT: 1025
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=naavi-network"
+
+      - "traefik.http.routers.hike.rule=Host(`api.naavi.local`) && PathPrefix(`/hike`) && !PathPrefix(`/hike/internal/`)"
+      - "traefik.http.routers.hike.entrypoints=web"
+      - "traefik.http.routers.hike.middlewares=auth-forward,hike-stripprefix"
+
+      - "traefik.http.services.hike.loadbalancer.server.port=8080"
+      - "traefik.http.services.hike.loadbalancer.healthcheck.path=/healthcheck"
+
+      - "traefik.http.middlewares.hike-stripprefix.stripprefix.prefixes=/hike"
+    networks:
+      - default
+      - naavi-network
+
+  database:
+    image: postgres:latest
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: naavi
+      POSTGRES_PASSWORD: naavi
+      POSTGRES_DB: naavi_hike
+
+volumes:
+  postgres_data: {}
+  naavi_shared_data:
+    external: true
+
+networks:
+  naavi-network:
+    external: true
