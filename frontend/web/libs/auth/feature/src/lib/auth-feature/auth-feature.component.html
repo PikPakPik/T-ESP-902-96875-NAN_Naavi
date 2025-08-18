@@ -1,0 +1,116 @@
+<div class="login-container">
+  <div class="login-content">
+    <!-- Section gauche avec l'image -->
+    <div class="image-section">
+      <div class="image-overlay">
+        <h1 class="welcome-title">Bienvenue</h1>
+        <p class="welcome-subtitle">Connectez-vous à votre compte</p>
+      </div>
+    </div>
+
+    <!-- Section droite avec le formulaire -->
+    <div class="form-section">
+      <div class="form-container">
+        <div class="logo-section">
+          <i
+            class="pi pi-mountain"
+            style="font-size: 3rem; color: var(--primary-color)"
+          ></i>
+          <h2>Connexion</h2>
+          <p class="subtitle">Accédez à votre espace personnel</p>
+        </div>
+
+        <form
+          [formGroup]="loginForm"
+          (ngSubmit)="onSubmit()"
+          class="login-form"
+        >
+          <!-- Champ Email -->
+          <div class="field">
+            <label for="email">Adresse email</label>
+            <span class="p-input-icon-left">
+              <i class="pi pi-envelope"></i>
+              <input
+                pInputText
+                id="email"
+                formControlName="email"
+                placeholder="votre@email.com"
+                [class.ng-invalid]="email?.invalid && email?.touched"
+                class="w-full"
+              />
+            </span>
+            @if (email?.invalid && email?.touched) {
+            <small class="p-error">
+              @if (email?.errors?.['required']) {
+              <span>L'email est requis</span>
+              } @if (email?.errors?.['email']) {
+              <span>Format d'email invalide</span>
+              }
+            </small>
+            }
+          </div>
+
+          <!-- Champ Mot de passe -->
+          <div class="field">
+            <label for="password">Mot de passe</label>
+            <span class="p-input-icon-left">
+              <i class="pi pi-lock"></i>
+              <p-password
+                formControlName="password"
+                placeholder="Votre mot de passe"
+                [toggleMask]="true"
+                [feedback]="false"
+                styleClass="w-full"
+                inputStyleClass="w-full"
+                [class.ng-invalid]="password?.invalid && password?.touched"
+              ></p-password>
+            </span>
+            @if (password?.invalid && password?.touched) {
+            <small class="p-error">
+              @if (password?.errors?.['required']) {
+              <span>Le mot de passe est requis</span>
+              }
+            </small>
+            }
+          </div>
+
+          <!-- Options -->
+          <div class="form-options">
+            <div class="remember-me">
+              <p-checkbox
+                formControlName="rememberMe"
+                inputId="rememberMe"
+                label="Se souvenir de moi"
+              ></p-checkbox>
+            </div>
+            <a href="#" class="forgot-password">Mot de passe oublié ?</a>
+          </div>
+
+          <!-- Bouton de connexion -->
+          <p-button
+            type="submit"
+            label="Se connecter"
+            [loading]="loading"
+            loadingIcon="pi pi-spin pi-spinner"
+            styleClass="w-full login-button"
+            [disabled]="loginForm.invalid"
+          ></p-button>
+
+          <!-- Divider -->
+          <div class="divider">
+            <span>ou</span>
+          </div>
+
+          <!-- Connexion sociale -->
+          <div class="social-login">
+            <p-button
+              label="Continuer avec Google"
+              icon="pi pi-google"
+              styleClass="w-full p-button-outlined social-button"
+            ></p-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

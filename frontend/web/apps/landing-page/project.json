@@ -1,0 +1,115 @@
+{
+  "name": "landing-page",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "app",
+  "sourceRoot": "apps/landing-page/src",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@angular-devkit/build-angular:application",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/landing-page",
+        "index": "apps/landing-page/src/index.html",
+        "browser": "apps/landing-page/src/main.ts",
+        "polyfills": ["zone.js"],
+        "tsConfig": "apps/landing-page/tsconfig.app.json",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/landing-page/public"
+          },
+          {
+            "glob": "**/*",
+            "input": "apps/landing-page/src/assets",
+            "output": "assets"
+          }
+        ],
+        "styles": ["apps/landing-page/src/styles.scss"],
+        "scripts": []
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "maximumError": "5mb",
+              "maximumWarning": "2mb",
+              "type": "initial"
+            },
+            {
+              "maximumError": "70kb",
+              "maximumWarning": "6kb",
+              "type": "anyComponentStyle"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@angular-devkit/build-angular:dev-server",
+      "options": {
+        "port": 4220,
+        "host": "0.0.0.0",
+        "disableHostCheck": true,
+        "publicHost": "http://0.0.0.0:4220"
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "landing-page:build:production"
+        },
+        "development": {
+          "buildTarget": "landing-page:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "extract-i18n": {
+      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "options": {
+        "buildTarget": "landing-page:build"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/landing-page/jest.config.ts"
+      }
+    },
+    "serve-static": {
+      "continuous": true,
+      "executor": "@nx/web:file-server",
+      "options": {
+        "port": 4220,
+        "buildTarget": "landing-page:build",
+        "staticFilePath": "dist/apps/landing-page/browser",
+        "spa": true
+      }
+    },
+    "docker": {
+      "executor": "@nx-tools/nx-container:build",
+      "options": {
+        "push": true,
+        "metadata": {
+          "images": [
+            "registry.gitlab.com/epitech-msc-2026/naavi/frontend/web/landing-page"
+          ],
+          "tags": ["type=sha,prefix=", "type=raw,linux-${TAG}"],
+          "platforms": ["linux/amd64", "linux/arm64"]
+        }
+      }
+    }
+  }
+}

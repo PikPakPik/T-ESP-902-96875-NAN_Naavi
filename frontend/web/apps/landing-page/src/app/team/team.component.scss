@@ -1,0 +1,324 @@
+@import url('https://fonts.googleapis.com/css2?family=Nova+Round&family=Lexend+Deca:wght@300;400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.team-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 10rem 2rem;
+  font-family: 'Lexend Deca', sans-serif;
+  background: var(--white);
+  min-height: 100vh;
+}
+
+.team-header {
+  text-align: center;
+  margin-bottom: 4rem;
+
+  .team-title {
+    font-family: 'Nova Round', cursive;
+    font-size: 3rem;
+    font-weight: 400;
+    color: var(--dark);
+    margin-bottom: 1rem;
+    line-height: 1.2;
+  }
+
+  .team-description {
+    font-size: 1.2rem;
+    color: var(--gray-600);
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+    font-weight: 400;
+  }
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 4rem;
+}
+
+.team-member-card {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--gray-200);
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+  }
+
+  &.recruiting-card {
+    border: 2px dashed var(--primary-light);
+    background: linear-gradient(135deg, var(--gray-100) 0%, var(--white) 100%);
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--primary-light));
+    }
+  }
+
+  &:not(.recruiting-card)::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+  }
+}
+
+.member-avatar {
+  margin-bottom: 1.5rem;
+
+  .avatar-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 auto;
+    box-shadow: 0 4px 12px rgba(74, 93, 35, 0.2);
+    transition: transform 0.3s ease;
+
+    &.recruiting-avatar {
+      background: var(--gray-400);
+      color: var(--white);
+    }
+  }
+
+  &:hover .avatar-circle {
+    transform: scale(1.05);
+  }
+}
+
+.member-info {
+  margin-bottom: 1.5rem;
+
+  .member-name {
+    font-family: 'Nova Round', cursive;
+    font-size: 1.3rem;
+    font-weight: 400;
+    color: var(--dark);
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+
+  .member-email {
+    font-size: 0.9rem;
+    color: var(--gray-600);
+    margin: 0;
+    font-weight: 400;
+  }
+
+  .recruiting-text {
+    font-size: 0.9rem;
+    color: var(--primary);
+    margin: 0;
+    font-weight: 500;
+    font-style: italic;
+  }
+}
+
+.member-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  min-height: 40px;
+  align-items: flex-start;
+}
+
+.role-chip {
+  font-size: 0.8rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-weight: 500;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  &.role-primary {
+    background-color: var(--primary);
+    color: var(--white);
+  }
+
+  &.role-success {
+    background-color: var(--success);
+    color: var(--white);
+  }
+
+  &.role-info {
+    background-color: var(--secondary);
+    color: var(--white);
+  }
+
+  &.role-secondary {
+    background-color: var(--gray-500);
+    color: var(--white);
+  }
+
+  &.role-warning {
+    background-color: var(--warning);
+    color: var(--white);
+  }
+
+  &.role-danger {
+    background-color: var(--danger);
+    color: var(--white);
+  }
+}
+
+.member-actions {
+  .contact-btn,
+  .apply-btn {
+    background: transparent;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    padding: 0.6rem 1.5rem;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Lexend Deca', sans-serif;
+
+    &:hover {
+      background: var(--primary);
+      color: var(--white);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(74, 93, 35, 0.3);
+    }
+  }
+
+  .apply-btn {
+    border-color: var(--primary);
+    color: var(--primary);
+
+    &:hover {
+      background: var(--primary);
+      color: var(--white);
+      box-shadow: 0 4px 12px rgba(74, 93, 35, 0.3);
+    }
+  }
+}
+
+.team-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+  padding: 2rem 0;
+
+  .stat-item {
+    text-align: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, var(--gray-100) 0%, var(--white) 100%);
+    border-radius: 16px;
+    border: 1px solid var(--gray-200);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-number {
+      display: block;
+      font-family: 'Nova Round', cursive;
+      font-size: 2.5rem;
+      font-weight: 400;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 1rem;
+      color: var(--gray-600);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 1024px) {
+  .team-container {
+    margin-top: 5rem;
+    padding: 3rem 1.5rem;
+  }
+
+  .team-header .team-title {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .team-container {
+    margin-top: 10rem;
+    padding: 2rem 1rem;
+  }
+
+  .team-header .team-title {
+    font-size: 2rem;
+  }
+
+  .team-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .team-stats {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .team-container {
+    margin-top: 10rem;
+  }
+
+  .team-member-card {
+    padding: 1.5rem;
+  }
+
+  .member-avatar .avatar-circle {
+    width: 60px;
+    height: 60px;
+    font-size: 1.2rem;
+  }
+
+  .member-info .member-name {
+    font-size: 1.1rem;
+  }
+}

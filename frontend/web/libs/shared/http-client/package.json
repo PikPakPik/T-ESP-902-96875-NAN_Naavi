@@ -1,0 +1,8 @@
+{
+  "name": "@web/shared-http-client",
+  "version": "0.0.1",
+  "peerDependencies": {
+    "@angular/core": "*"
+  },
+  "sideEffects": false
+}

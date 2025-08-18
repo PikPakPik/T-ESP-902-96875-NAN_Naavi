@@ -1,0 +1,242 @@
+:host {
+  --primary-color: #2d5016;
+  --secondary-color: #8fbc8f;
+  --tertiary-color: #e8f5e8;
+  --warning-color: #f4a261;
+  --info-color: #4a90e2;
+  --danger-color: #e76f51;
+  --subtle-color: #2c2c2c;
+  --light-gray: #f8f9fa;
+}
+
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    var(--tertiary-color) 0%,
+    var(--secondary-color) 100%
+  );
+  padding: 1rem;
+}
+
+.login-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  max-width: 1200px;
+  width: 100%;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  min-height: 600px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+  }
+}
+
+.image-section {
+  background: linear-gradient(rgba(45, 80, 22, 0.7), rgba(45, 80, 22, 0.5)),
+    url('/assets/img/mountain-image.png');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+
+  @media (max-width: 768px) {
+    min-height: 200px;
+  }
+}
+
+.image-overlay {
+  text-align: center;
+  color: white;
+  z-index: 2;
+}
+
+.welcome-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.welcome-subtitle {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.form-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.form-container {
+  width: 100%;
+  max-width: 400px;
+}
+
+.logo-section {
+  text-align: center;
+  margin-bottom: 2rem;
+
+  h2 {
+    color: var(--primary-color);
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 1rem 0 0.5rem 0;
+  }
+
+  .subtitle {
+    color: #666;
+    margin: 0;
+  }
+}
+
+.login-form {
+  .field {
+    margin-bottom: 1.5rem;
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+
+    .p-input-icon-left {
+      width: 100%;
+
+      i {
+        color: var(--secondary-color);
+      }
+    }
+
+    input,
+    ::ng-deep .p-password input {
+      border: 2px solid #e1e5e9;
+      border-radius: 10px;
+      padding: 0.75rem 1rem 0.75rem 2.5rem;
+      transition: all 0.3s ease;
+
+      &:focus {
+        border-color: var(--secondary-color);
+        box-shadow: 0 0 0 3px rgba(143, 188, 143, 0.1);
+      }
+
+      &.ng-invalid.ng-touched {
+        border-color: var(--danger-color);
+      }
+    }
+
+    ::ng-deep .p-password {
+      width: 100%;
+    }
+  }
+}
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+
+  .forgot-password {
+    color: var(--info-color);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: var(--primary-color);
+    }
+  }
+}
+
+::ng-deep .login-button {
+  .p-button {
+    background: linear-gradient(
+      135deg,
+      var(--primary-color) 0%,
+      var(--secondary-color) 100%
+    );
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(45, 80, 22, 0.3);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+    }
+  }
+}
+
+.divider {
+  text-align: center;
+  margin: 1.5rem 0;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e1e5e9;
+  }
+
+  span {
+    background: white;
+    padding: 0 1rem;
+    color: #666;
+    font-size: 0.9rem;
+  }
+}
+
+::ng-deep .social-button {
+  .p-button {
+    border: 2px solid #e1e5e9;
+    color: var(--subtle-color);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: var(--secondary-color);
+      color: var(--primary-color);
+    }
+  }
+}
+
+.p-error {
+  color: var(--danger-color);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+::ng-deep .p-checkbox {
+  .p-checkbox-box {
+    border-color: var(--secondary-color);
+
+    &.p-highlight {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+  }
+}

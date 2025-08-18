@@ -1,0 +1,43 @@
+<!-- Écran de chargement -->
+@if (loadingService.loading$ | async) {
+<app-loading></app-loading>
+}
+
+<!-- Contenu principal -->
+@if ((loadingService.loading$ | async) === false) {
+<div class="landing-page">
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-brand">
+        <div class="logo">
+          <img class="logo-img" src="./assets/img/logo.png" alt="Logo" />
+        </div>
+        <span class="brand-name">Naavi</span>
+      </div>
+      <!-- Menu mobile avec PrimeNG Sidebar -->
+      <p-menubar [model]="items" />
+    </div>
+  </nav>
+
+  <router-outlet></router-outlet>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <div class="logo">
+            <img class="logo-img" src="./assets/img/logo.png" alt="Logo" />
+          </div>
+          <span class="brand-name">Naavi</span>
+        </div>
+      </div>
+      <p-divider></p-divider>
+      <div class="footer-bottom">
+        <p>&copy; 2025 Naavi. Tous droits réservés.</p>
+      </div>
+    </div>
+  </footer>
+</div>
+}

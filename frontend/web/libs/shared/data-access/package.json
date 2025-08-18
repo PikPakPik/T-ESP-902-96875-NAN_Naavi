@@ -1,0 +1,12 @@
+{
+  "name": "@web/data-access",
+  "version": "0.0.1",
+  "peerDependencies": {
+    "@angular/common": "*",
+    "@angular/core": "*",
+    "@web/ui/notification": "*",
+    "@ngx-translate/core": "*",
+    "@web/shared/util": "*"
+  },
+  "sideEffects": false
+}

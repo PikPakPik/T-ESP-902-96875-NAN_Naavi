@@ -1,0 +1,54 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2015",
+    "module": "esnext",
+    "lib": ["es2020", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@web/auth/data-access": ["libs/auth/data-access/src/index.ts"],
+      "@web/auth/feature": ["libs/auth/feature/src/index.ts"],
+      "@web/home": ["libs/home/src/index.ts"],
+      "@web/shared/data-access": ["libs/shared/data-access/src/index.ts"],
+      "@web/shared/data-access/logger": [
+        "libs/shared/data-access/logger/src/index.ts"
+      ],
+      "@web/shared/http-client": ["libs/shared/http-client/src/index.ts"],
+      "@web/shared/models": ["libs/shared/models/src/index.ts"],
+      "@web/shared/models/settings": [
+        "libs/shared/models/settings/src/index.ts"
+      ],
+      "@web/shared/util": ["libs/shared/util/src/index.ts"],
+      "@web/shared/util-signal-stores": [
+        "libs/shared/util-signal-stores/src/index.ts"
+      ],
+      "@web/shared/util-signal-stores/logger": [
+        "libs/shared/util-signal-stores/logger/src/index.ts"
+      ],
+      "@web/shared/util-signal-stores/query-params": [
+        "libs/shared/util-signal-stores/query-params/src/index.ts"
+      ],
+      "@web/shared/util-signal-stores/request-status": [
+        "libs/shared/util-signal-stores/request-status/src/index.ts"
+      ],
+      "@web/shared/util-signal-stores/route-params": [
+        "libs/shared/util-signal-stores/route-params/src/index.ts"
+      ],
+      "@web/shared/util-signal-stores/selected-entity": [
+        "libs/shared/util-signal-stores/selected-entity/src/index.ts"
+      ],
+      "@web/ui": ["libs/shared/ui/src/index.ts"],
+      "@web/ui/notification": ["libs/shared/ui/notification/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "tmp"]
+}

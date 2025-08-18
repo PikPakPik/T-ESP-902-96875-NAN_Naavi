@@ -1,0 +1,19 @@
+{
+  "name": "@web/auth-data-access",
+  "version": "0.0.1",
+  "peerDependencies": {
+    "@angular/common": "*",
+    "@angular/core": "*",
+    "@web/shared-models": "*",
+    "@web/shared-http-client": "*",
+    "@web/ui/notification": "*",
+    "@angular-architects/ngrx-toolkit": "*",
+    "@ngrx/signals": "*",
+    "@web/signal-stores": "*",
+    "rxjs": "*",
+    "@angular/router": "*",
+    "@colsen1991/ngx-translate-extract-marker": "*",
+    "@web/shared/util": "*"
+  },
+  "sideEffects": false
+}

@@ -1,0 +1,50 @@
+<div class="team-container">
+  <div class="team-header">
+    <h1 class="team-title">Notre Équipe</h1>
+    <p class="team-description">
+      Une équipe passionnée et expérimentée dédiée à la création d'applications
+      de qualité.
+    </p>
+  </div>
+
+  <div class="team-grid">
+    @for (member of teamMembers; track member) {
+      <div
+        class="team-member-card"
+        [ngClass]="{ 'recruiting-card': member.isRecruiting }"
+        >
+        <div class="member-avatar">
+          <div
+            class="avatar-circle"
+            [ngClass]="{ 'recruiting-avatar': member.isRecruiting }"
+            >
+            {{ member.avatar || getInitials(member.name) }}
+          </div>
+        </div>
+        <div class="member-info">
+          <h3 class="member-name">{{ member.name }}</h3>
+          @if (member.email && !member.isRecruiting) {
+            <p class="member-email">
+              {{ member.email }}
+            </p>
+          }
+        </div>
+        <div class="member-roles">
+          @for (role of member.roles; track role) {
+            <span
+              class="role-chip"
+              [ngClass]="'role-' + getRoleColor(role)"
+              >
+              {{ role }}
+            </span>
+          }
+        </div>
+        @if (member.isRecruiting) {
+          <div class="member-actions">
+            <button class="apply-btn">Postuler</button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

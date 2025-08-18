@@ -1,0 +1,222 @@
+[
+  {
+    "description": "The \"@angular/common\" package is not used by \"ui\" project.",
+    "fingerprint": "7a1464bc140a09e7caa1e4dc9840ee46",
+    "severity": "major",
+    "location": {
+      "path": "libs/shared/ui/package.json",
+      "lines": {
+        "begin": 5
+      }
+    }
+  },
+  {
+    "description": "The \"@angular/core\" package is not used by \"ui\" project.",
+    "fingerprint": "f7a006e46ac77b3181b273753a3d8bec",
+    "severity": "major",
+    "location": {
+      "path": "libs/shared/ui/package.json",
+      "lines": {
+        "begin": 6
+      }
+    }
+  },
+  {
+    "description": "The selector should start with one of these prefixes: \"lib\" (https://angular.dev/style-guide#style-02-07)",
+    "fingerprint": "17eeace03e2096747cacd75149dd69e0",
+    "severity": "major",
+    "location": {
+      "path": "libs/shared/ui/notification/src/lib/toast.component.ts",
+      "lines": {
+        "begin": 5
+      }
+    }
+  },
+  {
+    "description": "The \"@angular/common\" package is not used by \"ui\" project.",
+    "fingerprint": "62e5764ed1c05d506db51c720cfffe7f",
+    "severity": "major",
+    "location": {
+      "path": "libs/shared/ui/package.json",
+      "lines": {
+        "begin": 5
+      }
+    }
+  },
+  {
+    "description": "The \"@angular/core\" package is not used by \"ui\" project.",
+    "fingerprint": "d5288f564b686b27881bf6efb0cbed7e",
+    "severity": "major",
+    "location": {
+      "path": "libs/shared/ui/package.json",
+      "lines": {
+        "begin": 6
+      }
+    }
+  },
+  {
+    "description": "The selector should start with one of these prefixes: \"lib\" (https://angular.dev/style-guide#style-02-07)",
+    "fingerprint": "ef41ee8d9b942c47db44f7a0799f72e2",
+    "severity": "major",
+    "location": {
+      "path": "libs/shared/ui/notification/src/lib/toast.component.ts",
+      "lines": {
+        "begin": 5
+      }
+    }
+  },
+  {
+    "description": "The \"@angular/common\" package is not used by \"ui\" project.",
+    "fingerprint": "28765b7628e0ed56be90f0d8a6473430",
+    "severity": "major",
+    "location": {
+      "path": "libs/shared/ui/package.json",
+      "lines": {
+        "begin": 5
+      }
+    }
+  },
+  {
+    "description": "The \"@angular/core\" package is not used by \"ui\" project.",
+    "fingerprint": "bd3cddb2966d9e5007fbc128d25c2de8",
+    "severity": "major",
+    "location": {
+      "path": "libs/shared/ui/package.json",
+      "lines": {
+        "begin": 6
+      }
+    }
+  },
+  {
+    "description": "The \"notification\" project uses the following packages, but they are missing from \"peerDependencies\":\n    - primeng",
+    "fingerprint": "6703af6c041930a38fff526b54dc405e",
+    "severity": "major",
+    "location": {
+      "path": "libs/shared/ui/notification/package.json",
+      "lines": {
+        "begin": 4
+      }
+    }
+  },
+  {
+    "description": "The selector should start with one of these prefixes: \"lib\" (https://angular.dev/style-guide#style-02-07)",
+    "fingerprint": "10b7e461f79d51a2298e098d8d977b2a",
+    "severity": "major",
+    "location": {
+      "path": "libs/shared/ui/notification/src/lib/toast.component.ts",
+      "lines": {
+        "begin": 5
+      }
+    }
+  },
+  {
+    "description": "The \"@angular/common\" package is not used by \"ui\" project.",
+    "fingerprint": "68178dc6da9b4c338aa721505dbc1db0",
+    "severity": "major",
+    "location": {
+      "path": "libs/shared/ui/package.json",
+      "lines": {
+        "begin": 5
+      }
+    }
+  },
+  {
+    "description": "The \"@angular/core\" package is not used by \"ui\" project.",
+    "fingerprint": "f5a0bc06538a9f8fe1fad676afd427eb",
+    "severity": "major",
+    "location": {
+      "path": "libs/shared/ui/package.json",
+      "lines": {
+        "begin": 6
+      }
+    }
+  },
+  {
+    "description": "The \"notification\" project uses the following packages, but they are missing from \"peerDependencies\":\n    - primeng",
+    "fingerprint": "779978231da6edd32198f69d061f9ef9",
+    "severity": "major",
+    "location": {
+      "path": "libs/shared/ui/notification/package.json",
+      "lines": {
+        "begin": 4
+      }
+    }
+  },
+  {
+    "description": "The selector should start with one of these prefixes: \"lib\" (https://angular.dev/style-guide#style-02-07)",
+    "fingerprint": "af8cb11ebc2bf5c6496b10cbaf702c50",
+    "severity": "major",
+    "location": {
+      "path": "libs/shared/ui/notification/src/lib/toast.component.ts",
+      "lines": {
+        "begin": 5
+      }
+    }
+  },
+  {
+    "description": "The \"@angular/common\" package is not used by \"ui\" project.",
+    "fingerprint": "27d6b3caf47799fc2dedcf26daaf7c55",
+    "severity": "major",
+    "location": {
+      "path": "libs/shared/ui/package.json",
+      "lines": {
+        "begin": 5
+      }
+    }
+  },
+  {
+    "description": "The \"@angular/core\" package is not used by \"ui\" project.",
+    "fingerprint": "2188431c7350a329e7b0f4b85c2f23a7",
+    "severity": "major",
+    "location": {
+      "path": "libs/shared/ui/package.json",
+      "lines": {
+        "begin": 6
+      }
+    }
+  },
+  {
+    "description": "The \"notification\" project uses the following packages, but they are missing from \"peerDependencies\":\n    - primeng",
+    "fingerprint": "d1caa56cb09e8b242c6379c2d9ab9220",
+    "severity": "major",
+    "location": {
+      "path": "libs/shared/ui/notification/package.json",
+      "lines": {
+        "begin": 4
+      }
+    }
+  },
+  {
+    "description": "The selector should start with one of these prefixes: \"lib\" (https://angular.dev/style-guide#style-02-07)",
+    "fingerprint": "046204f17073404b17dbfc1db0630c66",
+    "severity": "major",
+    "location": {
+      "path": "libs/shared/ui/notification/src/lib/toast.component.ts",
+      "lines": {
+        "begin": 5
+      }
+    }
+  },
+  {
+    "description": "The \"@angular/common\" package is not used by \"ui\" project.",
+    "fingerprint": "693baae01313a07544837d7384d07eac",
+    "severity": "major",
+    "location": {
+      "path": "libs/shared/ui/package.json",
+      "lines": {
+        "begin": 5
+      }
+    }
+  },
+  {
+    "description": "The \"@angular/core\" package is not used by \"ui\" project.",
+    "fingerprint": "c4fbfbedcad070707563b0ee962cf599",
+    "severity": "major",
+    "location": {
+      "path": "libs/shared/ui/package.json",
+      "lines": {
+        "begin": 6
+      }
+    }
+  }
+]

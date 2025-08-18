@@ -1,0 +1,135 @@
+/* Global Styles */
+@import url('https://fonts.googleapis.com/css2?family=Nova+Round&family=Lexend+Deca:wght@300;400;500;600;700&display=swap');
+@import 'primeicons/primeicons.css';
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Lexend Deca', sans-serif;
+  line-height: 1.6;
+  color: #2c3e50;
+  overflow-x: hidden;
+}
+
+/* PrimeNG Theme Customization */
+:root {
+  --primary: #4a5d23;
+  --primary-light: #7fb069;
+  --primary-lighter: #a4c2a5;
+  --secondary: #3498db;
+  --warning: #f39c12;
+  --danger: #e74c3c;
+  --success: #27ae60;
+  --dark: #2c3e50;
+  --light: #ecf0f1;
+  --white: #ffffff;
+  --gray-100: #f8f9fa;
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-400: #ced4da;
+  --gray-500: #adb5bd;
+  --gray-600: #6c757d;
+  --gray-700: #495057;
+  --gray-800: #343a40;
+  --gray-900: #212529;
+
+  /* PrimeNG compatibility */
+  --primary-color: var(--primary);
+  --primary-color-text: var(--white);
+  --surface-0: var(--white);
+  --surface-50: var(--gray-100);
+  --surface-100: #f3f4f6; // Keep specific value if needed
+  --surface-200: var(--gray-200);
+  --surface-300: var(--gray-300);
+  --surface-400: var(--gray-400);
+  --surface-500: var(--gray-500);
+  --surface-600: var(--gray-600);
+  --surface-700: var(--gray-700);
+  --surface-800: var(--gray-800);
+  --surface-900: var(--gray-900);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* PrimeNG Overrides */
+.p-button {
+  font-family: 'Lexend Deca', sans-serif;
+  font-weight: 600;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.p-button.p-button-lg {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+}
+
+.btn-primary {
+  color: var(--white);
+
+  &:hover {
+    border-color: var(--primary-light);
+  }
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--primary);
+
+  &:hover {
+    color: var(--white);
+  }
+}
+
+.p-card {
+  border: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-radius: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.p-card .p-card-title {
+  font-family: 'Nova Round', cursive;
+  color: #4a5d23;
+}
+
+.p-card .p-card-content {
+  font-family: 'Lexend Deca', sans-serif;
+}
+
+.p-tag {
+  font-family: 'Lexend Deca', sans-serif;
+  font-weight: 600;
+  border-radius: 20px;
+}
+
+.p-divider {
+  border-color: #4a5d23;
+  opacity: 0.3;
+}
+
+/* Utility Classes */
+.text-center {
+  text-align: center;
+}
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+.mb-3 {
+  margin-bottom: 0.75rem;
+}
+.mb-4 {
+  margin-bottom: 1rem;
+}
+.mt-4 {
+  margin-top: 1rem;
+}

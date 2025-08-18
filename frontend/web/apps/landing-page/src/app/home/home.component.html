@@ -1,0 +1,316 @@
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-container">
+    <div class="hero-content">
+      <p-tag
+        value="Nouvelle Application"
+        severity="success"
+        [rounded]="true"
+        class="hero-badge"
+        >
+      </p-tag>
+
+      <h1 class="hero-title">
+        Chaque sentier a une histoire,<br />
+        <span class="highlight">ajoutez la vôtre !</span>
+      </h1>
+
+      <p class="hero-subtitle">
+        L'application mobile qui révolutionne vos randonnées grâce à des
+        signalements en temps réel, une communauté active et des fonctionnalités
+        de sécurité avancées.
+      </p>
+
+      <div class="hero-actions">
+        <p-button size="large" class="btn-primary app-store-btn" [text]="false">
+          <ng-template pTemplate="content">
+            <div class="download-btn-content">
+              <img
+                src="./assets/img/apple-logo.svg"
+                alt="Apple Logo"
+                class="download-icon"
+                />
+              <div class="download-text">
+                <span class="download-subtitle">Télécharger sur</span>
+                <span class="download-title">App Store</span>
+              </div>
+            </div>
+          </ng-template>
+        </p-button>
+
+        <p-button
+          size="large"
+          [outlined]="true"
+          class="btn-outline google-play-btn"
+          [text]="false"
+          >
+          <ng-template pTemplate="content">
+            <div class="download-btn-content">
+              <img
+                src="./assets/img/google-play-logo.svg"
+                alt="Google Play Logo"
+                class="download-icon"
+                />
+              <div class="download-text">
+                <span class="download-subtitle">Disponible sur</span>
+                <span class="download-title">Google Play</span>
+              </div>
+            </div>
+          </ng-template>
+        </p-button>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <img
+        class="hero-visual-img"
+        src="./assets/img/hero-visual.png"
+        alt="Hero Visual"
+        />
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="features">
+  <div class="container">
+    <div class="section-header">
+      <h2>Fonctionnalités principales</h2>
+      <p>
+        Découvrez tout ce que Naavi peut faire pour améliorer vos randonnées
+      </p>
+    </div>
+
+    <div class="features-grid">
+      @for (feature of features; track feature) {
+        <p-card class="feature-card">
+          <ng-template pTemplate="header">
+            <div class="feature-icon" [style.background]="feature.color">
+              <span>{{ feature.icon }}</span>
+            </div>
+          </ng-template>
+          <ng-template pTemplate="title">
+            {{ feature.title }}
+          </ng-template>
+          <ng-template pTemplate="content">
+            <p>{{ feature.description }}</p>
+          </ng-template>
+        </p-card>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- POI Section -->
+<section id="poi" class="poi-section">
+  <div class="container">
+    <div class="section-header">
+      <h2>Points d'intérêt et signalements</h2>
+      <p>Une cartographie complète pour une randonnée en toute sécurité</p>
+    </div>
+
+    <div class="poi-content">
+      <div class="poi-category">
+        <h3>🏞️ Points d'intérêt</h3>
+        <div class="poi-list">
+          @for (poi of poiTypes; track poi) {
+            <div class="poi-item">
+              <div class="poi-icon" [style.background]="poi.color">
+                {{ poi.icon }}
+              </div>
+              <span>{{ poi.label }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="poi-category">
+        <h3>⚠️ Signalements</h3>
+        <div class="poi-list">
+          @for (signal of signalTypes; track signal) {
+            <div class="poi-item">
+              <div class="poi-icon" [style.background]="signal.color">
+                {{ signal.icon }}
+              </div>
+              <span>{{ signal.label }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Security Section -->
+<section class="security">
+  <div class="container">
+    <div class="security-content">
+      <div class="security-text">
+        <p-tag
+          value="Sécurité"
+          severity="danger"
+          [rounded]="true"
+          class="section-tag"
+        ></p-tag>
+        <h2>Votre sécurité, notre priorité</h2>
+        <p>
+          Avec plus de 200 décès évitables en montagne chaque année, Naavi met
+          la sécurité au cœur de votre expérience de randonnée.
+        </p>
+        <ul class="security-features">
+          <li>
+            <i class="pi pi-check-circle"></i>
+            Signalements collaboratifs en temps réel
+          </li>
+          <li>
+            <i class="pi pi-check-circle"></i>
+            Alertes de danger automatiques
+          </li>
+          <li>
+            <i class="pi pi-check-circle"></i>
+            Bouton d'urgence intégré
+          </li>
+          <li>
+            <i class="pi pi-check-circle"></i>
+            Géolocalisation précise
+          </li>
+        </ul>
+        <p-button
+          label="En savoir plus"
+          icon="pi pi-arrow-right"
+          class="btn-primary"
+          >
+        </p-button>
+      </div>
+
+      <div class="security-visual">
+        <div class="danger-grid">
+          <div class="danger-card warning">
+            <div class="danger-icon">⚠️</div>
+            <span>Passage inaccessible</span>
+          </div>
+          <div class="danger-card danger">
+            <div class="danger-icon">🚨</div>
+            <span>Danger signalé</span>
+          </div>
+          <div class="danger-card info">
+            <div class="danger-icon">❄️</div>
+            <span>Risque d'avalanche</span>
+          </div>
+          <div class="danger-card success">
+            <div class="danger-icon">🦌</div>
+            <span>Passage d'animaux</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Community Section -->
+<section id="community" class="community">
+  <div class="container">
+    <div class="community-content">
+      <div class="community-visual">
+        <img
+          class="community-visual-img"
+          src="./assets/img/community-visual.png"
+          alt="Community Visual"
+          />
+      </div>
+
+      <div class="community-text">
+        <p-tag
+          value="Communauté"
+          severity="info"
+          [rounded]="true"
+          class="section-tag"
+        ></p-tag>
+        <h2>Rejoignez la communauté Naavi</h2>
+        <p>
+          Partagez vos expériences, découvrez de nouveaux parcours et
+          connectez-vous avec d'autres passionnés de randonnée.
+        </p>
+
+        <div class="community-features">
+          <div class="community-feature">
+            <div class="feature-icon-small">📸</div>
+            <div>
+              <h4>Partage d'expériences</h4>
+              <p>Partagez vos photos et avis sur les parcours</p>
+            </div>
+          </div>
+          <div class="community-feature">
+            <div class="feature-icon-small">🏆</div>
+            <div>
+              <h4>Défis et récompenses</h4>
+              <p>Gagnez des kilomètres virtuels et débloquez des badges</p>
+            </div>
+          </div>
+          <div class="community-feature">
+            <div class="feature-icon-small">🤝</div>
+            <div>
+              <h4>Entraide</h4>
+              <p>Aidez et soyez aidé par la communauté</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta">
+  <div class="container">
+    <div class="cta-content">
+      <h2>Prêt à commencer votre aventure ?</h2>
+      <p>
+        Téléchargez Naavi dès maintenant et découvrez une nouvelle façon de
+        randonner
+      </p>
+      <div class="cta-buttons">
+        <p-button
+          size="large"
+          class="btn-primary app-store-btn-cta"
+          [text]="false"
+          >
+          <ng-template pTemplate="content">
+            <div class="download-btn-content">
+              <img
+                src="./assets/img/apple-logo.svg"
+                alt="Apple Logo"
+                class="download-icon"
+                />
+              <div class="download-text">
+                <span class="download-subtitle">Télécharger sur</span>
+                <span class="download-title">App Store</span>
+              </div>
+            </div>
+          </ng-template>
+        </p-button>
+
+        <p-button
+          size="large"
+          [outlined]="true"
+          class="btn-outline-white google-play-btn-cta"
+          [text]="false"
+          >
+          <ng-template pTemplate="content">
+            <div class="download-btn-content">
+              <img
+                src="./assets/img/google-play-logo.svg"
+                alt="Google Play Logo"
+                class="download-icon"
+                />
+              <div class="download-text">
+                <span class="download-subtitle">Disponible sur</span>
+                <span class="download-title">Google Play</span>
+              </div>
+            </div>
+          </ng-template>
+        </p-button>
+      </div>
+    </div>
+  </div>
+</section>

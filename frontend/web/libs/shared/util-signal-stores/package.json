@@ -1,0 +1,10 @@
+{
+  "name": "@web/signal-stores",
+  "version": "0.0.1",
+  "peerDependencies": {
+    "@angular/core": "*",
+    "@ngrx/signals": "*",
+    "@angular/router": "*"
+  },
+  "sideEffects": false
+}

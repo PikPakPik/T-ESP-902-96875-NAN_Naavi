@@ -1,0 +1,12 @@
+{
+  "name": "@web/shared/util",
+  "version": "0.0.1",
+  "peerDependencies": {
+    "@angular/common": "*",
+    "@angular/core": "*",
+    "@ngx-translate/core": "*",
+    "deepmerge-ts": "*",
+    "rxjs": "*"
+  },
+  "sideEffects": false
+}

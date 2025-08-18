@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.lib.json",
+  "compilerOptions": {
+    "declarationMap": false,
+    "useDefineForClassFields": false,
+    "moduleResolution": "bundler"
+  },
+  "angularCompilerOptions": {
+    "compilationMode": "partial"
+  }
+}
