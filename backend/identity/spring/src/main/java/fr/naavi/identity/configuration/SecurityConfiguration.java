@@ -1,10 +1,12 @@
 package fr.naavi.identity.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.naavi.identity.repository.SessionRepository;
 import fr.naavi.identity.security.AuthenticationNotRequiredMatcher;
 import fr.naavi.identity.security.InternalApiKeyFilter;
 import fr.naavi.identity.security.JWTAuthenticationFilter;
 import fr.naavi.identity.security.LoginAuthenticationProvider;
+import fr.naavi.identity.service.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -93,18 +95,52 @@ public class SecurityConfiguration {
     }
 
     /**
-     * Configures the security filter chain for the application.
+     * Configures the security filter chain for Swagger UI and API documentation.
      * Disables CSRF, logout, HTTP basic authentication, and form login.
-     * Sets up authorization rules and exception handling.
+     * Sets session management to stateless.
      *
      * @param http HttpSecurity object to configure security settings
-     * @param jwtAuthenticationFilter the filter to handle JWT authentication
      * @return SecurityFilterChain instance
      * @throws Exception if an error occurs during configuration
      */
     @Bean
     @Order(3)
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JWTAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+    public SecurityFilterChain swaggerFilterChain(HttpSecurity http) throws Exception {
+        http.securityMatcher("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html");
+        http.csrf(AbstractHttpConfigurer::disable);
+        http.logout(AbstractHttpConfigurer::disable);
+        http.httpBasic(AbstractHttpConfigurer::disable);
+        http.formLogin(AbstractHttpConfigurer::disable);
+        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        return http.build();
+    }
+
+    /**
+     * Configures the security filter chain for the application.
+     * Disables CSRF, logout, HTTP basic authentication, and form login.
+     * Sets up authorization rules and exception handling.
+     *
+     * @param http HttpSecurity object to configure security settings
+     * @param objectMapper ObjectMapper for JSON serialization
+     * @param sessionRepository SessionRepository for managing user sessions
+     * @param jwtService JwtService for handling JWT operations
+     * @return SecurityFilterChain instance
+     * @throws Exception if an error occurs during configuration
+     */
+    @Bean
+    @Order(4)
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            ObjectMapper objectMapper,
+            SessionRepository sessionRepository,
+            JwtService jwtService
+    ) throws Exception {
+        JWTAuthenticationFilter jwtAuthenticationFilter = new JWTAuthenticationFilter(
+                objectMapper,
+                sessionRepository,
+                jwtService
+        );
+
         http.csrf(AbstractHttpConfigurer::disable);
         http.logout(AbstractHttpConfigurer::disable);
         http.httpBasic(AbstractHttpConfigurer::disable);
@@ -114,7 +150,7 @@ public class SecurityConfiguration {
                 .requestMatchers(new AuthenticationNotRequiredMatcher(handlerMapping)).permitAll()
                 .anyRequest().authenticated()
         );
-        http.addFilterAfter(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         http.exceptionHandling(exception -> exception
                 .authenticationEntryPoint(authenticationEntryPoint())
                 .accessDeniedHandler(accessDeniedHandler())

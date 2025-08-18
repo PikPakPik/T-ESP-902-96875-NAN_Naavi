@@ -7,11 +7,11 @@ services:
       - .docker/java/watch.sh:/usr/share/watch.sh
       - ./spring:/usr/share/app
       - ~/.m2:/root/.m2
+      - naavi_shared_data:/usr/share/naavi_shared_data
     environment:
       MAVEN_PROFILES: dev
       SPRING_PROFILES_ACTIVE: dev
       SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/naavi_identity
-      JWT_PASSPHRASE: "9vRK494wAVwDO8oBw1zppMnnE4f9WPYLE4lH7MECT1k="
       SPRING_MAIL_HOST: mailer
       SPRING_MAIL_PORT: 1025
     labels:
@@ -27,8 +27,10 @@ services:
   
       - "traefik.http.middlewares.identity-stripprefix.stripprefix.prefixes=/identity"
     networks:
-      - default
-      - naavi-network
+      default: {}
+      naavi-network:
+          aliases:
+            - identity
 
   database:
     image: postgres:latest
@@ -41,6 +43,8 @@ services:
 
 volumes:
   postgres_data: {}
+  naavi_shared_data:
+    external: true
 
 networks:
   naavi-network:

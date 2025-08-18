@@ -4,6 +4,7 @@ import fr.naavi.core.utils.RequestUtils;
 import fr.naavi.identity.dto.output.AuthenticationDTO;
 import fr.naavi.identity.entity.Session;
 import fr.naavi.identity.entity.User;
+import fr.naavi.identity.enums.JwtEnum;
 import fr.naavi.identity.repository.SessionRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
@@ -16,7 +17,11 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class AuthenticationService {
@@ -47,7 +52,6 @@ public class AuthenticationService {
         Instant now = Instant.now();
         Instant expiration = now.plus(1, ChronoUnit.DAYS);
         Map<String, Object> claims = new HashMap<>();
-        claims.put("type", "session");
         claims.put("sessId", uuid);
 
         JwtBuilder jwt = Jwts.builder()
@@ -56,7 +60,7 @@ public class AuthenticationService {
                 .expiration(Date.from(expiration));
 
         return Map.of(
-                "token", this.jwtService.signJwt(jwt),
+                "token", this.jwtService.signJwt(jwt, JwtEnum.AUTH),
                 "sessId", uuid
         );
     }
@@ -72,7 +76,6 @@ public class AuthenticationService {
         Instant expiration = now.plus(7, ChronoUnit.DAYS);
 
         Map<String, Object> claims = new HashMap<>();
-        claims.put("type", "refresh");
         claims.put("sessId", uuid);
 
         JwtBuilder jwt = Jwts.builder()
@@ -81,7 +84,7 @@ public class AuthenticationService {
                 .expiration(Date.from(expiration));
 
         return Map.of(
-                "token", this.jwtService.signJwt(jwt),
+                "token", this.jwtService.signJwt(jwt, JwtEnum.AUTH),
                 "sessId", uuid
         );
     }
@@ -113,7 +116,7 @@ public class AuthenticationService {
      */
     public AuthenticationDTO renewSession(String token) {
         try {
-            Claims claims = this.jwtService.verifyJwt(token);
+            Claims claims = this.jwtService.verifyJwt(token, JwtEnum.AUTH);
             String sessId = claims.get("sessId", String.class);
 
             Optional<Session> session = this.sessionRepository.findByRefreshToken(sessId);

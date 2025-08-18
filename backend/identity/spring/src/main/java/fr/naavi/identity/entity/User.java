@@ -4,7 +4,15 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.naavi.identity.converter.RolesConverter;
 import fr.naavi.identity.entitylistener.UserListener;
 import fr.naavi.identity.enums.StatusEnum;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

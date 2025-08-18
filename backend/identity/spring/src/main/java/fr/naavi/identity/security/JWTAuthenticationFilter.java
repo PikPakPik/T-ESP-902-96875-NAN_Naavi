@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.naavi.core.dto.ApiResponseDto;
 import fr.naavi.identity.entity.Session;
 import fr.naavi.identity.entity.User;
+import fr.naavi.identity.enums.JwtEnum;
 import fr.naavi.identity.repository.SessionRepository;
 import fr.naavi.identity.service.JwtService;
 import io.jsonwebtoken.Claims;
@@ -18,7 +19,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -28,7 +28,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-@Component
 public class JWTAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(JWTAuthenticationFilter.class);
 
@@ -62,7 +61,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                     : authorizationValue;
 
             if (token != null && !token.isEmpty()) {
-                Claims claims = this.jwtService.verifyJwt(token);
+                Claims claims = this.jwtService.verifyJwt(token, JwtEnum.AUTH);
                 String sessId = claims.get("sessId", String.class);
 
                 Optional<Session> session = this.sessionRepository.findByAccessToken(sessId);

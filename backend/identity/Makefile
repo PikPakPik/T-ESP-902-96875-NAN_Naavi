@@ -4,6 +4,7 @@ SHELL := /bin/bash
 build:
 	sed -i 's/\r$$//' .docker/java/watch.sh || true
 	@docker network ls | grep -q naavi-network || docker network create naavi-network
+	@docker volume inspect naavi_shared_data >/dev/null 2>&1 || docker volume create naavi_shared_data
 	docker compose up --build -d
 
 .PHONY: down

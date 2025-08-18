@@ -19,6 +19,13 @@ import fr.naavi.identity.repository.SessionRepository;
 import fr.naavi.identity.service.AuthenticationService;
 import fr.naavi.identity.service.MailerService;
 import fr.naavi.identity.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -32,6 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Optional;
 
+@Tag(name = "Sécurité", description = "Points d'accès pour l'authentification et l'inscription des utilisateurs")
 @RestController
 public class SecurityController extends AbstractController {
     private final UserService userService;
@@ -65,6 +73,59 @@ public class SecurityController extends AbstractController {
      * @param loginDto the login credentials
      * @return an AuthenticationDto containing the access token
      */
+    @Operation(
+            summary = "Authentification de l'utilisateur",
+            description = "Permet de connecter un utilisateur et de retourner les tokens d'authentification."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Authentification réussie.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = AuthenticationDTO.class,
+                                    example = "{\n"
+                                            + "  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6...\",\n"
+                                            + "  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6...\"\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Identifiants invalides.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDto.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"security.invalid_credentials\",\n"
+                                            + "  \"message\": \"Invalid credentials provided.\",\n"
+                                            + "  \"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "422",
+                    description = "Erreur de validation des données.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDto.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"validation.failed\",\n"
+                                            + "  \"message\": \"Validation failed\",\n"
+                                            + "  \"extra\": {\n"
+                                            + "    \"email\": \"must be a well-formed email address\",\n"
+                                            + "    \"password\": \"must not be blank\"\n"
+                                            + "  }\n"
+                                            + "}"
+                            )
+                    )
+            )
+    })
     @PostMapping("/login")
     public AuthenticationDTO login(@RequestBody @Validated LoginDTO loginDto) {
         try {
@@ -88,6 +149,63 @@ public class SecurityController extends AbstractController {
      * @param registerDto the registration details
      * @return an ApiResponseDto indicating success or failure
      */
+    @Operation(
+            summary = "Inscription d'un nouvel utilisateur",
+            description = "Permet de créer un nouvel utilisateur et d'envoyer un e-mail de confirmation."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Utilisateur inscrit avec succès.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDto.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"security.register.success\",\n"
+                                            + "  \"message\": \"User registered successfully.\",\n"
+                                            + "  \"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Un compte avec cet e-mail existe déjà.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDto.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"security.email_already_exists\",\n"
+                                            + "  \"message\": \"An account with this email already exists.\",\n"
+                                            + "  \"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "422",
+                    description = "Erreur de validation des données.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDto.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"validation.failed\",\n"
+                                            + "  \"message\": \"Validation failed\",\n"
+                                            + "  \"extra\": {\n"
+                                            + "    \"firstname\": \"must not be blank\",\n"
+                                            + "    \"lastname\": \"must not be blank\",\n"
+                                            + "    \"email\": \"must be a well-formed email address\",\n"
+                                            + "    \"password\": \"must not be blank\",\n"
+                                            + "    \"confirmPassword\": \"must not be blank\"\n"
+                                            + "  }\n"
+                                            + "}"
+                            )
+                    )
+            )
+    })
     @PostMapping("/register")
     @AuthenticationNotRequired
     public ApiResponseDto register(@RequestBody @Validated RegisterDTO registerDto) {
@@ -113,6 +231,53 @@ public class SecurityController extends AbstractController {
      *
      * @return an ApiResponseDto indicating success or failure
      */
+    @Operation(
+            summary = "Déconnexion de l'utilisateur",
+            description = "Invalide la session courante de l'utilisateur."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Utilisateur déconnecté avec succès.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDto.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"logout.success\",\n"
+                                            + "  \"message\": \"User logged out successfully.\",\n"
+                                            + "  \"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Session invalide ou inexistante.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponseDto.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Session manquante ou invalide",
+                                            value = "{\n"
+                                                    + "  \"i18nKey\": \"security.logout.error\",\n"
+                                                    + "  \"message\": \"Session ID is missing or invalid.\",\n"
+                                                    + "  \"extra\": null\n"
+                                                    + "}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "Session non trouvée ou expirée",
+                                            value = "{\n"
+                                                    + "  \"i18nKey\": \"security.logout.error\",\n"
+                                                    + "  \"message\": \"Session not found or already expired.\",\n"
+                                                    + "  \"extra\": null\n"
+                                                    + "}"
+                                    )
+                            }
+                    )
+            )
+    })
     @DeleteMapping("/logout")
     public ApiResponseDto logout() {
         String sessId = (String) this.getCurrentRequest().getAttribute("sessId");
@@ -145,6 +310,58 @@ public class SecurityController extends AbstractController {
      * @param refreshDto the refresh token details
      * @return an AuthenticationDTO containing the new access token
      */
+    @Operation(
+            summary = "Renouvellement du token d'authentification",
+            description = "Permet de renouveler la session à l'aide d'un refresh token valide."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Token renouvelé avec succès.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = AuthenticationDTO.class,
+                                    example = "{\n"
+                                            + "  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6...\",\n"
+                                            + "  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6...\"\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Refresh token invalide ou expiré.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDto.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"security.refresh_token_invalid\",\n"
+                                            + "  \"message\": \"The provided refresh token is invalid or expired.\",\n"
+                                            + "  \"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "422",
+                    description = "Erreur de validation des données.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDto.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"validation.failed\",\n"
+                                            + "  \"message\": \"Validation failed\",\n"
+                                            + "  \"extra\": {\n"
+                                            + "    \"token\": \"must not be blank\"\n"
+                                            + "  }\n"
+                                            + "}"
+                            )
+                    )
+            )
+    })
     @PostMapping("/refresh")
     @AuthenticationNotRequired
     public AuthenticationDTO refresh(@RequestBody @Validated RefreshDTO refreshDto) {
@@ -165,6 +382,45 @@ public class SecurityController extends AbstractController {
      * @param forgotPasswordDTO the email address for password reset
      * @return an ApiResponseDto indicating success or failure
      */
+    @Operation(
+            summary = "Demande de réinitialisation du mot de passe",
+            description = "Envoie un e-mail de réinitialisation si l'utilisateur existe. Réponse identique même si l'e-mail n'existe pas."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "E-mail de réinitialisation envoyé (ou réponse générique si l'utilisateur n'existe pas).",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDto.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"forgot_password.success\",\n"
+                                            + "  \"message\": \"If an account exists with the e-mail address entered,"
+                                            + " an e-mail will be sent to you with instructions for resetting your password.\",\n"
+                                            + "  \"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "422",
+                    description = "Erreur de validation des données.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDto.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"validation.failed\",\n"
+                                            + "  \"message\": \"Validation failed\",\n"
+                                            + "  \"extra\": {\n"
+                                            + "    \"email\": \"must be a well-formed email address\"\n"
+                                            + "  }\n"
+                                            + "}"
+                            )
+                    )
+            )
+    })
     @PostMapping("/forgot-password")
     @AuthenticationNotRequired
     public ApiResponseDto forgotPassword(@RequestBody @Validated ForgotPasswordDTO forgotPasswordDTO) {
@@ -189,6 +445,61 @@ public class SecurityController extends AbstractController {
      * @param resetPasswordDTO the new password and reset token
      * @return an ApiResponseDto indicating success or failure
      */
+    @Operation(
+            summary = "Réinitialisation du mot de passe",
+            description = "Permet de réinitialiser le mot de passe à l'aide d'un token de réinitialisation valide."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Mot de passe réinitialisé avec succès.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDto.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"reset_password.success\",\n"
+                                            + "  \"message\": \"Your password has been successfully reset.\",\n"
+                                            + "  \"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Token de réinitialisation invalide ou expiré.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDto.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"reset_password.request_not_found\",\n"
+                                            + "  \"message\": \"The reset password request is invalid or has expired.\",\n"
+                                            + "  \"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "422",
+                    description = "Erreur de validation des données.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDto.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"validation.failed\",\n"
+                                            + "  \"message\": \"Validation failed\",\n"
+                                            + "  \"extra\": {\n"
+                                            + "    \"token\": \"must not be blank\",\n"
+                                            + "    \"password\": \"must not be blank\",\n"
+                                            + "    \"confirmPassword\": \"must not be blank\"\n"
+                                            + "  }\n"
+                                            + "}"
+                            )
+                    )
+            )
+    })
     @PostMapping("/reset-password")
     @AuthenticationNotRequired
     public ApiResponseDto resetPassword(@RequestBody @Validated ResetPasswordDTO resetPasswordDTO) {
