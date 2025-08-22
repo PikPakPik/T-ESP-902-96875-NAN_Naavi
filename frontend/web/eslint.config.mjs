@@ -43,6 +43,13 @@ export default [
     },
   },
   {
+    files: ['*.json'],
+    parser: 'jsonc-eslint-parser',
+    rules: {
+      '@nx/dependency-checks': 'warn',
+    },
+  },
+  {
     files: [
       '**/*.ts',
       '**/*.tsx',

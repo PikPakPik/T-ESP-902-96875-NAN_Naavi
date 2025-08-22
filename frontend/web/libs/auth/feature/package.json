@@ -1,9 +1,12 @@
 {
-  "name": "@web/auth-feature",
+  "name": "@web/auth/feature",
   "version": "0.0.1",
   "peerDependencies": {
-    "@angular/common": "^19.2.0",
-    "@angular/core": "^19.2.0"
+    "@angular/common": "*",
+    "@angular/core": "*",
+    "@angular/forms": "*",
+    "primeng": "*",
+    "@web/auth/data-access": "*"
   },
   "sideEffects": false
 }

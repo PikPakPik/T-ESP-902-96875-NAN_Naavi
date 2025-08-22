@@ -1,5 +1,5 @@
 {
-  "name": "@web/shared-models",
+  "name": "@web/shared/models",
   "version": "0.0.1",
   "peerDependencies": {},
   "sideEffects": false

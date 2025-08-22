@@ -1,6 +1,7 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
     "rootDir": ".",
     "sourceMap": true,
     "declaration": false,
@@ -8,12 +9,15 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "importHelpers": true,
-    "target": "es2015",
+    "target": "es2020",
     "module": "esnext",
+    "typeRoots": ["node_modules/@types"],
     "lib": ["es2020", "dom"],
+    "types": ["reflect-metadata"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
+    "resolveJsonModule": true,
     "paths": {
       "@web/auth/data-access": ["libs/auth/data-access/src/index.ts"],
       "@web/auth/feature": ["libs/auth/feature/src/index.ts"],
@@ -28,22 +32,22 @@
         "libs/shared/models/settings/src/index.ts"
       ],
       "@web/shared/util": ["libs/shared/util/src/index.ts"],
-      "@web/shared/util-signal-stores": [
+      "@web/shared/util/signal-stores": [
         "libs/shared/util-signal-stores/src/index.ts"
       ],
-      "@web/shared/util-signal-stores/logger": [
+      "@web/shared/util/signal-stores/logger": [
         "libs/shared/util-signal-stores/logger/src/index.ts"
       ],
-      "@web/shared/util-signal-stores/query-params": [
+      "@web/shared/util/signal-stores/query-params": [
         "libs/shared/util-signal-stores/query-params/src/index.ts"
       ],
-      "@web/shared/util-signal-stores/request-status": [
+      "@web/shared/util/signal-stores/request-status": [
         "libs/shared/util-signal-stores/request-status/src/index.ts"
       ],
-      "@web/shared/util-signal-stores/route-params": [
+      "@web/shared/util/signal-stores/route-params": [
         "libs/shared/util-signal-stores/route-params/src/index.ts"
       ],
-      "@web/shared/util-signal-stores/selected-entity": [
+      "@web/shared/util/signal-stores/selected-entity": [
         "libs/shared/util-signal-stores/selected-entity/src/index.ts"
       ],
       "@web/ui": ["libs/shared/ui/src/index.ts"],

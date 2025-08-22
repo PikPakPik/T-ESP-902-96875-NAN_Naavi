@@ -4,11 +4,16 @@ import {
   ReactiveFormsModule,
   type FormGroup,
   Validators,
+  FormsModule,
 } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { CheckboxModule } from 'primeng/checkbox';
-import { PasswordModule } from 'primeng/password';
+import { Button } from 'primeng/button';
+import { InputText } from 'primeng/inputtext';
+import { Checkbox } from 'primeng/checkbox';
+import { Password } from 'primeng/password';
+import { AutoFocus } from 'primeng/autofocus';
+import { Dialog } from 'primeng/dialog';
+import { AuthStore } from '@web/auth/data-access';
+import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 
 @Component({
   selector: 'web-auth-feature',
@@ -16,17 +21,23 @@ import { PasswordModule } from 'primeng/password';
   styleUrls: ['./auth-feature.component.scss'],
   standalone: true,
   imports: [
-    ButtonModule,
-    InputTextModule,
-    CheckboxModule,
-    PasswordModule,
+    Button,
+    InputText,
+    Checkbox,
+    Password,
+    AutoFocus,
+    Dialog,
+    ForgotPasswordComponent,
     ReactiveFormsModule,
+    FormsModule,
   ],
 })
 export class AuthFeatureComponent {
   readonly #fb = inject(FormBuilder);
+  readonly #store = inject(AuthStore);
   loginForm: FormGroup;
   loading = false;
+  showForgotPasswordModal = false;
 
   constructor() {
     this.loginForm = this.#fb.group({
@@ -36,17 +47,15 @@ export class AuthFeatureComponent {
     });
   }
 
-  onSubmit() {
+  async onSubmit() {
     if (this.loginForm.valid) {
       this.loading = true;
 
-      // Simulation d'une connexion
-      setTimeout(() => {
-        this.loading = false;
-        console.log('Connexion réussie', this.loginForm.value);
-        // Redirection après connexion
-        // this.router.navigate(['/dashboard']);
-      }, 2000);
+      await this.#store.login(
+        this.loginForm.value.email,
+        this.loginForm.value.password
+      );
+      this.loading = false;
     } else {
       this.markFormGroupTouched();
     }
@@ -64,5 +73,13 @@ export class AuthFeatureComponent {
   }
   get password() {
     return this.loginForm.get('password');
+  }
+
+  openForgotPasswordModal() {
+    this.showForgotPasswordModal = true;
+  }
+
+  closeForgotPasswordModal() {
+    this.showForgotPasswordModal = false;
   }
 }

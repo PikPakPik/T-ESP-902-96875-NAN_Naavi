@@ -22,12 +22,17 @@
           },
           {
             "glob": "**/*",
+            "input": "apps/backoffice/src/assets",
+            "output": "assets"
+          },
+          {
+            "glob": "**/*",
             "input": "shared-assets",
             "output": "assets"
           }
         ],
         "styles": [
-          "apps/backoffice/src/styles.css",
+          "apps/backoffice/src/styles.scss",
           "node_modules/primeicons/primeicons.css"
         ],
         "scripts": [],
@@ -96,7 +101,7 @@
         "push": true,
         "metadata": {
           "images": [
-            "registry.gitlab.com/epitech-msc-2026/naavi/frontend/web/backoffice"
+            "registry.gitlab.com/epitech-msc-2026/frontend/web/backoffice"
           ],
           "tags": ["type=sha,prefix=", "type=raw,linux-${TAG}"],
           "platforms": ["linux/amd64", "linux/arm64"]

@@ -1,10 +1,12 @@
 import { Signal, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Params } from '@angular/router';
-import { ParamsComputed, ParamsConfig } from '@web/signal-stores';
+import { ParamsComputed, ParamsConfig } from '@web/shared/util/signal-stores';
 import { signalStoreFeature, withComputed } from '@ngrx/signals';
 
-export function withRouteParams<Config extends ParamsConfig>(config: Config) {
+export function withRouteParams<Config extends ParamsConfig<any>>(
+  config: Config
+) {
   return signalStoreFeature(
     withComputed(() => {
       const routeParams = injectRouteParams();

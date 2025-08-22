@@ -1,7 +1,7 @@
 # Multi-stage build pour Angular static
 
 # Stage 1: Build
-FROM registry.gitlab.com/epitech-msc-2026/naavi/ci-factory/naavi-node22-pnpm-git-alpine:latest AS builder
+FROM registry.gitlab.com/epitech-msc-2026/ci-factory/naavi-node22-pnpm-git-alpine:latest AS builder
 
 WORKDIR /app
 

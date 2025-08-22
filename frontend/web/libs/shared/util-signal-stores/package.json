@@ -1,5 +1,5 @@
 {
-  "name": "@web/signal-stores",
+  "name": "@web/shared/util/signal-stores",
   "version": "0.0.1",
   "peerDependencies": {
     "@angular/core": "*",

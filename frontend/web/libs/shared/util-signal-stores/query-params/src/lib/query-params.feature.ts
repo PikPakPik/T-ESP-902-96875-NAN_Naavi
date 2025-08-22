@@ -2,9 +2,9 @@ import { computed, inject, Signal } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { signalStoreFeature, withComputed, withMethods } from '@ngrx/signals';
-import { ParamsComputed, ParamsConfig } from '@web/signal-stores';
+import { ParamsComputed, ParamsConfig } from '@web/shared/util/signal-stores';
 
-type QueryParamsMethods<Config extends ParamsConfig> = {
+type QueryParamsMethods<Config extends ParamsConfig<any>> = {
   [Key in keyof Config as `update${Capitalize<
     Key & string
   >}`]: Config[Key] extends infer TransformFn
@@ -14,7 +14,9 @@ type QueryParamsMethods<Config extends ParamsConfig> = {
     : never;
 };
 
-export function withQueryParams<Config extends ParamsConfig>(config: Config) {
+export function withQueryParams<Config extends ParamsConfig<any>>(
+  config: Config
+) {
   return signalStoreFeature(
     withComputed(() => {
       const queryParams = injectQueryParams();

@@ -104,7 +104,7 @@
         "push": true,
         "metadata": {
           "images": [
-            "registry.gitlab.com/epitech-msc-2026/naavi/frontend/web/landing-page"
+            "registry.gitlab.com/epitech-msc-2026/frontend/web/landing-page"
           ],
           "tags": ["type=sha,prefix=", "type=raw,linux-${TAG}"],
           "platforms": ["linux/amd64", "linux/arm64"]

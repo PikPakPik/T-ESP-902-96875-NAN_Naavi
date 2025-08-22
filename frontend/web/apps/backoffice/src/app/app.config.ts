@@ -1,6 +1,10 @@
 import { API_URL } from '@web/shared/http-client';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
-import { GlobalErrorHandler, LogLevel } from '@web/shared/data-access/logger';
+import {
+  GlobalErrorHandler,
+  LogLevel,
+  LOG_LEVEL_TOKEN,
+} from '@web/shared/data-access/logger';
 import {
   ApplicationConfig,
   ErrorHandler,
@@ -20,9 +24,10 @@ import Lara from '@primeng/themes/lara';
 import { environment } from '../environments/environment';
 import { NotificationModule } from '@web/ui/notification';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpBackend } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpBackend } from '@angular/common/http';
 import { HttpLoaderFactory } from '@web/shared/util';
 import { provideHttpClient, withFetch } from '@angular/common/http';
+import { LoaderInterceptor } from '@web/shared/data-access';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -56,10 +61,11 @@ export const appConfig: ApplicationConfig = {
       }),
     ]),
     {
-      provide: 'LOG_LEVEL',
+      provide: LOG_LEVEL_TOKEN,
       useValue: environment.production ? LogLevel.Error : LogLevel.Debug,
     },
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
+    { provide: HTTP_INTERCEPTORS, useClass: LoaderInterceptor, multi: true },
     { provide: API_URL, useValue: environment.api_url },
   ],
 };

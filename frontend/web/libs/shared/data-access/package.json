@@ -6,7 +6,8 @@
     "@angular/core": "*",
     "@web/ui/notification": "*",
     "@ngx-translate/core": "*",
-    "@web/shared/util": "*"
+    "@web/shared/util": "*",
+    "rxjs": "*"
   },
   "sideEffects": false
 }

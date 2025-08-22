@@ -1,6 +1,5 @@
 import { RouterModule } from '@angular/router';
 import { DividerModule } from 'primeng/divider';
-import { SidebarModule } from 'primeng/sidebar';
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LoadingService } from './loading/loading.service';
@@ -12,7 +11,6 @@ import { MenuItem } from 'primeng/api';
   imports: [
     CommonModule,
     DividerModule,
-    SidebarModule,
     RouterModule,
     LoadingComponent,
     MenubarModule,

@@ -1,0 +1,1185 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`AuthFeatureComponent visual state Given default component state When rendering component Then should display login form with email input, password input, remember me checkbox, login button and forgot password link 1`] = `
+<web-auth-feature
+  loading="false"
+  loginForm={[Function FormGroup]}
+  showForgotPasswordModal="false"
+>
+  <div
+    class="login-container min-h-screen flex items-center justify-center p-4"
+  >
+    <div
+      class="login-content"
+    >
+      <div
+        class="image-section"
+      >
+        <div
+          class="image-overlay"
+        >
+          <h1
+            class="welcome-title"
+          >
+            Bienvenue
+          </h1>
+          <p
+            class="welcome-subtitle"
+          >
+            Connectez-vous à votre compte
+          </p>
+        </div>
+      </div>
+      <div
+        class="form-section"
+      >
+        <div
+          class="form-container"
+        >
+          <div
+            class="logo-section"
+          >
+            <i
+              class="pi pi-mountain"
+              style="font-size: 3rem; color: var(--primary-color);"
+            />
+            <h2>
+              Connexion
+            </h2>
+            <p
+              class="subtitle"
+            >
+              Accédez à votre espace personnel
+            </p>
+          </div>
+          <form
+            class="login-form"
+            novalidate=""
+          >
+            <div
+              class="field"
+            >
+              <label
+                for="email"
+              >
+                Adresse email
+              </label>
+              <input
+                class="w-full"
+                formcontrolname="email"
+                id="email"
+                pinputtext=""
+                placeholder="votre@email.com"
+              />
+            </div>
+            <div
+              class="field"
+            >
+              <label
+                for="password"
+              >
+                Mot de passe
+              </label>
+              <p-password
+                data-pc-name="password"
+                data-pc-section="root"
+                formcontrolname="password"
+                inputstyleclass="w-full"
+                placeholder="Votre mot de passe"
+              >
+                <input
+                  pinputtext=""
+                />
+              </p-password>
+            </div>
+            <div
+              class="flex justify-between items-center mb-6"
+            >
+              <div
+                class="flex items-center"
+              >
+                <p-checkbox
+                  formcontrolname="rememberMe"
+                  inputid="rememberMe"
+                >
+                  <input
+                    type="checkbox"
+                  />
+                  <div>
+                  </div>
+                </p-checkbox>
+                <label
+                  class="ml-2 text-sm"
+                  for="rememberMe"
+                >
+                   Se souvenir de moi 
+                </label>
+              </div>
+              <a
+                class="text-green-600 hover:text-green-800 text-sm font-medium cursor-pointer transition-colors"
+                role="button"
+                tabindex="0"
+              >
+                 Mot de passe oublié ? 
+              </a>
+            </div>
+            <p-button
+              label="Se connecter"
+              styleclass="w-full login-button"
+              type="submit"
+            >
+              <button
+                class="p-ripple"
+                pripple=""
+              >
+              </button>
+            </p-button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div><p-dialog
+    header=""
+    styleclass="forgot-password-dialog"
+  >
+  </p-dialog>
+</web-auth-feature>
+`;
+
+exports[`AuthFeatureComponent visual state Given forgot password modal open When rendering component Then should display modal with forgot password component 1`] = `
+<web-auth-feature
+  loading="false"
+  loginForm={[Function FormGroup]}
+  showForgotPasswordModal={[Function Boolean]}
+>
+  <div
+    class="login-container min-h-screen flex items-center justify-center p-4"
+  >
+    <div
+      class="login-content"
+    >
+      <div
+        class="image-section"
+      >
+        <div
+          class="image-overlay"
+        >
+          <h1
+            class="welcome-title"
+          >
+            Bienvenue
+          </h1>
+          <p
+            class="welcome-subtitle"
+          >
+            Connectez-vous à votre compte
+          </p>
+        </div>
+      </div>
+      <div
+        class="form-section"
+      >
+        <div
+          class="form-container"
+        >
+          <div
+            class="logo-section"
+          >
+            <i
+              class="pi pi-mountain"
+              style="font-size: 3rem; color: var(--primary-color);"
+            />
+            <h2>
+              Connexion
+            </h2>
+            <p
+              class="subtitle"
+            >
+              Accédez à votre espace personnel
+            </p>
+          </div>
+          <form
+            class="login-form ng-untouched ng-pristine ng-invalid"
+            novalidate=""
+          >
+            <div
+              class="field"
+            >
+              <label
+                for="email"
+              >
+                Adresse email
+              </label>
+              <input
+                class="w-full p-component p-inputtext ng-untouched ng-pristine"
+                formcontrolname="email"
+                id="email"
+                pc328=""
+                pc329=""
+                pinputtext=""
+                placeholder="votre@email.com"
+              />
+            </div>
+            <div
+              class="field"
+            >
+              <label
+                for="password"
+              >
+                Mot de passe
+              </label>
+              <p-password
+                class="p-component p-inputwrapper p-password ng-untouched ng-pristine ng-invalid"
+                data-pc-name="password"
+                data-pc-section="root"
+                formcontrolname="password"
+                inputstyleclass="w-full"
+                pc330=""
+                placeholder="Votre mot de passe"
+                style="position: relative;"
+              >
+                <input
+                  class="p-password-input w-full p-component p-inputtext"
+                  data-pc-section="input"
+                  pc334=""
+                  pc335=""
+                  pinputtext=""
+                  placeholder="Votre mot de passe"
+                  type="password"
+                />
+                <svg
+                  class="p-password-toggle-mask-icon p-password-unmask-icon p-icon"
+                  data-p-icon="eye"
+                  data-pc-section="showIcon"
+                  fill="none"
+                  height="14"
+                  pc346=""
+                  viewBox="0 0 14 14"
+                  width="14"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    clip-rule="evenodd"
+                    d="M0.0535499 7.25213C0.208567 7.59162 2.40413 12.4 7 12.4C11.5959 12.4 13.7914 7.59162 13.9465 7.25213C13.9487 7.2471 13.9506 7.24304 13.952 7.24001C13.9837 7.16396 14 7.08239 14 7.00001C14 6.91762 13.9837 6.83605 13.952 6.76001C13.9506 6.75697 13.9487 6.75292 13.9465 6.74788C13.7914 6.4084 11.5959 1.60001 7 1.60001C2.40413 1.60001 0.208567 6.40839 0.0535499 6.74788C0.0512519 6.75292 0.0494023 6.75697 0.048 6.76001C0.0163137 6.83605 0 6.91762 0 7.00001C0 7.08239 0.0163137 7.16396 0.048 7.24001C0.0494023 7.24304 0.0512519 7.2471 0.0535499 7.25213ZM7 11.2C3.664 11.2 1.736 7.92001 1.264 7.00001C1.736 6.08001 3.664 2.80001 7 2.80001C10.336 2.80001 12.264 6.08001 12.736 7.00001C12.264 7.92001 10.336 11.2 7 11.2ZM5.55551 9.16182C5.98308 9.44751 6.48576 9.6 7 9.6C7.68891 9.59789 8.349 9.32328 8.83614 8.83614C9.32328 8.349 9.59789 7.68891 9.59999 7C9.59999 6.48576 9.44751 5.98308 9.16182 5.55551C8.87612 5.12794 8.47006 4.7947 7.99497 4.59791C7.51988 4.40112 6.99711 4.34963 6.49276 4.44995C5.98841 4.55027 5.52513 4.7979 5.16152 5.16152C4.7979 5.52513 4.55027 5.98841 4.44995 6.49276C4.34963 6.99711 4.40112 7.51988 4.59791 7.99497C4.7947 8.47006 5.12794 8.87612 5.55551 9.16182ZM6.2222 5.83594C6.45243 5.6821 6.7231 5.6 7 5.6C7.37065 5.6021 7.72553 5.75027 7.98762 6.01237C8.24972 6.27446 8.39789 6.62934 8.4 7C8.4 7.27689 8.31789 7.54756 8.16405 7.77779C8.01022 8.00802 7.79157 8.18746 7.53575 8.29343C7.27994 8.39939 6.99844 8.42711 6.72687 8.37309C6.4553 8.31908 6.20584 8.18574 6.01005 7.98994C5.81425 7.79415 5.68091 7.54469 5.6269 7.27312C5.57288 7.00155 5.6006 6.72006 5.70656 6.46424C5.81253 6.20842 5.99197 5.98977 6.2222 5.83594Z"
+                    fill="currentColor"
+                    fill-rule="evenodd"
+                  />
+                </svg>
+              </p-password>
+            </div>
+            <div
+              class="flex justify-between items-center mb-6"
+            >
+              <div
+                class="flex items-center"
+              >
+                <p-checkbox
+                  class="p-checkbox p-component ng-untouched ng-pristine ng-valid"
+                  data-p-checked="false"
+                  data-p-disabled="false"
+                  data-p-highlight="false"
+                  formcontrolname="rememberMe"
+                  inputid="rememberMe"
+                  pc331=""
+                >
+                  <input
+                    class="p-checkbox-input"
+                    id="rememberMe"
+                    type="checkbox"
+                  />
+                  <div
+                    class="p-checkbox-box"
+                  >
+                  </div>
+                </p-checkbox>
+                <label
+                  class="ml-2 text-sm"
+                  for="rememberMe"
+                >
+                   Se souvenir de moi 
+                </label>
+              </div>
+              <a
+                class="text-green-600 hover:text-green-800 text-sm font-medium cursor-pointer transition-colors"
+                role="button"
+                tabindex="0"
+              >
+                 Mot de passe oublié ? 
+              </a>
+            </div>
+            <p-button
+              label="Se connecter"
+              pc332=""
+              styleclass="w-full login-button"
+              type="submit"
+            >
+              <button
+                autofocus="true"
+                class="p-ripple login-button p-button p-component w-full"
+                data-pc-name="button"
+                data-pc-section="root"
+                disabled=""
+                pc336=""
+                pc337=""
+                pripple=""
+                type="submit"
+              >
+                <span
+                  class="p-button-label"
+                  data-pc-section="label"
+                >
+                  Se connecter
+                </span>
+              </button>
+            </p-button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div><p-dialog
+    header=""
+    pc333=""
+    styleclass="forgot-password-dialog"
+  >
+    <div
+      class="p-dialog-mask p-overlay-mask p-overlay-mask-enter"
+      style="align-items: center; display: flex; height: 100%; justify-content: center; left: 0px; pointer-events: auto; position: fixed; top: 0px; width: 100%;"
+    >
+      <div
+        aria-labelledby="pn_id_37_header"
+        aria-modal="true"
+        class="ng-trigger ng-trigger-animation forgot-password-dialog p-component p-dialog ng-animating"
+        pc347=""
+        pfocustrap=""
+        role="dialog"
+        style="display: flex; flex-direction: column; pointer-events: auto;"
+      >
+        <span
+          aria-hidden="true"
+          class="p-hidden-accessible p-hidden-focusable"
+          data-p-hidden-accessible="true"
+          data-p-hidden-focusable="true"
+          data-pc-section="firstfocusableelement"
+          role="presentation"
+          tabindex="0"
+        />
+        <div
+          class="p-dialog-header"
+          style=""
+        >
+          <span
+            class="p-dialog-title"
+            id="pn_id_37_header"
+          >
+          </span>
+          <div
+            class="p-dialog-header-actions"
+          >
+            <p-button
+              pc348=""
+            >
+              <button
+                autofocus="true"
+                class="p-ripple p-button p-button-icon-only p-button-rounded p-button-secondary p-button-text p-component p-dialog-close-button"
+                data-pc-name="button"
+                data-pc-section="root"
+                pc349=""
+                pc350=""
+                pripple=""
+                type="button"
+              >
+                <svg
+                  class="p-icon"
+                  data-p-icon="times"
+                  fill="none"
+                  height="14"
+                  pc351=""
+                  viewBox="0 0 14 14"
+                  width="14"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M8.01186 7.00933L12.27 2.75116C12.341 2.68501 12.398 2.60524 12.4375 2.51661C12.4769 2.42798 12.4982 2.3323 12.4999 2.23529C12.5016 2.13827 12.4838 2.0419 12.4474 1.95194C12.4111 1.86197 12.357 1.78024 12.2884 1.71163C12.2198 1.64302 12.138 1.58893 12.0481 1.55259C11.9581 1.51625 11.8617 1.4984 11.7647 1.50011C11.6677 1.50182 11.572 1.52306 11.4834 1.56255C11.3948 1.60204 11.315 1.65898 11.2488 1.72997L6.99067 5.98814L2.7325 1.72997C2.59553 1.60234 2.41437 1.53286 2.22718 1.53616C2.03999 1.53946 1.8614 1.61529 1.72901 1.74767C1.59663 1.88006 1.5208 2.05865 1.5175 2.24584C1.5142 2.43303 1.58368 2.61419 1.71131 2.75116L5.96948 7.00933L1.71131 11.2675C1.576 11.403 1.5 11.5866 1.5 11.7781C1.5 11.9696 1.576 12.1532 1.71131 12.2887C1.84679 12.424 2.03043 12.5 2.2219 12.5C2.41338 12.5 2.59702 12.424 2.7325 12.2887L6.99067 8.03052L11.2488 12.2887C11.3843 12.424 11.568 12.5 11.7594 12.5C11.9509 12.5 12.1346 12.424 12.27 12.2887C12.4053 12.1532 12.4813 11.9696 12.4813 11.7781C12.4813 11.5866 12.4053 11.403 12.27 11.2675L8.01186 7.00933Z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </button>
+            </p-button>
+          </div>
+        </div>
+        <div
+          class="p-dialog-content"
+          data-pc-section="content"
+          style=""
+        >
+          <forgot-password>
+            <div
+              class="p-6 min-w-[400px]"
+            >
+              <div
+                class="text-center mb-8"
+              >
+                <h3
+                  class="text-2xl font-bold text-green-800 mb-2"
+                >
+                  Mot de passe oublié
+                </h3>
+                <p
+                  class="text-gray-600 text-sm"
+                >
+                   Entrez votre adresse email pour recevoir un lien de réinitialisation 
+                </p>
+              </div>
+              <form
+                class="space-y-6 ng-untouched ng-pristine ng-invalid"
+                novalidate=""
+              >
+                <div
+                  class="space-y-2"
+                >
+                  <label
+                    class="block text-sm font-semibold text-green-800"
+                    for="reset-email"
+                  >
+                    Adresse email
+                  </label>
+                  <input
+                    autofocus="true"
+                    class="w-full ng-untouched ng-pristine p-component p-inputtext"
+                    formcontrolname="email"
+                    id="reset-email"
+                    pc338=""
+                    pc339=""
+                    pinputtext=""
+                    placeholder="votre@email.com"
+                  />
+                </div>
+                <div
+                  class="flex gap-3 pt-4"
+                >
+                  <p-button
+                    label="Annuler"
+                    pc340=""
+                    severity="secondary"
+                    styleclass="flex-1"
+                    type="button"
+                  >
+                    <button
+                      autofocus="true"
+                      class="p-ripple flex-1 p-button p-button-outlined p-button-secondary p-component"
+                      data-pc-name="button"
+                      data-pc-section="root"
+                      pc342=""
+                      pc343=""
+                      pripple=""
+                      type="button"
+                    >
+                      <span
+                        class="p-button-label"
+                        data-pc-section="label"
+                      >
+                        Annuler
+                      </span>
+                    </button>
+                  </p-button>
+                  <p-button
+                    label="Envoyer"
+                    pc341=""
+                    styleclass="flex-1"
+                    type="submit"
+                  >
+                    <button
+                      autofocus="true"
+                      class="p-ripple flex-1 p-button p-component"
+                      data-pc-name="button"
+                      data-pc-section="root"
+                      pc344=""
+                      pc345=""
+                      pripple=""
+                      type="submit"
+                    >
+                      <span
+                        class="p-button-label"
+                        data-pc-section="label"
+                      >
+                        Envoyer
+                      </span>
+                    </button>
+                  </p-button>
+                </div>
+              </form>
+            </div>
+          </forgot-password>
+        </div>
+        <span
+          aria-hidden="true"
+          class="p-hidden-accessible p-hidden-focusable"
+          data-p-hidden-accessible="true"
+          data-p-hidden-focusable="true"
+          data-pc-section="lastfocusableelement"
+          role="presentation"
+          tabindex="0"
+        />
+      </div>
+    </div>
+  </p-dialog>
+</web-auth-feature>
+`;
+
+exports[`AuthFeatureComponent visual state Given form with validation errors When rendering component Then should display error messages for invalid fields 1`] = `
+<web-auth-feature
+  loading="false"
+  loginForm={[Function FormGroup]}
+  showForgotPasswordModal="false"
+>
+  <div
+    class="login-container min-h-screen flex items-center justify-center p-4"
+  >
+    <div
+      class="login-content"
+    >
+      <div
+        class="image-section"
+      >
+        <div
+          class="image-overlay"
+        >
+          <h1
+            class="welcome-title"
+          >
+            Bienvenue
+          </h1>
+          <p
+            class="welcome-subtitle"
+          >
+            Connectez-vous à votre compte
+          </p>
+        </div>
+      </div>
+      <div
+        class="form-section"
+      >
+        <div
+          class="form-container"
+        >
+          <div
+            class="logo-section"
+          >
+            <i
+              class="pi pi-mountain"
+              style="font-size: 3rem; color: var(--primary-color);"
+            />
+            <h2>
+              Connexion
+            </h2>
+            <p
+              class="subtitle"
+            >
+              Accédez à votre espace personnel
+            </p>
+          </div>
+          <form
+            class="login-form ng-touched ng-pristine ng-invalid"
+            novalidate=""
+          >
+            <div
+              class="field"
+            >
+              <label
+                for="email"
+              >
+                Adresse email
+              </label>
+              <input
+                class="w-full ng-invalid p-component p-inputtext ng-touched ng-pristine"
+                formcontrolname="email"
+                id="email"
+                pc289=""
+                pc290=""
+                pinputtext=""
+                placeholder="votre@email.com"
+              />
+              <small
+                class="p-error"
+              >
+                <span>
+                  L'email est requis
+                </span>
+              </small>
+            </div>
+            <div
+              class="field"
+            >
+              <label
+                for="password"
+              >
+                Mot de passe
+              </label>
+              <p-password
+                class="p-component p-inputwrapper p-password ng-touched ng-pristine ng-invalid"
+                data-pc-name="password"
+                data-pc-section="root"
+                formcontrolname="password"
+                inputstyleclass="w-full"
+                pc291=""
+                placeholder="Votre mot de passe"
+                style="position: relative;"
+              >
+                <input
+                  class="p-password-input w-full p-component p-inputtext p-invalid"
+                  data-pc-section="input"
+                  pc295=""
+                  pc296=""
+                  pinputtext=""
+                  placeholder="Votre mot de passe"
+                  type="password"
+                />
+                <svg
+                  class="p-password-toggle-mask-icon p-password-unmask-icon p-icon"
+                  data-p-icon="eye"
+                  data-pc-section="showIcon"
+                  fill="none"
+                  height="14"
+                  pc307=""
+                  viewBox="0 0 14 14"
+                  width="14"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    clip-rule="evenodd"
+                    d="M0.0535499 7.25213C0.208567 7.59162 2.40413 12.4 7 12.4C11.5959 12.4 13.7914 7.59162 13.9465 7.25213C13.9487 7.2471 13.9506 7.24304 13.952 7.24001C13.9837 7.16396 14 7.08239 14 7.00001C14 6.91762 13.9837 6.83605 13.952 6.76001C13.9506 6.75697 13.9487 6.75292 13.9465 6.74788C13.7914 6.4084 11.5959 1.60001 7 1.60001C2.40413 1.60001 0.208567 6.40839 0.0535499 6.74788C0.0512519 6.75292 0.0494023 6.75697 0.048 6.76001C0.0163137 6.83605 0 6.91762 0 7.00001C0 7.08239 0.0163137 7.16396 0.048 7.24001C0.0494023 7.24304 0.0512519 7.2471 0.0535499 7.25213ZM7 11.2C3.664 11.2 1.736 7.92001 1.264 7.00001C1.736 6.08001 3.664 2.80001 7 2.80001C10.336 2.80001 12.264 6.08001 12.736 7.00001C12.264 7.92001 10.336 11.2 7 11.2ZM5.55551 9.16182C5.98308 9.44751 6.48576 9.6 7 9.6C7.68891 9.59789 8.349 9.32328 8.83614 8.83614C9.32328 8.349 9.59789 7.68891 9.59999 7C9.59999 6.48576 9.44751 5.98308 9.16182 5.55551C8.87612 5.12794 8.47006 4.7947 7.99497 4.59791C7.51988 4.40112 6.99711 4.34963 6.49276 4.44995C5.98841 4.55027 5.52513 4.7979 5.16152 5.16152C4.7979 5.52513 4.55027 5.98841 4.44995 6.49276C4.34963 6.99711 4.40112 7.51988 4.59791 7.99497C4.7947 8.47006 5.12794 8.87612 5.55551 9.16182ZM6.2222 5.83594C6.45243 5.6821 6.7231 5.6 7 5.6C7.37065 5.6021 7.72553 5.75027 7.98762 6.01237C8.24972 6.27446 8.39789 6.62934 8.4 7C8.4 7.27689 8.31789 7.54756 8.16405 7.77779C8.01022 8.00802 7.79157 8.18746 7.53575 8.29343C7.27994 8.39939 6.99844 8.42711 6.72687 8.37309C6.4553 8.31908 6.20584 8.18574 6.01005 7.98994C5.81425 7.79415 5.68091 7.54469 5.6269 7.27312C5.57288 7.00155 5.6006 6.72006 5.70656 6.46424C5.81253 6.20842 5.99197 5.98977 6.2222 5.83594Z"
+                    fill="currentColor"
+                    fill-rule="evenodd"
+                  />
+                </svg>
+              </p-password>
+              <small
+                class="p-error"
+              >
+                <span>
+                  Le mot de passe est requis
+                </span>
+              </small>
+            </div>
+            <div
+              class="flex justify-between items-center mb-6"
+            >
+              <div
+                class="flex items-center"
+              >
+                <p-checkbox
+                  class="p-checkbox p-component ng-untouched ng-pristine ng-valid"
+                  data-p-checked="false"
+                  data-p-disabled="false"
+                  data-p-highlight="false"
+                  formcontrolname="rememberMe"
+                  inputid="rememberMe"
+                  pc292=""
+                >
+                  <input
+                    class="p-checkbox-input"
+                    id="rememberMe"
+                    type="checkbox"
+                  />
+                  <div
+                    class="p-checkbox-box"
+                  >
+                  </div>
+                </p-checkbox>
+                <label
+                  class="ml-2 text-sm"
+                  for="rememberMe"
+                >
+                   Se souvenir de moi 
+                </label>
+              </div>
+              <a
+                class="text-green-600 hover:text-green-800 text-sm font-medium cursor-pointer transition-colors"
+                role="button"
+                tabindex="0"
+              >
+                 Mot de passe oublié ? 
+              </a>
+            </div>
+            <p-button
+              label="Se connecter"
+              pc293=""
+              styleclass="w-full login-button"
+              type="submit"
+            >
+              <button
+                autofocus="true"
+                class="p-ripple login-button p-button p-component w-full"
+                data-pc-name="button"
+                data-pc-section="root"
+                disabled=""
+                pc297=""
+                pc298=""
+                pripple=""
+                type="submit"
+              >
+                <span
+                  class="p-button-label"
+                  data-pc-section="label"
+                >
+                  Se connecter
+                </span>
+              </button>
+            </p-button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div><p-dialog
+    header=""
+    pc294=""
+    styleclass="forgot-password-dialog"
+  >
+  </p-dialog>
+</web-auth-feature>
+`;
+
+exports[`AuthFeatureComponent visual state Given loading state When rendering component Then should display loading button and disabled form 1`] = `
+<web-auth-feature
+  loading={[Function Boolean]}
+  loginForm={[Function FormGroup]}
+  showForgotPasswordModal="false"
+>
+  <div
+    class="login-container min-h-screen flex items-center justify-center p-4"
+  >
+    <div
+      class="login-content"
+    >
+      <div
+        class="image-section"
+      >
+        <div
+          class="image-overlay"
+        >
+          <h1
+            class="welcome-title"
+          >
+            Bienvenue
+          </h1>
+          <p
+            class="welcome-subtitle"
+          >
+            Connectez-vous à votre compte
+          </p>
+        </div>
+      </div>
+      <div
+        class="form-section"
+      >
+        <div
+          class="form-container"
+        >
+          <div
+            class="logo-section"
+          >
+            <i
+              class="pi pi-mountain"
+              style="font-size: 3rem; color: var(--primary-color);"
+            />
+            <h2>
+              Connexion
+            </h2>
+            <p
+              class="subtitle"
+            >
+              Accédez à votre espace personnel
+            </p>
+          </div>
+          <form
+            class="login-form ng-untouched ng-pristine ng-invalid"
+            novalidate=""
+          >
+            <div
+              class="field"
+            >
+              <label
+                for="email"
+              >
+                Adresse email
+              </label>
+              <input
+                class="w-full p-component p-inputtext ng-untouched ng-pristine"
+                formcontrolname="email"
+                id="email"
+                pc308=""
+                pc309=""
+                pinputtext=""
+                placeholder="votre@email.com"
+              />
+            </div>
+            <div
+              class="field"
+            >
+              <label
+                for="password"
+              >
+                Mot de passe
+              </label>
+              <p-password
+                class="p-component p-inputwrapper p-password ng-untouched ng-pristine ng-invalid"
+                data-pc-name="password"
+                data-pc-section="root"
+                formcontrolname="password"
+                inputstyleclass="w-full"
+                pc310=""
+                placeholder="Votre mot de passe"
+                style="position: relative;"
+              >
+                <input
+                  class="p-password-input w-full p-component p-inputtext"
+                  data-pc-section="input"
+                  pc314=""
+                  pc315=""
+                  pinputtext=""
+                  placeholder="Votre mot de passe"
+                  type="password"
+                />
+                <svg
+                  class="p-password-toggle-mask-icon p-password-unmask-icon p-icon"
+                  data-p-icon="eye"
+                  data-pc-section="showIcon"
+                  fill="none"
+                  height="14"
+                  pc326=""
+                  viewBox="0 0 14 14"
+                  width="14"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    clip-rule="evenodd"
+                    d="M0.0535499 7.25213C0.208567 7.59162 2.40413 12.4 7 12.4C11.5959 12.4 13.7914 7.59162 13.9465 7.25213C13.9487 7.2471 13.9506 7.24304 13.952 7.24001C13.9837 7.16396 14 7.08239 14 7.00001C14 6.91762 13.9837 6.83605 13.952 6.76001C13.9506 6.75697 13.9487 6.75292 13.9465 6.74788C13.7914 6.4084 11.5959 1.60001 7 1.60001C2.40413 1.60001 0.208567 6.40839 0.0535499 6.74788C0.0512519 6.75292 0.0494023 6.75697 0.048 6.76001C0.0163137 6.83605 0 6.91762 0 7.00001C0 7.08239 0.0163137 7.16396 0.048 7.24001C0.0494023 7.24304 0.0512519 7.2471 0.0535499 7.25213ZM7 11.2C3.664 11.2 1.736 7.92001 1.264 7.00001C1.736 6.08001 3.664 2.80001 7 2.80001C10.336 2.80001 12.264 6.08001 12.736 7.00001C12.264 7.92001 10.336 11.2 7 11.2ZM5.55551 9.16182C5.98308 9.44751 6.48576 9.6 7 9.6C7.68891 9.59789 8.349 9.32328 8.83614 8.83614C9.32328 8.349 9.59789 7.68891 9.59999 7C9.59999 6.48576 9.44751 5.98308 9.16182 5.55551C8.87612 5.12794 8.47006 4.7947 7.99497 4.59791C7.51988 4.40112 6.99711 4.34963 6.49276 4.44995C5.98841 4.55027 5.52513 4.7979 5.16152 5.16152C4.7979 5.52513 4.55027 5.98841 4.44995 6.49276C4.34963 6.99711 4.40112 7.51988 4.59791 7.99497C4.7947 8.47006 5.12794 8.87612 5.55551 9.16182ZM6.2222 5.83594C6.45243 5.6821 6.7231 5.6 7 5.6C7.37065 5.6021 7.72553 5.75027 7.98762 6.01237C8.24972 6.27446 8.39789 6.62934 8.4 7C8.4 7.27689 8.31789 7.54756 8.16405 7.77779C8.01022 8.00802 7.79157 8.18746 7.53575 8.29343C7.27994 8.39939 6.99844 8.42711 6.72687 8.37309C6.4553 8.31908 6.20584 8.18574 6.01005 7.98994C5.81425 7.79415 5.68091 7.54469 5.6269 7.27312C5.57288 7.00155 5.6006 6.72006 5.70656 6.46424C5.81253 6.20842 5.99197 5.98977 6.2222 5.83594Z"
+                    fill="currentColor"
+                    fill-rule="evenodd"
+                  />
+                </svg>
+              </p-password>
+            </div>
+            <div
+              class="flex justify-between items-center mb-6"
+            >
+              <div
+                class="flex items-center"
+              >
+                <p-checkbox
+                  class="p-checkbox p-component ng-untouched ng-pristine ng-valid"
+                  data-p-checked="false"
+                  data-p-disabled="false"
+                  data-p-highlight="false"
+                  formcontrolname="rememberMe"
+                  inputid="rememberMe"
+                  pc311=""
+                >
+                  <input
+                    class="p-checkbox-input"
+                    id="rememberMe"
+                    type="checkbox"
+                  />
+                  <div
+                    class="p-checkbox-box"
+                  >
+                  </div>
+                </p-checkbox>
+                <label
+                  class="ml-2 text-sm"
+                  for="rememberMe"
+                >
+                   Se souvenir de moi 
+                </label>
+              </div>
+              <a
+                class="text-green-600 hover:text-green-800 text-sm font-medium cursor-pointer transition-colors"
+                role="button"
+                tabindex="0"
+              >
+                 Mot de passe oublié ? 
+              </a>
+            </div>
+            <p-button
+              label="Se connecter"
+              pc312=""
+              styleclass="w-full login-button"
+              type="submit"
+            >
+              <button
+                autofocus="true"
+                class="p-ripple login-button p-button p-button-loading p-component w-full"
+                data-pc-name="button"
+                data-pc-section="root"
+                disabled=""
+                pc316=""
+                pc317=""
+                pripple=""
+                type="submit"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="p-button-icon p-button-icon-left p-button-loading-icon pi-spin p-icon p-icon-spin"
+                  data-p-icon="spinner"
+                  data-pc-section="loadingicon"
+                  fill="none"
+                  height="14"
+                  pc327=""
+                  viewBox="0 0 14 14"
+                  width="14"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <g
+                    clip-path="url(#pui_id_1)"
+                  >
+                    <path
+                      d="M6.99701 14C5.85441 13.999 4.72939 13.7186 3.72012 13.1832C2.71084 12.6478 1.84795 11.8737 1.20673 10.9284C0.565504 9.98305 0.165424 8.89526 0.041387 7.75989C-0.0826496 6.62453 0.073125 5.47607 0.495122 4.4147C0.917119 3.35333 1.59252 2.4113 2.46241 1.67077C3.33229 0.930247 4.37024 0.413729 5.4857 0.166275C6.60117 -0.0811796 7.76026 -0.0520535 8.86188 0.251112C9.9635 0.554278 10.9742 1.12227 11.8057 1.90555C11.915 2.01493 11.9764 2.16319 11.9764 2.31778C11.9764 2.47236 11.915 2.62062 11.8057 2.73C11.7521 2.78503 11.688 2.82877 11.6171 2.85864C11.5463 2.8885 11.4702 2.90389 11.3933 2.90389C11.3165 2.90389 11.2404 2.8885 11.1695 2.85864C11.0987 2.82877 11.0346 2.78503 10.9809 2.73C9.9998 1.81273 8.73246 1.26138 7.39226 1.16876C6.05206 1.07615 4.72086 1.44794 3.62279 2.22152C2.52471 2.99511 1.72683 4.12325 1.36345 5.41602C1.00008 6.70879 1.09342 8.08723 1.62775 9.31926C2.16209 10.5513 3.10478 11.5617 4.29713 12.1803C5.48947 12.7989 6.85865 12.988 8.17414 12.7157C9.48963 12.4435 10.6711 11.7264 11.5196 10.6854C12.3681 9.64432 12.8319 8.34282 12.8328 7C12.8328 6.84529 12.8943 6.69692 13.0038 6.58752C13.1132 6.47812 13.2616 6.41667 13.4164 6.41667C13.5712 6.41667 13.7196 6.47812 13.8291 6.58752C13.9385 6.69692 14 6.84529 14 7C14 8.85651 13.2622 10.637 11.9489 11.9497C10.6356 13.2625 8.85432 14 6.99701 14Z"
+                      fill="currentColor"
+                    />
+                  </g>
+                  <defs>
+                    <clippath
+                      id="url(#pui_id_1)"
+                    >
+                      <rect
+                        fill="white"
+                        height="14"
+                        width="14"
+                      />
+                    </clippath>
+                  </defs>
+                </svg>
+                <span
+                  class="p-button-label"
+                  data-pc-section="label"
+                >
+                  Se connecter
+                </span>
+              </button>
+            </p-button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div><p-dialog
+    header=""
+    pc313=""
+    styleclass="forgot-password-dialog"
+  >
+  </p-dialog>
+</web-auth-feature>
+`;
+
+exports[`AuthFeatureComponent visual state Given valid form data When rendering component Then should display enabled submit button with valid form inputs 1`] = `
+<web-auth-feature
+  loading="false"
+  loginForm={[Function FormGroup]}
+  showForgotPasswordModal="false"
+>
+  <div
+    class="login-container min-h-screen flex items-center justify-center p-4"
+  >
+    <div
+      class="login-content"
+    >
+      <div
+        class="image-section"
+      >
+        <div
+          class="image-overlay"
+        >
+          <h1
+            class="welcome-title"
+          >
+            Bienvenue
+          </h1>
+          <p
+            class="welcome-subtitle"
+          >
+            Connectez-vous à votre compte
+          </p>
+        </div>
+      </div>
+      <div
+        class="form-section"
+      >
+        <div
+          class="form-container"
+        >
+          <div
+            class="logo-section"
+          >
+            <i
+              class="pi pi-mountain"
+              style="font-size: 3rem; color: var(--primary-color);"
+            />
+            <h2>
+              Connexion
+            </h2>
+            <p
+              class="subtitle"
+            >
+              Accédez à votre espace personnel
+            </p>
+          </div>
+          <form
+            class="login-form ng-untouched ng-pristine ng-valid"
+            novalidate=""
+          >
+            <div
+              class="field"
+            >
+              <label
+                for="email"
+              >
+                Adresse email
+              </label>
+              <input
+                class="w-full p-component p-filled p-inputtext ng-untouched ng-pristine ng-valid"
+                formcontrolname="email"
+                id="email"
+                pc352=""
+                pc353=""
+                pinputtext=""
+                placeholder="votre@email.com"
+              />
+            </div>
+            <div
+              class="field"
+            >
+              <label
+                for="password"
+              >
+                Mot de passe
+              </label>
+              <p-password
+                class="p-component p-inputwrapper p-inputwrapper-filled p-password ng-untouched ng-pristine ng-valid"
+                data-pc-name="password"
+                data-pc-section="root"
+                formcontrolname="password"
+                inputstyleclass="w-full"
+                pc354=""
+                placeholder="Votre mot de passe"
+                style="position: relative;"
+              >
+                <input
+                  class="p-password-input w-full p-component p-filled p-inputtext"
+                  data-pc-section="input"
+                  pc358=""
+                  pc359=""
+                  pinputtext=""
+                  placeholder="Votre mot de passe"
+                  type="password"
+                />
+                <svg
+                  class="p-password-toggle-mask-icon p-password-unmask-icon p-icon"
+                  data-p-icon="eye"
+                  data-pc-section="showIcon"
+                  fill="none"
+                  height="14"
+                  pc370=""
+                  viewBox="0 0 14 14"
+                  width="14"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    clip-rule="evenodd"
+                    d="M0.0535499 7.25213C0.208567 7.59162 2.40413 12.4 7 12.4C11.5959 12.4 13.7914 7.59162 13.9465 7.25213C13.9487 7.2471 13.9506 7.24304 13.952 7.24001C13.9837 7.16396 14 7.08239 14 7.00001C14 6.91762 13.9837 6.83605 13.952 6.76001C13.9506 6.75697 13.9487 6.75292 13.9465 6.74788C13.7914 6.4084 11.5959 1.60001 7 1.60001C2.40413 1.60001 0.208567 6.40839 0.0535499 6.74788C0.0512519 6.75292 0.0494023 6.75697 0.048 6.76001C0.0163137 6.83605 0 6.91762 0 7.00001C0 7.08239 0.0163137 7.16396 0.048 7.24001C0.0494023 7.24304 0.0512519 7.2471 0.0535499 7.25213ZM7 11.2C3.664 11.2 1.736 7.92001 1.264 7.00001C1.736 6.08001 3.664 2.80001 7 2.80001C10.336 2.80001 12.264 6.08001 12.736 7.00001C12.264 7.92001 10.336 11.2 7 11.2ZM5.55551 9.16182C5.98308 9.44751 6.48576 9.6 7 9.6C7.68891 9.59789 8.349 9.32328 8.83614 8.83614C9.32328 8.349 9.59789 7.68891 9.59999 7C9.59999 6.48576 9.44751 5.98308 9.16182 5.55551C8.87612 5.12794 8.47006 4.7947 7.99497 4.59791C7.51988 4.40112 6.99711 4.34963 6.49276 4.44995C5.98841 4.55027 5.52513 4.7979 5.16152 5.16152C4.7979 5.52513 4.55027 5.98841 4.44995 6.49276C4.34963 6.99711 4.40112 7.51988 4.59791 7.99497C4.7947 8.47006 5.12794 8.87612 5.55551 9.16182ZM6.2222 5.83594C6.45243 5.6821 6.7231 5.6 7 5.6C7.37065 5.6021 7.72553 5.75027 7.98762 6.01237C8.24972 6.27446 8.39789 6.62934 8.4 7C8.4 7.27689 8.31789 7.54756 8.16405 7.77779C8.01022 8.00802 7.79157 8.18746 7.53575 8.29343C7.27994 8.39939 6.99844 8.42711 6.72687 8.37309C6.4553 8.31908 6.20584 8.18574 6.01005 7.98994C5.81425 7.79415 5.68091 7.54469 5.6269 7.27312C5.57288 7.00155 5.6006 6.72006 5.70656 6.46424C5.81253 6.20842 5.99197 5.98977 6.2222 5.83594Z"
+                    fill="currentColor"
+                    fill-rule="evenodd"
+                  />
+                </svg>
+              </p-password>
+            </div>
+            <div
+              class="flex justify-between items-center mb-6"
+            >
+              <div
+                class="flex items-center"
+              >
+                <p-checkbox
+                  class="p-checkbox p-checkbox-checked p-component p-highlight ng-untouched ng-pristine ng-valid"
+                  data-p-checked="true"
+                  data-p-disabled="false"
+                  data-p-highlight="true"
+                  formcontrolname="rememberMe"
+                  inputid="rememberMe"
+                  pc355=""
+                >
+                  <input
+                    class="p-checkbox-input"
+                    id="rememberMe"
+                    type="checkbox"
+                  />
+                  <div
+                    class="p-checkbox-box"
+                  >
+                    <svg
+                      class="p-checkbox-icon p-icon"
+                      data-p-icon="check"
+                      data-pc-section="icon"
+                      fill="none"
+                      height="14"
+                      pc371=""
+                      viewBox="0 0 14 14"
+                      width="14"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M4.86199 11.5948C4.78717 11.5923 4.71366 11.5745 4.64596 11.5426C4.57826 11.5107 4.51779 11.4652 4.46827 11.4091L0.753985 7.69483C0.683167 7.64891 0.623706 7.58751 0.580092 7.51525C0.536478 7.44299 0.509851 7.36177 0.502221 7.27771C0.49459 7.19366 0.506156 7.10897 0.536046 7.03004C0.565935 6.95111 0.613367 6.88 0.674759 6.82208C0.736151 6.76416 0.8099 6.72095 0.890436 6.69571C0.970973 6.67046 1.05619 6.66385 1.13966 6.67635C1.22313 6.68886 1.30266 6.72017 1.37226 6.76792C1.44186 6.81567 1.4997 6.8786 1.54141 6.95197L4.86199 10.2503L12.6397 2.49483C12.7444 2.42694 12.8689 2.39617 12.9932 2.40745C13.1174 2.41873 13.2343 2.47141 13.3251 2.55705C13.4159 2.64268 13.4753 2.75632 13.4938 2.87973C13.5123 3.00315 13.4888 3.1292 13.4271 3.23768L5.2557 11.4091C5.20618 11.4652 5.14571 11.5107 5.07801 11.5426C5.01031 11.5745 4.9368 11.5923 4.86199 11.5948Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </div>
+                </p-checkbox>
+                <label
+                  class="ml-2 text-sm"
+                  for="rememberMe"
+                >
+                   Se souvenir de moi 
+                </label>
+              </div>
+              <a
+                class="text-green-600 hover:text-green-800 text-sm font-medium cursor-pointer transition-colors"
+                role="button"
+                tabindex="0"
+              >
+                 Mot de passe oublié ? 
+              </a>
+            </div>
+            <p-button
+              label="Se connecter"
+              pc356=""
+              styleclass="w-full login-button"
+              type="submit"
+            >
+              <button
+                autofocus="true"
+                class="p-ripple login-button p-button p-component w-full"
+                data-pc-name="button"
+                data-pc-section="root"
+                pc360=""
+                pc361=""
+                pripple=""
+                type="submit"
+              >
+                <span
+                  class="p-button-label"
+                  data-pc-section="label"
+                >
+                  Se connecter
+                </span>
+              </button>
+            </p-button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div><p-dialog
+    header=""
+    pc357=""
+    styleclass="forgot-password-dialog"
+  >
+  </p-dialog>
+</web-auth-feature>
+`;

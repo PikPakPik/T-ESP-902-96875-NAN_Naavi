@@ -1,18 +1,20 @@
 import { LocalStorageService } from '@web/shared/util';
 import { ILogError, ILogDebug, ILogWarn } from './models/log-input';
-import { inject, Inject, Injectable } from '@angular/core';
+import { inject, Injectable, InjectionToken } from '@angular/core';
 import { ConsoleLoggerService } from './console.logger.service';
 import { LogLevel } from './models/log-level';
+
+export const LOG_LEVEL_TOKEN = new InjectionToken<LogLevel>('LOG_LEVEL');
 
 @Injectable({ providedIn: 'root' })
 export class LoggerService {
   private _level: LogLevel | null = null;
   private localStorage = inject(LocalStorageService);
-  constructor(
-    private readonly _srv: ConsoleLoggerService,
-    @Inject('LOG_LEVEL') logLevel: LogLevel
-  ) {
-    this._level = logLevel || LogLevel.None;
+  readonly #consoleLogger = inject(ConsoleLoggerService);
+  readonly #logLevel = inject(LOG_LEVEL_TOKEN);
+
+  constructor() {
+    this._level = (this.#logLevel as LogLevel) || LogLevel.None;
 
     // Init the LocalStorage
     const storage_logs = JSON.parse(this.localStorage.getItem('logs') ?? '[]');
@@ -21,19 +23,19 @@ export class LoggerService {
 
   log_error(payload: ILogError): void {
     this.update_storage(payload);
-    this._srv.log_error(payload);
+    this.#consoleLogger.log_error(payload);
   }
 
   log_warning(payload: ILogWarn): void {
     if (!this.currentLogLevelIsEqualOrSmallerThan(LogLevel.Warn)) return;
     this.update_storage(payload);
-    this._srv.log_warning(payload);
+    this.#consoleLogger.log_warning(payload);
   }
 
   log_debug(payload: ILogDebug): void {
     if (!this.currentLogLevelIsEqualOrSmallerThan(LogLevel.Debug)) return;
     this.update_storage(payload);
-    this._srv.log_debug(payload);
+    this.#consoleLogger.log_debug(payload);
   }
 
   private update_storage(payload: ILogError | ILogDebug | ILogWarn) {

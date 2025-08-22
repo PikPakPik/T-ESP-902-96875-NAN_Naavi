@@ -1,4 +1,4 @@
-<div class="login-container">
+<div class="login-container min-h-screen flex items-center justify-center p-4">
   <div class="login-content">
     <!-- Section gauche avec l'image -->
     <div class="image-section">
@@ -28,17 +28,15 @@
           <!-- Champ Email -->
           <div class="field">
             <label for="email">Adresse email</label>
-            <span class="p-input-icon-left">
-              <i class="pi pi-envelope"></i>
-              <input
-                pInputText
-                id="email"
-                formControlName="email"
-                placeholder="votre@email.com"
-                [class.ng-invalid]="email?.invalid && email?.touched"
-                class="w-full"
-              />
-            </span>
+            <input
+              pInputText
+              id="email"
+              formControlName="email"
+              placeholder="votre@email.com"
+              [class.ng-invalid]="email?.invalid && email?.touched"
+              class="w-full"
+              [pAutoFocus]="false"
+            />
             @if (email?.invalid && email?.touched) {
             <small class="p-error">
               @if (email?.errors?.['required']) {
@@ -53,18 +51,15 @@
           <!-- Champ Mot de passe -->
           <div class="field">
             <label for="password">Mot de passe</label>
-            <span class="p-input-icon-left">
-              <i class="pi pi-lock"></i>
-              <p-password
-                formControlName="password"
-                placeholder="Votre mot de passe"
-                [toggleMask]="true"
-                [feedback]="false"
-                styleClass="w-full"
-                inputStyleClass="w-full"
-                [class.ng-invalid]="password?.invalid && password?.touched"
-              ></p-password>
-            </span>
+            <p-password
+              formControlName="password"
+              placeholder="Votre mot de passe"
+              [toggleMask]="true"
+              [feedback]="false"
+              inputStyleClass="w-full"
+              [invalid]="password?.invalid && password?.touched"
+              [autofocus]="false"
+            ></p-password>
             @if (password?.invalid && password?.touched) {
             <small class="p-error">
               @if (password?.errors?.['required']) {
@@ -75,15 +70,26 @@
           </div>
 
           <!-- Options -->
-          <div class="form-options">
-            <div class="remember-me">
+          <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center">
               <p-checkbox
                 formControlName="rememberMe"
+                [binary]="true"
                 inputId="rememberMe"
-                label="Se souvenir de moi"
               ></p-checkbox>
+              <label for="rememberMe" class="ml-2 text-sm">
+                Se souvenir de moi
+              </label>
             </div>
-            <a href="#" class="forgot-password">Mot de passe oublié ?</a>
+            <a
+              (click)="openForgotPasswordModal()"
+              class="text-green-600 hover:text-green-800 text-sm font-medium cursor-pointer transition-colors"
+              role="button"
+              tabindex="0"
+              (keydown.enter)="openForgotPasswordModal()"
+            >
+              Mot de passe oublié ?
+            </a>
           </div>
 
           <!-- Bouton de connexion -->
@@ -91,26 +97,25 @@
             type="submit"
             label="Se connecter"
             [loading]="loading"
-            loadingIcon="pi pi-spin pi-spinner"
             styleClass="w-full login-button"
             [disabled]="loginForm.invalid"
           ></p-button>
-
-          <!-- Divider -->
-          <div class="divider">
-            <span>ou</span>
-          </div>
-
-          <!-- Connexion sociale -->
-          <div class="social-login">
-            <p-button
-              label="Continuer avec Google"
-              icon="pi pi-google"
-              styleClass="w-full p-button-outlined social-button"
-            ></p-button>
-          </div>
         </form>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Modal Mot de passe oublié -->
+<p-dialog
+  header=""
+  [(visible)]="showForgotPasswordModal"
+  [modal]="true"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="forgot-password-dialog"
+  [dismissableMask]="true"
+>
+  <forgot-password (closeModal)="closeForgotPasswordModal()"></forgot-password>
+</p-dialog>

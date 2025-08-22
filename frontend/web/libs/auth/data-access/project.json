@@ -2,9 +2,10 @@
   "name": "auth-data-access",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/auth/data-access/src",
-  "prefix": "lib",
+  "prefix": "",
   "projectType": "library",
   "tags": [],
+  "implicitDependencies": ["notification"],
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",

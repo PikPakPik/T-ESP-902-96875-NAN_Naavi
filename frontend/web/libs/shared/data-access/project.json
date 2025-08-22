@@ -5,6 +5,7 @@
   "prefix": "",
   "projectType": "library",
   "tags": [],
+  "implicitDependencies": ["notification"],
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
