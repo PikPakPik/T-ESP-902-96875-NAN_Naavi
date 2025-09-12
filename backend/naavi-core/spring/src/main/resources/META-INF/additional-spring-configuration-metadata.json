@@ -1,0 +1,99 @@
+{
+  "properties": [
+    {
+      "name": "jwt.issuer",
+      "type": "java.lang.String",
+      "description": "JWT issuer identifier used in token generation and validation"
+    },
+    {
+      "name": "jwt.default.private",
+      "type": "java.lang.String",
+      "description": "File path to the default private key for JWT signing"
+    },
+    {
+      "name": "jwt.default.public",
+      "type": "java.lang.String",
+      "description": "File path to the default public key for JWT verification"
+    },
+    {
+      "name": "jwt.default.password",
+      "type": "java.lang.String",
+      "description": "Password for decrypting the default private key"
+    },
+    {
+      "name": "jwt.auth.private",
+      "type": "java.lang.String",
+      "description": "File path to the authentication private key for JWT signing"
+    },
+    {
+      "name": "jwt.auth.public",
+      "type": "java.lang.String",
+      "description": "File path to the authentication public key for JWT verification"
+    },
+    {
+      "name": "jwt.auth.password",
+      "type": "java.lang.String",
+      "description": "Password for decrypting the authentication private key"
+    },
+    {
+      "name": "jwt.exchange.private",
+      "type": "java.lang.String",
+      "description": "File path to the exchange private key for JWT signing"
+    },
+    {
+      "name": "jwt.exchange.public",
+      "type": "java.lang.String",
+      "description": "File path to the exchange public key for JWT verification"
+    },
+    {
+      "name": "jwt.exchange.password",
+      "type": "java.lang.String",
+      "description": "Password for decrypting the exchange private key"
+    },
+    {
+      "name": "spring.mail.host",
+      "type": "java.lang.String",
+      "description": "SMTP server host for sending emails"
+    },
+    {
+      "name": "spring.mail.port",
+      "type": "java.lang.Integer",
+      "description": "SMTP server port (e.g., 587 for TLS, 465 for SSL)",
+      "defaultValue": 587
+    },
+    {
+      "name": "spring.mail.username",
+      "type": "java.lang.String",
+      "description": "Username for SMTP authentication"
+    },
+    {
+      "name": "spring.mail.password",
+      "type": "java.lang.String",
+      "description": "Password for SMTP authentication"
+    },
+    {
+      "name": "spring.mail.properties.mail.smtp.auth",
+      "type": "java.lang.Boolean",
+      "description": "Enable SMTP authentication",
+      "defaultValue": true
+    },
+    {
+      "name": "spring.mail.properties.mail.transport.protocol",
+      "type": "java.lang.String",
+      "description": "Mail transport protocol",
+      "defaultValue": "smtp"
+    },
+    {
+      "name": "spring.mail.properties.mail.smtp.ssl.enable",
+      "type": "java.lang.Boolean",
+      "description": "Enable SSL encryption for SMTP connection",
+      "defaultValue": false
+    },
+    {
+      "name": "spring.mail.properties.mail.smtp.starttls.enable",
+      "type": "java.lang.Boolean",
+      "description": "Enable STARTTLS encryption for SMTP connection",
+      "defaultValue": true
+    }
+  ]
+}
