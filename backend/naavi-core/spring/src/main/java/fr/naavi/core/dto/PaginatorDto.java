@@ -2,13 +2,14 @@ package fr.naavi.core.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 @SuppressWarnings("unused")
 public class PaginatorDto<T> {
-    @Schema(description = "List of items for the current page")
+    @ArraySchema(schema = @Schema(description = "List of items for the current page"))
     @JsonProperty("items")
     private List<T> items;
 
