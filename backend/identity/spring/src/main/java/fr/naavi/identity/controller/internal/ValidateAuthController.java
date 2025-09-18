@@ -1,11 +1,11 @@
 package fr.naavi.identity.controller.internal;
 
+import fr.naavi.core.enums.JwtEnum;
+import fr.naavi.core.service.JwtService;
 import fr.naavi.identity.abstraction.AbstractController;
 import fr.naavi.identity.entity.Session;
 import fr.naavi.identity.entity.User;
-import fr.naavi.identity.enums.JwtEnum;
 import fr.naavi.identity.repository.SessionRepository;
-import fr.naavi.identity.service.JwtService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
@@ -42,6 +42,7 @@ public class ValidateAuthController extends AbstractController {
         this.jwtService = jwtService;
         this.sessionRepository = sessionRepository;
     }
+
     /**
      * Endpoint for health check.
      * This endpoint is used to verify if the service is running.

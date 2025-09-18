@@ -6,7 +6,6 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 public class UserListener {
     /**
@@ -15,7 +14,6 @@ public class UserListener {
     @PrePersist
     protected void onCreate(User user) {
         user.setCreatedAt(LocalDateTime.now());
-        user.setRoles(List.of("ROLE_USER"));
         user.setStatus(StatusEnum.UNVERIFIED);
     }
 

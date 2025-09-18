@@ -1,6 +1,8 @@
 package fr.naavi.identity.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import fr.naavi.core.enums.PermissionEnum;
+import fr.naavi.core.enums.RoleEnum;
+import fr.naavi.identity.converter.PermissionsConverter;
 import fr.naavi.identity.converter.RolesConverter;
 import fr.naavi.identity.entitylistener.UserListener;
 import fr.naavi.identity.enums.StatusEnum;
@@ -23,7 +25,6 @@ import java.util.List;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonIgnore
     private Long id;
 
     @Column(nullable = false)
@@ -36,14 +37,17 @@ public class User {
     private String email;
 
     @Column(nullable = false)
-    @JsonIgnore
     private String password;
 
     @Column(columnDefinition = "text")
     @Convert(converter = RolesConverter.class)
-    private List<String> roles = new ArrayList<>();
+    private List<RoleEnum> roles = new ArrayList<>();
 
-    @Enumerated(EnumType.ORDINAL)
+    @Column(columnDefinition = "text")
+    @Convert(converter = PermissionsConverter.class)
+    private List<PermissionEnum> permissions = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
     private StatusEnum status;
 
     @Column(nullable = false, updatable = false)
@@ -125,16 +129,31 @@ public class User {
     /**
      * @return The list of roles assigned to the user.
      */
-    public List<String> getRoles() {
-        List<String> result = new ArrayList<>(roles);
+    public List<RoleEnum> getRoles() {
+        List<RoleEnum> result = new ArrayList<>(roles);
+        result.addFirst(RoleEnum.ROLE_USER);
         return result.stream().distinct().toList();
     }
 
     /**
      * @param roles The list of roles to set for the user.
      */
-    public void setRoles(List<String> roles) {
+    public void setRoles(List<RoleEnum> roles) {
         this.roles = roles;
+    }
+
+    /**
+     * @return The list of permissions assigned to the user.
+     */
+    public List<PermissionEnum> getPermissions() {
+        return permissions;
+    }
+
+    /**
+     * @param permissions The list of permissions to set for the user.
+     */
+    public void setPermissions(List<PermissionEnum> permissions) {
+        this.permissions = permissions;
     }
 
     /**

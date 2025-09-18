@@ -2,7 +2,7 @@
 
 JAVA_PID=0
 
-mvn spring-boot:run &
+mvn spring-boot:run -Pdev &
 JAVA_PID=$!
 echo "Application lancée initialement avec PID=$JAVA_PID"
 

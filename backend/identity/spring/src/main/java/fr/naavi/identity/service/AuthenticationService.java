@@ -1,10 +1,11 @@
 package fr.naavi.identity.service;
 
+import fr.naavi.core.enums.JwtEnum;
+import fr.naavi.core.service.JwtService;
 import fr.naavi.core.utils.RequestUtils;
 import fr.naavi.identity.dto.output.AuthenticationDTO;
 import fr.naavi.identity.entity.Session;
 import fr.naavi.identity.entity.User;
-import fr.naavi.identity.enums.JwtEnum;
 import fr.naavi.identity.repository.SessionRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;

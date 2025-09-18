@@ -4,6 +4,7 @@ public enum StatusEnum {
     UNVERIFIED,
     VERIFIED,
     RESTRICTED,
-    BANNED
+    BANNED,
+    DELETED
 }
 

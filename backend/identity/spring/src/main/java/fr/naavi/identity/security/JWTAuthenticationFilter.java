@@ -2,11 +2,11 @@ package fr.naavi.identity.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.naavi.core.dto.ApiResponseDto;
+import fr.naavi.core.enums.JwtEnum;
+import fr.naavi.core.service.JwtService;
 import fr.naavi.identity.entity.Session;
 import fr.naavi.identity.entity.User;
-import fr.naavi.identity.enums.JwtEnum;
 import fr.naavi.identity.repository.SessionRepository;
-import fr.naavi.identity.service.JwtService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -121,9 +121,12 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
     private Collection<GrantedAuthority> getAuthorities(User user) {
         List<GrantedAuthority> authorities = new ArrayList<>();
 
-        authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
         user.getRoles().forEach(role -> {
-            authorities.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+            authorities.add(new SimpleGrantedAuthority(role.name()));
+        });
+
+        user.getPermissions().forEach(permission -> {
+            authorities.add(new SimpleGrantedAuthority("PERM_" + permission.name()));
         });
 
         return authorities;

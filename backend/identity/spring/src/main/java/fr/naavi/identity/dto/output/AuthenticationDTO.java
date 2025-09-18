@@ -1,15 +1,13 @@
 package fr.naavi.identity.dto.output;
 
-public class AuthenticationDTO {
-    private final String accessToken;
-    private String refreshToken;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-    /**
-     * Constructs for AuthenticationDto with access token only.
-     */
-    public AuthenticationDTO(String accessToken) {
-        this.accessToken = accessToken;
-    }
+public class AuthenticationDTO {
+    @Schema(description = "Jeton d'authentification", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6...")
+    private final String accessToken;
+
+    @Schema(description = "Jeton de re-authentification", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6...")
+    private final String refreshToken;
 
     /**
      * Constructs for AuthenticationDto with access and refresh tokens.

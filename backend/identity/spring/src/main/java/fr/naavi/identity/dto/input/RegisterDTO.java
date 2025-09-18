@@ -18,11 +18,11 @@ public class RegisterDTO {
     private String email;
 
     @NotBlank
-    @Size(min=8)
+    @Size(min = 8)
     private String password;
 
     @NotBlank
-    @Size(min=8)
+    @Size(min = 8)
     private String confirmPassword;
 
     public String getFirstname() {

@@ -10,11 +10,11 @@ public class ResetPasswordDTO {
     private String token;
 
     @NotBlank
-    @Size(min=8)
+    @Size(min = 8)
     private String password;
 
     @NotBlank
-    @Size(min=8)
+    @Size(min = 8)
     private String confirmPassword;
 
     public String getToken() {

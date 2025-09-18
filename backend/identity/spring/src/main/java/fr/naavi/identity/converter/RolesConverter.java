@@ -1,30 +1,16 @@
 package fr.naavi.identity.converter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.AttributeConverter;
+import com.fasterxml.jackson.core.type.TypeReference;
+import fr.naavi.core.converter.ListConverter;
+import fr.naavi.core.enums.RoleEnum;
 import jakarta.persistence.Converter;
 
-import java.util.List;
-
 @Converter
-public class RolesConverter implements AttributeConverter<List<String>, String> {
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @Override
-    public String convertToDatabaseColumn(List<String> attribute) {
-        try {
-            return objectMapper.writeValueAsString(attribute);
-        } catch (Exception e) {
-            return "[]";
-        }
-    }
-
-    @Override
-    public List<String> convertToEntityAttribute(String dbData) {
-        try {
-            return objectMapper.readValue(dbData, new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
-        } catch (Exception e) {
-            return List.of();
-        }
+public class RolesConverter extends ListConverter<RoleEnum> {
+    /**
+     * Constructs a RolesConverter.
+     */
+    public RolesConverter() {
+        super(new TypeReference<>() {});
     }
 }

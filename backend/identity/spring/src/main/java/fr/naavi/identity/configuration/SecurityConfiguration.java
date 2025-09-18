@@ -1,16 +1,14 @@
 package fr.naavi.identity.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.naavi.core.service.JwtService;
 import fr.naavi.identity.repository.SessionRepository;
 import fr.naavi.identity.security.AuthenticationNotRequiredMatcher;
 import fr.naavi.identity.security.InternalApiKeyFilter;
 import fr.naavi.identity.security.JWTAuthenticationFilter;
 import fr.naavi.identity.security.LoginAuthenticationProvider;
-import fr.naavi.identity.service.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -36,9 +35,8 @@ import java.util.List;
 import java.util.Map;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfiguration {
-    private static final Logger log = LoggerFactory.getLogger(SecurityConfiguration.class);
-
     @Autowired
     @Qualifier("requestMappingHandlerMapping")
     private HandlerMapping handlerMapping;
@@ -179,7 +177,6 @@ public class SecurityConfiguration {
     @Bean
     public AccessDeniedHandler accessDeniedHandler() {
         return (HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) -> {
-            log.error("Access denied {}", accessDeniedException.getMessage());
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             Map<String, String> errorResponse = Map.of(
