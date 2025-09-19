@@ -1,6 +1,6 @@
 package fr.naavi.core.dto;
 
-public class ApiResponseDto {
+public class ApiResponseDTO {
     private final String i18nKey;
     private final String message;
     private final Object extra;
@@ -11,7 +11,7 @@ public class ApiResponseDto {
      * @param i18nKey The internationalization key for the response message.
      * @param message The message to be returned in the response.
      */
-    public ApiResponseDto(String i18nKey, String message) {
+    public ApiResponseDTO(String i18nKey, String message) {
         this(i18nKey, message, null);
     }
 
@@ -22,7 +22,7 @@ public class ApiResponseDto {
      * @param message The message to be returned in the response.
      * @param extra   The object returned to give more details
      */
-    public ApiResponseDto(String i18nKey, String message, Object extra) {
+    public ApiResponseDTO(String i18nKey, String message, Object extra) {
         this.i18nKey = i18nKey;
         this.message = message;
         this.extra = extra;

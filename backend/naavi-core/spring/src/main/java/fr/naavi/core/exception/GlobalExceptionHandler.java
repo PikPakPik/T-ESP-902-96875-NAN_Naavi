@@ -1,6 +1,6 @@
 package fr.naavi.core.exception;
 
-import fr.naavi.core.dto.ApiResponseDto;
+import fr.naavi.core.dto.ApiResponseDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
      * @return A ResponseEntity containing the ApiResponseDto with error details.
      */
     @ExceptionHandler(GenericHttpException.class)
-    public ResponseEntity<ApiResponseDto> handleGenericHttpException(GenericHttpException ex) {
+    public ResponseEntity<ApiResponseDTO> handleGenericHttpException(GenericHttpException ex) {
         return new ResponseEntity<>(ex.generateApiResponseDto(), ex.getStatus());
     }
 
@@ -31,12 +31,12 @@ public class GlobalExceptionHandler {
      * @return A ResponseEntity containing the ApiResponseDto with validation errors.
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponseDto> handleValidationExceptions(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiResponseDTO> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(error ->
                 errors.put(error.getField(), error.getDefaultMessage())
         );
-        ApiResponseDto response = new ApiResponseDto(
+        ApiResponseDTO response = new ApiResponseDTO(
                 "validation.failed",
                 "Validation failed",
                 errors

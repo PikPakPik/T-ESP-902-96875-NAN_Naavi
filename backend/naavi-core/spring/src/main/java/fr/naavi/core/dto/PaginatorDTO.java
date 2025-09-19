@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
 @SuppressWarnings("unused")
-public class PaginatorDto<T> {
+public class PaginatorDTO<T> {
     @ArraySchema(schema = @Schema(description = "List of items for the current page"))
     @JsonProperty("items")
     private List<T> items;
@@ -40,7 +40,7 @@ public class PaginatorDto<T> {
      * @param totalItems The total number of items.
      * @param paginationDTO The pagination DTO.
      */
-    public PaginatorDto(List<T> items, Integer totalItems, PaginationDTO paginationDTO) {
+    public PaginatorDTO(List<T> items, Integer totalItems, PaginationDTO paginationDTO) {
         this.items = items != null ? List.copyOf(items) : List.of();
         this.totalItems = totalItems;
         this.currentPage = paginationDTO.getPage();
@@ -66,8 +66,8 @@ public class PaginatorDto<T> {
      *
      * @return A PaginatorDto with the specified items, total items and pagination DTO.
      */
-    public static <T> PaginatorDto<T> of(List<T> items, Integer totalItems, PaginationDTO paginationDTO) {
-        return new PaginatorDto<>(items, totalItems, paginationDTO);
+    public static <T> PaginatorDTO<T> of(List<T> items, Integer totalItems, PaginationDTO paginationDTO) {
+        return new PaginatorDTO<>(items, totalItems, paginationDTO);
     }
 
     public List<T> getItems() {

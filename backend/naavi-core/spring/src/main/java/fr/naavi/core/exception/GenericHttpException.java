@@ -1,6 +1,6 @@
 package fr.naavi.core.exception;
 
-import fr.naavi.core.dto.ApiResponseDto;
+import fr.naavi.core.dto.ApiResponseDTO;
 import org.springframework.http.HttpStatus;
 
 public class GenericHttpException extends RuntimeException {
@@ -53,12 +53,12 @@ public class GenericHttpException extends RuntimeException {
     }
 
     /**
-     * Generates an {@link ApiResponseDto} containing the current exception details.
+     * Generates an {@link ApiResponseDTO} containing the current exception details.
      *
      * @return a new {@code ApiResponseDto} initialized with the internationalization key,
      *         message, and extra data from this exception.
      */
-    public ApiResponseDto generateApiResponseDto() {
-        return new ApiResponseDto(i18nKey, message, extra);
+    public ApiResponseDTO generateApiResponseDto() {
+        return new ApiResponseDTO(i18nKey, message, extra);
     }
 }
