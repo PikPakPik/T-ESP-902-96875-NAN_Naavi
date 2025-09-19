@@ -20,9 +20,9 @@ public class NaaviBadCredentialsException extends NaaviBadRequestException {
      *
      * @param i18nKey The internationalization key for the error message.
      * @param message The detailed error message.
-     * @param cause   The underlying cause of the exception.
+     * @param extra   Additional data to include in the response (may be {@code null}).
      */
-    public NaaviBadCredentialsException(String i18nKey, String message, Throwable cause) {
-        super(i18nKey, message, cause);
+    public NaaviBadCredentialsException(String i18nKey, String message, Object extra) {
+        super(i18nKey, message, extra);
     }
 }

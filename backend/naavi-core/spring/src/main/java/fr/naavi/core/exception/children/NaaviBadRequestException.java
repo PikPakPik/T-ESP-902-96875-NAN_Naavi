@@ -21,9 +21,9 @@ public class NaaviBadRequestException extends GenericHttpException {
      *
      * @param i18nKey The internationalization key for the error message.
      * @param message The detailed error message for logging or client response.
-     * @param cause   The underlying cause of the exception.
+     * @param extra   Additional data to include in the response (may be {@code null}).
      */
-    public NaaviBadRequestException(String i18nKey, String message, Throwable cause) {
-        super(HttpStatus.BAD_REQUEST, i18nKey, message, cause);
+    public NaaviBadRequestException(String i18nKey, String message, Object extra) {
+        super(HttpStatus.BAD_REQUEST, i18nKey, message, extra);
     }
 }
