@@ -8,7 +8,7 @@ import java.util.List;
 
 public class InternalAuthTokenDTO {
     private TokenType type;
-    private Long userId;
+    private Long id;
     private String firstname;
     private String lastname;
     private String email;
@@ -16,7 +16,12 @@ public class InternalAuthTokenDTO {
     private List<PermissionEnum> permissions;
 
     //<editor-fold desc="Constructor">
-    public InternalAuthTokenDTO(TokenType type){
+    /**
+     * Constructs an InternalAuthTokenDto with the specified type.
+     *
+     * @param type The type of the token.
+     */
+    public InternalAuthTokenDTO(TokenType type) {
         this.type = type;
     }
     //</editor-fold>
@@ -30,12 +35,12 @@ public class InternalAuthTokenDTO {
         this.type = type;
     }
 
-    public Long getUserId() {
-        return userId;
+    public Long getId() {
+        return id;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getFirstname() {
@@ -63,20 +68,19 @@ public class InternalAuthTokenDTO {
     }
 
     public List<RoleEnum> getRoles() {
-        return roles;
+        return List.copyOf(roles);
     }
 
     public void setRoles(List<RoleEnum> roles) {
-        this.roles = roles;
+        this.roles = List.copyOf(roles);
     }
 
     public List<PermissionEnum> getPermissions() {
-        return permissions;
+        return List.copyOf(permissions);
     }
 
     public void setPermissions(List<PermissionEnum> permissions) {
-        this.permissions = permissions;
+        this.permissions = List.copyOf(permissions);
     }
     //</editor-fold>
-
 }
