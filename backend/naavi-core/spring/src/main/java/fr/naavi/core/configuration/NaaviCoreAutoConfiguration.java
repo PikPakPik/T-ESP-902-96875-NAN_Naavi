@@ -1,7 +1,8 @@
 package fr.naavi.core.configuration;
 
-import org.springframework.beans.factory.annotation.Value;
+import fr.naavi.core.properties.SmtpProperties;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -20,34 +21,8 @@ import java.util.Properties;
  */
 @AutoConfiguration
 @ComponentScan(basePackages = "fr.naavi.core")
+@EnableConfigurationProperties(SmtpProperties.class)
 public class NaaviCoreAutoConfiguration {
-    // TODO: Add any necessary beans or configurations specific to Naavi Core
-
-    //<editor-fold desc="email">
-    @Value("${spring.mail.host}")
-    private String mailHost;
-
-    @Value("${spring.mail.port}")
-    private int mailPort;
-
-    @Value("${spring.mail.username}")
-    private String mailUsername;
-
-    @Value("${spring.mail.password}")
-    private String mailPassword;
-
-    @Value("${spring.mail.properties.mail.smtp.auth}")
-    private boolean smtpAuth;
-
-    @Value("${spring.mail.properties.mail.transport.protocol}")
-    private String transportProtocol;
-
-    @Value("${spring.mail.properties.mail.smtp.ssl.enable}")
-    private boolean sslEnable;
-
-    @Value("${spring.mail.properties.mail.smtp.starttls.enable}")
-    private boolean starttlsEnable;
-
     /**
      * Creates and configures a {@link JavaMailSender} bean with
      * the specified mail server settings.
@@ -55,19 +30,30 @@ public class NaaviCoreAutoConfiguration {
      * @return a configured {@code JavaMailSender} instance.
      */
     @Bean
-    public JavaMailSender javaMailSender() {
+    public JavaMailSender javaMailSender(SmtpProperties smtpProps) {
+        if (smtpProps.getHost() == null || smtpProps.getHost().trim().isEmpty() || smtpProps.getPort() == null) {
+            return null;
+        }
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
         mailSender.setDefaultEncoding("UTF-8");
-        mailSender.setHost(mailHost);
-        mailSender.setPort(mailPort);
-        mailSender.setUsername(mailUsername);
-        mailSender.setPassword(mailPassword);
+        mailSender.setHost(smtpProps.getHost());
+        mailSender.setPort(smtpProps.getPort());
+        mailSender.setUsername(smtpProps.getUsername());
+        mailSender.setPassword(smtpProps.getPassword());
 
         Properties props = mailSender.getJavaMailProperties();
-        props.put("mail.transport.protocol", transportProtocol);
-        props.put("mail.smtp.auth", smtpAuth);
-        props.put("mail.smtp.ssl.enable", sslEnable);
-        props.put("mail.smtp.starttls.enable", starttlsEnable);
+        if (smtpProps.getPropertiesMailTransportProtocol() != null) {
+            props.put("mail.transport.protocol", smtpProps.getPropertiesMailTransportProtocol());
+        }
+        if (smtpProps.getPropertiesMailSmtpAuth() != null) {
+            props.put("mail.smtp.auth", smtpProps.getPropertiesMailSmtpAuth());
+        }
+        if (smtpProps.getPropertiesMailSmtpSslEnable() != null) {
+            props.put("mail.smtp.ssl.enable", smtpProps.getPropertiesMailSmtpSslEnable());
+        }
+        if (smtpProps.getPropertiesMailSmtpStarttlsEnable() != null) {
+            props.put("mail.smtp.starttls.enable", smtpProps.getPropertiesMailSmtpStarttlsEnable());
+        }
 
         return mailSender;
     }
