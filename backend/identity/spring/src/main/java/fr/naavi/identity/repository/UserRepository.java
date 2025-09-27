@@ -1,7 +1,7 @@
 package fr.naavi.identity.repository;
 
 import fr.naavi.core.dto.PaginationDTO;
-import fr.naavi.core.dto.PaginatorDto;
+import fr.naavi.core.dto.PaginatorDTO;
 import fr.naavi.identity.dto.output.UserDto;
 import fr.naavi.identity.entity.User;
 import fr.naavi.identity.repository.interfaces.UserRepositoryInterface;
@@ -20,7 +20,7 @@ public interface UserRepository extends JpaRepository<User, Long>, UserRepositor
      * Find all users with pagination.
      *
      * @param paginationDTO The pagination data.
-     * @return The PaginatorDto containing the users.
+     * @return The PaginatorDTO containing the users.
      */
-    PaginatorDto<UserDto> findAllUserWithPagination(PaginationDTO paginationDTO);
+    PaginatorDTO<UserDto> findAllUserWithPagination(PaginationDTO paginationDTO);
 }

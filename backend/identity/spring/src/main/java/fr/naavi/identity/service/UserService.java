@@ -110,6 +110,39 @@ public class UserService {
     }
 
     /**
+     * Creates a new user from the provided registration data.
+     *
+     * @param userDto The registration data containing user details.
+     * @return The created User entity.
+     */
+    public User createUserFromAdmin(UserDTO userDto) {
+        User user = new User();
+
+        user.setFirstname(userDto.getFirstname());
+        user.setLastname(userDto.getLastname());
+        user.setEmail(userDto.getEmail());
+        user.setPassword(this.hashPassword(this.randomService.randomString(32)));
+        if (userDto.getRoles() != null) {
+            user.setRoles(userDto.getRoles().stream()
+                    .filter(role -> !role.equals(RoleEnum.ROLE_USER.name()))
+                    .filter(this::isValidRole)
+                    .map(RoleEnum::valueOf)
+                    .toList());
+        }
+        if (userDto.getPermissions() != null) {
+            user.setPermissions(userDto.getPermissions().stream()
+                    .filter(this::isValidPermission)
+                    .map(PermissionEnum::valueOf)
+                    .toList());
+        }
+        if (userDto.getStatus() != null && isValidStatus(userDto.getStatus())) {
+            user.setStatus(StatusEnum.valueOf(userDto.getStatus()));
+        }
+
+        return this.userRepository.save(user);
+    }
+
+    /**
      * Updates the user's password with the new password provided in the reset password DTO.
      *
      * @param user The user whose password is to be updated.
@@ -168,6 +201,9 @@ public class UserService {
                     .filter(this::isValidPermission)
                     .map(PermissionEnum::valueOf)
                     .toList());
+        }
+        if (userDto.getStatus() != null && isValidStatus(userDto.getStatus())) {
+            user.setStatus(StatusEnum.valueOf(userDto.getStatus()));
         }
 
         return userRepository.save(user);
@@ -237,6 +273,24 @@ public class UserService {
             throw new NaaviBadCredentialsException(
                     "user.permission_invalid",
                     "The permission '" + role + "' does not exist."
+            );
+        }
+    }
+
+    /**
+     * Checks if the given status is valid.
+     *
+     * @param status The status to check.
+     * @return True if the status is valid, false otherwise.
+     */
+    private boolean isValidStatus(String status) {
+        try {
+            StatusEnum.valueOf(status);
+            return true;
+        } catch (IllegalArgumentException e) {
+            throw new NaaviBadCredentialsException(
+                    "user.status_invalid",
+                    "The status '" + status + "' does not exist."
             );
         }
     }

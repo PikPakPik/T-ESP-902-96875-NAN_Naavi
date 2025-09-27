@@ -1,7 +1,7 @@
 package fr.naavi.identity.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.naavi.core.dto.ApiResponseDto;
+import fr.naavi.core.dto.ApiResponseDTO;
 import fr.naavi.core.enums.JwtEnum;
 import fr.naavi.core.service.JwtService;
 import fr.naavi.identity.entity.Session;
@@ -69,7 +69,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                 if (session.isEmpty()) {
                     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    ApiResponseDto apiResponseDto = new ApiResponseDto(
+                    ApiResponseDTO apiResponseDto = new ApiResponseDTO(
                             "session.not_found_or_invalid",
                             "Session not found or invalid token"
                     );
@@ -80,7 +80,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                 if (session.get().getAccessTokenExpiredAt().isBefore(LocalDateTime.now())) {
                     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    ApiResponseDto apiResponseDto = new ApiResponseDto(
+                    ApiResponseDTO apiResponseDto = new ApiResponseDTO(
                             "session.not_found_or_invalid",
                             "Session not found or invalid token"
                     );
@@ -102,7 +102,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
             log.error("Authentication error: {}", e.getMessage());
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            ApiResponseDto apiResponseDto = new ApiResponseDto(
+            ApiResponseDTO apiResponseDto = new ApiResponseDTO(
                     "authentication.error",
                     "Authentication error"
             );

@@ -1,6 +1,7 @@
 package fr.naavi.identity.controller.internal;
 
 import fr.naavi.core.enums.JwtEnum;
+import fr.naavi.core.enums.TokenType;
 import fr.naavi.core.service.JwtService;
 import fr.naavi.identity.abstraction.AbstractController;
 import fr.naavi.identity.entity.Session;
@@ -86,18 +87,19 @@ public class ValidateAuthController extends AbstractController {
 
     private String generateGuestToken() {
         Map<String, Object> newClaims = new HashMap<>();
-        newClaims.put("type", "guest");
+        newClaims.put("type", TokenType.GUEST);
         return this.generateToken(newClaims);
     }
 
     private String generateLoggedToken(User user) {
         Map<String, Object> newClaims = new HashMap<>();
-        newClaims.put("type", "logged");
+        newClaims.put("type", TokenType.LOGGED);
         newClaims.put("id", user.getId());
         newClaims.put("firstname", user.getFirstname());
         newClaims.put("lastname", user.getLastname());
         newClaims.put("email", user.getEmail());
         newClaims.put("roles", user.getRoles());
+        newClaims.put("permissions", user.getPermissions());
         return this.generateToken(newClaims);
     }
 

@@ -1,7 +1,7 @@
 package fr.naavi.identity.controller;
 
 import fr.naavi.core.annotation.AuthenticationNotRequired;
-import fr.naavi.core.dto.ApiResponseDto;
+import fr.naavi.core.dto.ApiResponseDTO;
 import fr.naavi.core.exception.GenericHttpException;
 import fr.naavi.core.exception.children.NaaviBadCredentialsException;
 import fr.naavi.core.exception.children.NaaviUnauthorizedException;
@@ -91,7 +91,7 @@ public class SecurityController extends AbstractController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(
-                                    implementation = ApiResponseDto.class,
+                                    implementation = ApiResponseDTO.class,
                                     example = "{\n"
                                             + "  \"i18nKey\": \"security.invalid_credentials\",\n"
                                             + "  \"message\": \"Invalid credentials provided.\",\n"
@@ -123,7 +123,7 @@ public class SecurityController extends AbstractController {
      * This endpoint is used to register a new user and send a confirmation email.
      *
      * @param registerDto the registration details
-     * @return an ApiResponseDto indicating success or failure
+     * @return an ApiResponseDTO indicating success or failure
      */
     @Operation(
             summary = "Inscription d'un nouvel utilisateur",
@@ -137,7 +137,7 @@ public class SecurityController extends AbstractController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(
-                                    implementation = ApiResponseDto.class,
+                                    implementation = ApiResponseDTO.class,
                                     example = "{\n"
                                             + "  \"i18nKey\": \"security.register.success\",\n"
                                             + "  \"message\": \"User registered successfully.\",\n"
@@ -152,7 +152,7 @@ public class SecurityController extends AbstractController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(
-                                    implementation = ApiResponseDto.class,
+                                    implementation = ApiResponseDTO.class,
                                     example = "{\n"
                                             + "  \"i18nKey\": \"security.email_already_exists\",\n"
                                             + "  \"message\": \"An account with this email already exists.\",\n"
@@ -165,7 +165,7 @@ public class SecurityController extends AbstractController {
     })
     @PostMapping("/register")
     @AuthenticationNotRequired
-    public ApiResponseDto register(@RequestBody @Validated RegisterDTO registerDto) {
+    public ApiResponseDTO register(@RequestBody @Validated RegisterDTO registerDto) {
         User existingUser = this.userService.checkIfUserExists(registerDto.getEmail());
 
         if (existingUser != null) {
@@ -179,14 +179,14 @@ public class SecurityController extends AbstractController {
         User newUser = this.userService.createUser(registerDto);
         this.mailerService.sendRegistrationEmail(newUser);
 
-        return new ApiResponseDto("security.register.success", "User registered successfully.");
+        return new ApiResponseDTO("security.register.success", "User registered successfully.");
     }
 
     /**
      * Endpoint to log out the user.
      * This endpoint is used to invalidate the current session.
      *
-     * @return an ApiResponseDto indicating success or failure
+     * @return an ApiResponseDTO indicating success or failure
      */
     @Operation(
             summary = "Déconnexion de l'utilisateur",
@@ -200,7 +200,7 @@ public class SecurityController extends AbstractController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(
-                                    implementation = ApiResponseDto.class,
+                                    implementation = ApiResponseDTO.class,
                                     example = "{\n"
                                             + "  \"i18nKey\": \"logout.success\",\n"
                                             + "  \"message\": \"User logged out successfully.\",\n"
@@ -214,7 +214,7 @@ public class SecurityController extends AbstractController {
                     description = "Session invalide ou inexistante.",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = ApiResponseDto.class),
+                            schema = @Schema(implementation = ApiResponseDTO.class),
                             examples = {
                                     @ExampleObject(
                                             name = "Session manquante ou invalide",
@@ -237,7 +237,7 @@ public class SecurityController extends AbstractController {
             )
     })
     @DeleteMapping("/logout")
-    public ApiResponseDto logout() {
+    public ApiResponseDTO logout() {
         String sessId = (String) this.getCurrentRequest().getAttribute("sessId");
 
         if (sessId == null || sessId.isEmpty()) {
@@ -258,7 +258,7 @@ public class SecurityController extends AbstractController {
 
         this.sessionRepository.delete(session.get());
 
-        return new ApiResponseDto("logout.success", "User logged out successfully.");
+        return new ApiResponseDTO("logout.success", "User logged out successfully.");
     }
 
     /**
@@ -288,7 +288,7 @@ public class SecurityController extends AbstractController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(
-                                    implementation = ApiResponseDto.class,
+                                    implementation = ApiResponseDTO.class,
                                     example = "{\n"
                                             + "  \"i18nKey\": \"security.refresh_token_invalid\",\n"
                                             + "  \"message\": \"The provided refresh token is invalid or expired.\",\n"
@@ -317,7 +317,7 @@ public class SecurityController extends AbstractController {
      * This endpoint is used to send a password-reset email if the user exists.
      *
      * @param forgotPasswordDTO the email address for password reset
-     * @return an ApiResponseDto indicating success or failure
+     * @return an ApiResponseDTO indicating success or failure
      */
     @Operation(
             summary = "Demande de réinitialisation du mot de passe",
@@ -331,7 +331,7 @@ public class SecurityController extends AbstractController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(
-                                    implementation = ApiResponseDto.class,
+                                    implementation = ApiResponseDTO.class,
                                     example = "{\n"
                                             + "  \"i18nKey\": \"forgot_password.success\",\n"
                                             + "  \"message\": \"If an account exists with the e-mail address entered,"
@@ -345,7 +345,7 @@ public class SecurityController extends AbstractController {
     })
     @PostMapping("/forgot-password")
     @AuthenticationNotRequired
-    public ApiResponseDto forgotPassword(@RequestBody @Validated ForgotPasswordDTO forgotPasswordDTO) {
+    public ApiResponseDTO forgotPassword(@RequestBody @Validated ForgotPasswordDTO forgotPasswordDTO) {
         User user = this.userService.checkIfUserExists(forgotPasswordDTO.getEmail());
 
         if (user != null) {
@@ -353,7 +353,7 @@ public class SecurityController extends AbstractController {
             this.mailerService.sendForgotPasswordEmail(resetPasswordRequest);
         }
 
-        return new ApiResponseDto(
+        return new ApiResponseDTO(
                 "forgot_password.success",
                 "If an account exists with the e-mail address entered, an e-mail will be "
                 + "sent to you with instructions for resetting your password."
@@ -365,7 +365,7 @@ public class SecurityController extends AbstractController {
      * This endpoint is used to update the user's password using a valid reset token.
      *
      * @param resetPasswordDTO the new password and reset token
-     * @return an ApiResponseDto indicating success or failure
+     * @return an ApiResponseDTO indicating success or failure
      */
     @Operation(
             summary = "Réinitialisation du mot de passe",
@@ -379,7 +379,7 @@ public class SecurityController extends AbstractController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(
-                                    implementation = ApiResponseDto.class,
+                                    implementation = ApiResponseDTO.class,
                                     example = "{\n"
                                             + "  \"i18nKey\": \"reset_password.success\",\n"
                                             + "  \"message\": \"Your password has been successfully reset.\",\n"
@@ -394,7 +394,7 @@ public class SecurityController extends AbstractController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(
-                                    implementation = ApiResponseDto.class,
+                                    implementation = ApiResponseDTO.class,
                                     example = "{\n"
                                             + "  \"i18nKey\": \"reset_password.request_not_found\",\n"
                                             + "  \"message\": \"The reset password request is invalid or has expired.\",\n"
@@ -407,7 +407,7 @@ public class SecurityController extends AbstractController {
     })
     @PostMapping("/reset-password")
     @AuthenticationNotRequired
-    public ApiResponseDto resetPassword(@RequestBody @Validated ResetPasswordDTO resetPasswordDTO) {
+    public ApiResponseDTO resetPassword(@RequestBody @Validated ResetPasswordDTO resetPasswordDTO) {
         ResetPasswordRequest resetPasswordRequest = this.userService.checkIfResetPasswordRequestExists(resetPasswordDTO.getToken());
 
         if (resetPasswordRequest == null) {
@@ -423,6 +423,6 @@ public class SecurityController extends AbstractController {
         this.userService.deleteResetPasswordRequest(resetPasswordRequest);
         this.mailerService.sendResetPasswordConfirmationEmail(user);
 
-        return new ApiResponseDto("reset_password.success", "Your password has been successfully reset.");
+        return new ApiResponseDTO("reset_password.success", "Your password has been successfully reset.");
     }
 }

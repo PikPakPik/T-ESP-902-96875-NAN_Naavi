@@ -1,7 +1,7 @@
 package fr.naavi.identity.repository.impl;
 
 import fr.naavi.core.dto.PaginationDTO;
-import fr.naavi.core.dto.PaginatorDto;
+import fr.naavi.core.dto.PaginatorDTO;
 import fr.naavi.identity.dto.output.UserDto;
 import fr.naavi.identity.entity.User;
 import fr.naavi.identity.enums.StatusEnum;
@@ -22,7 +22,7 @@ public class UserRepositoryImpl implements UserRepositoryInterface {
     private EntityManager entityManager;
 
     @Override
-    public PaginatorDto<UserDto> findAllUserWithPagination(PaginationDTO paginationDTO) {
+    public PaginatorDTO<UserDto> findAllUserWithPagination(PaginationDTO paginationDTO) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<User> query = cb.createQuery(User.class);
         Root<User> user = query.from(User.class);
@@ -78,7 +78,7 @@ public class UserRepositoryImpl implements UserRepositoryInterface {
                 .map(u -> new UserDto(u, true))
                 .toList();
 
-        return PaginatorDto.of(
+        return PaginatorDTO.of(
                 users,
                 totalItems.intValue(),
                 paginationDTO

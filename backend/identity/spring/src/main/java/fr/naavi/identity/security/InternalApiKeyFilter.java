@@ -1,7 +1,7 @@
 package fr.naavi.identity.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.naavi.core.dto.ApiResponseDto;
+import fr.naavi.core.dto.ApiResponseDTO;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,7 +40,7 @@ public class InternalApiKeyFilter extends OncePerRequestFilter {
         if (internalApiKeyValue != null && !internalApiKeyValue.isEmpty() && !internalApiKeyValue.equals(this.internalApiKey)) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-            ApiResponseDto apiResponseDto = new ApiResponseDto(
+            ApiResponseDTO apiResponseDto = new ApiResponseDTO(
                     "internal.api_key.invalid",
                     "Invalid internal API key"
             );

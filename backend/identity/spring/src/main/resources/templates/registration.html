@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <body>
+        <p>Merci pour votre inscription, <span th:text="${fullName}"></span>!</p>
+        <div th:if="${createdByAdmin}">
+            <p>
+                Votre compte a été créé par un administrateur.<br>
+                Veuillez réinitialiser votre mot de passe lors de votre première connexion.
+            </p>
+        </div>
+    </body>
+</html>

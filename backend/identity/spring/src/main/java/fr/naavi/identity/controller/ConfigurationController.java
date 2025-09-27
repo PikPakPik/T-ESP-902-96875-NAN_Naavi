@@ -3,6 +3,7 @@ package fr.naavi.identity.controller;
 import fr.naavi.core.annotation.AuthenticationNotRequired;
 import fr.naavi.core.enums.PermissionEnum;
 import fr.naavi.core.enums.RoleEnum;
+import fr.naavi.identity.enums.StatusEnum;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -38,6 +39,9 @@ public class ConfigurationController {
                                             + "   ],\n"
                                             + "  \"permissions\": ["
                                             + "    \"USER_READ\""
+                                            + "   ],\n"
+                                            + "  \"user_status\": ["
+                                            + "    \"UNVERIFIED\""
                                             + "  ]\n"
                                             + "}"
                             )
@@ -49,7 +53,8 @@ public class ConfigurationController {
     public Map<String, Object> configuration() {
         return Map.of(
                 "roles", RoleEnum.values(),
-                "permissions", PermissionEnum.values()
+                "permissions", PermissionEnum.values(),
+                "user_status", StatusEnum.values()
         );
     }
 }

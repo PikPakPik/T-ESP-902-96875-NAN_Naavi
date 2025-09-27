@@ -1,9 +1,10 @@
 package fr.naavi.identity.controller;
 
 import fr.naavi.core.dto.PaginationDTO;
-import fr.naavi.core.dto.PaginatorDto;
+import fr.naavi.core.dto.PaginatorDTO;
 import fr.naavi.core.enums.RoleEnum;
 import fr.naavi.core.exception.GlobalExceptionHandler;
+import fr.naavi.identity.dto.input.UserDTO;
 import fr.naavi.identity.dto.output.UserDto;
 import fr.naavi.identity.entity.User;
 import fr.naavi.identity.enums.StatusEnum;
@@ -11,6 +12,7 @@ import fr.naavi.identity.repository.UserRepository;
 import fr.naavi.identity.service.AuthenticationService;
 import fr.naavi.identity.service.MailerService;
 import fr.naavi.identity.service.UserService;
+import fr.naavi.identity.util.DtoFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -28,6 +30,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -35,10 +38,14 @@ import javax.sql.DataSource;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -123,7 +130,7 @@ class UserControllerTest {
         PaginationDTO paginationDTO = new PaginationDTO();
         paginationDTO.setPage(1);
 
-        PaginatorDto<UserDto> paginatorDto = new PaginatorDto<>(userDtos, 2, paginationDTO);
+        PaginatorDTO<UserDto> paginatorDto = new PaginatorDTO<>(userDtos, 2, paginationDTO);
         paginatorDto.setItems(userDtos);
 
         Mockito.when(userRepository.findAllUserWithPagination(Mockito.any(PaginationDTO.class)))
@@ -160,7 +167,7 @@ class UserControllerTest {
         paginationDTO.setPage(1);
         paginationDTO.setLimit(1);
 
-        PaginatorDto<UserDto> paginatorDto = new PaginatorDto<>(userDtos, 2, paginationDTO);
+        PaginatorDTO<UserDto> paginatorDto = new PaginatorDTO<>(userDtos, 2, paginationDTO);
         paginatorDto.setItems(userDtos);
 
         Mockito.when(userRepository.findAllUserWithPagination(Mockito.any(PaginationDTO.class)))
@@ -212,60 +219,121 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.message").value("User not found"));
     }
 
-//    @Test
-//    @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
-//    void shouldUpdateUser_WhenUserExists() throws Exception {
-//        User user = createMockUser();
-//        user.setEmail("updated@example.com");
-//
-//        User authenticatedUser = createMockUser();
-//        authenticatedUser.setRoles(List.of(RoleEnum.ROLE_ADMIN));
-//
-//        Field idField = User.class.getDeclaredField("id");
-//        idField.setAccessible(true);
-//        idField.set(user, 42L);
-//
-//        Mockito.when(userService.updateUser(Mockito.eq(42L), Mockito.any()))
-//                .thenReturn(user);
-//
-//        UserDTO userDto = DtoFactory.createDto(UserDTO.class,
-//                Map.of(
-//                        "firstname", "Jean",
-//                        "lastname", "Dupont"
-//                )
-//        );
-//
-//        mockMvc.perform(
-//                        put("/administration/users/42")
-//                                .with(createAuthenticatedUser(authenticatedUser))
-//                                .contentType(MediaType.APPLICATION_JSON)
-//                                .content(DtoFactory.toJson(userDto))
-//                )
-//                .andDo(MockMvcResultHandlers.print())
-//                .andExpect(status().isOk())
-//                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-//                .andExpect(jsonPath("$.email").value("updated@example.com"))
-//                .andExpect(jsonPath("$.firstname").value("Jean"))
-//                .andExpect(jsonPath("$.lastname").value("Dupont"));
-//    }
-//
-//    @Test
-//    @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
-//    void shouldDeleteUser_WhenUserExists() throws Exception {
-//        User authenticatedUser = createMockUser();
-//        authenticatedUser.setRoles(List.of(RoleEnum.ROLE_ADMIN));
-//
-//        Mockito.doNothing().when(userService).deleteUser(42L);
-//
-//        mockMvc.perform(
-//                        delete("/administration/users/42")
-//                                .with(createAuthenticatedUser(authenticatedUser))
-//                )
-//                .andExpect(status().isOk())
-//                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-//                .andExpect(jsonPath("$.i18nKey").value("user.deleted"))
-//                .andExpect(jsonPath("$.message").value("User successfully deleted"));
-//    }
+    @Test
+    @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
+    void shouldCreateUser_WhenAdminCreatesNewUser() throws Exception {
+        User user = createMockUser();
+        user.setEmail("newuser@example.com");
+
+        Mockito.when(userRepository.findByEmail("newuser@example.com"))
+                .thenReturn(Optional.empty());
+        Mockito.when(userService.createUserFromAdmin(Mockito.any()))
+                .thenReturn(user);
+
+        UserDTO userDto = DtoFactory.createDto(UserDTO.class,
+                Map.of(
+                        "firstname", "John",
+                        "lastname", "Doe",
+                        "email", "newuser@example.com"
+                )
+        );
+
+        mockMvc.perform(
+                        post("/administration/users")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(DtoFactory.toJson(userDto))
+                                .with(SecurityMockMvcRequestPostProcessors.csrf())
+                )
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.email").value("newuser@example.com"))
+                .andExpect(jsonPath("$.firstname").value("Jean"))
+                .andExpect(jsonPath("$.lastname").value("Dupont"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
+    void shouldReturn409_WhenEmailAlreadyExists() throws Exception {
+        User existingUser = createMockUser();
+        existingUser.setEmail("existing@example.com");
+
+        Mockito.when(userRepository.findByEmail("existing@example.com"))
+                .thenReturn(Optional.of(existingUser));
+
+        UserDTO userDto = DtoFactory.createDto(UserDTO.class,
+                Map.of(
+                        "firstname", "John",
+                        "lastname", "Doe",
+                        "email", "existing@example.com"
+                )
+        );
+
+        mockMvc.perform(
+                        post("/administration/users")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(DtoFactory.toJson(userDto))
+                                .with(SecurityMockMvcRequestPostProcessors.csrf())
+                )
+                .andExpect(status().isConflict())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.i18nKey").value("user.already_exist"))
+                .andExpect(jsonPath("$.message").value("User already exist with this email"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
+    void shouldUpdateUser_WhenUserExists() throws Exception {
+        User user = createMockUser();
+        user.setEmail("updated@example.com");
+
+        User authenticatedUser = createMockUser();
+        authenticatedUser.setRoles(List.of(RoleEnum.ROLE_ADMIN));
+
+        Field idField = User.class.getDeclaredField("id");
+        idField.setAccessible(true);
+        idField.set(user, 42L);
+
+        Mockito.when(userService.updateUser(Mockito.eq(42L), Mockito.any()))
+                .thenReturn(user);
+
+        UserDTO userDto = DtoFactory.createDto(UserDTO.class,
+                Map.of(
+                        "firstname", "Jean",
+                        "lastname", "Dupont"
+                )
+        );
+
+        mockMvc.perform(
+                        put("/administration/users/42")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(DtoFactory.toJson(userDto))
+                                .with(SecurityMockMvcRequestPostProcessors.csrf())
+                )
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.email").value("updated@example.com"))
+                .andExpect(jsonPath("$.firstname").value("Jean"))
+                .andExpect(jsonPath("$.lastname").value("Dupont"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
+    void shouldDeleteUser_WhenUserExists() throws Exception {
+        User authenticatedUser = createMockUser();
+        authenticatedUser.setRoles(List.of(RoleEnum.ROLE_ADMIN));
+
+        Mockito.doNothing().when(userService).deleteUser(42L);
+
+        mockMvc.perform(
+                        delete("/administration/users/42")
+                                .with(SecurityMockMvcRequestPostProcessors.csrf())
+                )
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.i18nKey").value("user.deleted"))
+                .andExpect(jsonPath("$.message").value("User successfully deleted"));
+    }
 
     private RequestPostProcessor createAuthenticatedUser(User user) {
         List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
