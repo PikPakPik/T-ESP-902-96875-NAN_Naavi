@@ -142,12 +142,12 @@ public class UserController extends AbstractController {
             @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
             @ApiResponse(responseCode = "403", ref = "#/components/responses/AccessDeniedError"),
             @ApiResponse(
-                    responseCode = "409",
-                    description = "Conflit pendant l'enregistrement des données",
+                    responseCode = "404",
+                    description = "Utilisateur non trouvé",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(
-                                    example = "{\n"
+                                    example = "{"
                                             + "\"i18nKey\": \"user.already_exist\",\n"
                                             + "\"message\": \"User already exist with this email\",\n"
                                             + "\"extra\": null\n"
