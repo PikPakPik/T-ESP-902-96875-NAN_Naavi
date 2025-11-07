@@ -6,16 +6,11 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-@Tag(
-        name = "Healthcheck",
-        description = "Points d'accès pour vérifier l'état de santé du service de randonnée"
-)
 @RestController
 public class HealthcheckController {
     /**
@@ -26,7 +21,8 @@ public class HealthcheckController {
      */
     @Operation(
             summary = "Vérification de l'état du service",
-            description = "Permet de vérifier si le service de randonnée est opérationnel."
+            description = "Permet de vérifier si le service de randonnée est opérationnel.",
+            tags = {"Service"}
     )
     @ApiResponses(value = {
             @ApiResponse(

@@ -1,13 +1,11 @@
 package fr.naavi.hike.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.naavi.core.service.JwtService;
 import fr.naavi.hike.security.AuthenticationNotRequiredMatcher;
 import fr.naavi.hike.security.JWTAuthenticationFilter;
-import fr.naavi.hike.service.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -29,8 +27,6 @@ import java.util.Map;
 
 @Configuration
 public class SecurityConfiguration {
-    private static final Logger log = LoggerFactory.getLogger(SecurityConfiguration.class);
-
     @Autowired
     @Qualifier("requestMappingHandlerMapping")
     private HandlerMapping handlerMapping;
@@ -120,7 +116,6 @@ public class SecurityConfiguration {
     @Bean
     public AccessDeniedHandler accessDeniedHandler() {
         return (HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) -> {
-            log.error("Access denied {}", accessDeniedException.getMessage());
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             Map<String, String> errorResponse = Map.of(
