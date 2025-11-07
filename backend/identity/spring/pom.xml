@@ -10,7 +10,7 @@
 
 	<properties>
 		<java.version>21</java.version>
-		<naavi.core.version>1.0.7</naavi.core.version>
+		<naavi.core.version>1.0.8</naavi.core.version>
 	</properties>
 
 	<parent>
