@@ -1,8 +1,10 @@
 package fr.naavi.hike.controller;
 
 import fr.naavi.core.annotation.AuthenticationNotRequired;
-import fr.naavi.hike.enums.StatusEnum;
 import fr.naavi.hike.enums.DifficultyEnum;
+import fr.naavi.hike.enums.SeasonEnum;
+import fr.naavi.hike.enums.SourceEnum;
+import fr.naavi.hike.enums.StatusEnum;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -38,6 +40,12 @@ public class ConfigurationController {
                                             + "   ],\n"
                                             + "  \"status\": ["
                                             + "    \"DRAFT\""
+                                            + "  ],\n"
+                                            + "  \"sources\": ["
+                                            + "    \"OFFICIAL\""
+                                            + "  ],\n"
+                                            + "  \"seasons\": ["
+                                            + "    \"SPRING\""
                                             + "  ]\n"
                                             + "}"
                             )
@@ -49,7 +57,9 @@ public class ConfigurationController {
     public Map<String, Object> configuration() {
         return Map.of(
                 "difficulties", DifficultyEnum.values(),
-                "status", StatusEnum.values()
+                "status", StatusEnum.values(),
+                "sources", SourceEnum.values(),
+                "seasons", SeasonEnum.values()
         );
     }
 }

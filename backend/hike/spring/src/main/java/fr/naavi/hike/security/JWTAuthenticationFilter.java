@@ -3,8 +3,11 @@ package fr.naavi.hike.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.naavi.core.dto.ApiResponseDTO;
 import fr.naavi.core.enums.JwtEnum;
+import fr.naavi.core.enums.PermissionEnum;
+import fr.naavi.core.enums.RoleEnum;
 import fr.naavi.core.enums.TokenType;
 import fr.naavi.core.service.JwtService;
+import fr.naavi.hike.dto.UserDTO;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -23,7 +26,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public class JWTAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(JWTAuthenticationFilter.class);
@@ -60,16 +62,31 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                     Collection<String> roles = rawRoles != null
                             ? rawRoles.stream().map(Object::toString).toList()
                             : List.of();
+
+                    Collection<?> rawPermissions = claims.get("permissions", Collection.class);
+                    Collection<String> permissions = rawPermissions != null
+                            ? rawPermissions.stream().map(Object::toString).toList()
+                            : List.of();
+
+                    List<RoleEnum> roleEnums = roles.stream()
+                            .map(RoleEnum::valueOf)
+                            .toList();
+
+                    List<PermissionEnum> permissionEnums = permissions.stream()
+                            .map(PermissionEnum::valueOf)
+                            .toList();
+
+                    UserDTO userDto = new UserDTO();
+                    userDto.setId(claims.get("id", Long.class));
+                    userDto.setFirstname(claims.get("firstname", String.class));
+                    userDto.setLastname(claims.get("lastname", String.class));
+                    userDto.setEmail(claims.get("email", String.class));
+                    userDto.setRoles(roleEnums);
+                    userDto.setPermissions(permissionEnums);
+
                     Collection<GrantedAuthority> authorities = getAuthorities(roles);
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                            Map.of(
-                                    "id", claims.get("id", Integer.class),
-                                    "firstname", claims.get("firstname", String.class),
-                                    "lastname", claims.get("lastname", String.class),
-                                    "email", claims.get("email", String.class),
-                                    "roles", claims.get("roles", Collection.class),
-                                    "permissions", claims.get("permissions", Collection.class)
-                            ),
+                            userDto,
                             null,
                             authorities
                     );

@@ -38,6 +38,7 @@ services:
       POSTGRES_USER: naavi
       POSTGRES_PASSWORD: naavi
       POSTGRES_DB: naavi_hike
+      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - 5433:5432
 

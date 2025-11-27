@@ -1,9 +1,13 @@
 package fr.naavi.hike.entity;
 
+import fr.naavi.hike.converter.SeasonConverter;
 import fr.naavi.hike.entitylistener.HikeListener;
 import fr.naavi.hike.enums.DifficultyEnum;
+import fr.naavi.hike.enums.SeasonEnum;
+import fr.naavi.hike.enums.SourceEnum;
 import fr.naavi.hike.enums.StatusEnum;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
@@ -13,6 +17,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity(name = "hikes")
 @EntityListeners(HikeListener.class)
@@ -45,6 +51,9 @@ public class Hike {
     @Column(name = "wkb_geometry", columnDefinition = "TEXT")
     private String wkbGeometry;
 
+    @Column(name = "wkb_waypoints", columnDefinition = "TEXT")
+    private String wkbWaypoints;
+
     @Column(name = "distance")
     private Integer distance;
 
@@ -58,6 +67,13 @@ public class Hike {
     private DifficultyEnum difficulty;
 
     @Enumerated(EnumType.STRING)
+    private SourceEnum source;
+
+    @Column(columnDefinition = "text")
+    @Convert(converter = SeasonConverter.class)
+    private List<SeasonEnum> seasons = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
     private StatusEnum status;
 
     @Column(nullable = false, updatable = false)
@@ -67,7 +83,7 @@ public class Hike {
     private LocalDateTime updatedAt;
 
     /**
-     * @return The unique identifier of the user.
+     * @return The unique identifier of the hike.
      */
     public Long getId() {
         return id;
@@ -186,6 +202,20 @@ public class Hike {
     }
 
     /**
+     * @return the wkbWaypoints
+     */
+    public String getWkbWaypoints() {
+        return wkbWaypoints;
+    }
+
+    /**
+     * @param wkbWaypoints the wkbWaypoints to set
+     */
+    public void setWkbWaypoints(String wkbWaypoints) {
+        this.wkbWaypoints = wkbWaypoints;
+    }
+
+    /**
      * @return the distance
      */
     public Integer getDistance() {
@@ -239,6 +269,34 @@ public class Hike {
      */
     public void setDifficulty(DifficultyEnum difficulty) {
         this.difficulty = difficulty;
+    }
+
+    /**
+     * @return the source
+     */
+    public SourceEnum getSource() {
+        return source;
+    }
+
+    /**
+     * @param source the source to set
+     */
+    public void setSource(SourceEnum source) {
+        this.source = source;
+    }
+
+    /**
+     * @return The list of seasons the hike is available for.
+     */
+    public List<SeasonEnum> getSeasons() {
+        return seasons;
+    }
+
+    /**
+     * @param seasons The list of seasons to set for the hike.
+     */
+    public void setSeasons(List<SeasonEnum> seasons) {
+        this.seasons = seasons;
     }
 
     /**

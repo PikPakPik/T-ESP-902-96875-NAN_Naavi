@@ -2,14 +2,21 @@ package fr.naavi.hike.controller;
 
 import fr.naavi.core.annotation.AuthenticationNotRequired;
 import fr.naavi.core.dto.ApiResponseDTO;
+import fr.naavi.core.dto.PaginationDTO;
 import fr.naavi.core.dto.PaginatorDTO;
+import fr.naavi.core.enums.RoleEnum;
+import fr.naavi.core.exception.children.NaaviForbiddenException;
 import fr.naavi.core.exception.children.NaaviNotFoundException;
 import fr.naavi.core.validation.ValidationGroups;
 import fr.naavi.hike.abstraction.AbstractController;
 import fr.naavi.hike.dto.input.HikeDTO;
+import fr.naavi.hike.dto.input.HikeHistoryDTO;
 import fr.naavi.hike.dto.input.HikePaginationDTO;
 import fr.naavi.hike.dto.output.HikeDto;
+import fr.naavi.hike.dto.output.HikeHistoryDto;
 import fr.naavi.hike.entity.Hike;
+import fr.naavi.hike.entity.HikeHistory;
+import fr.naavi.hike.repository.HikeHistoryRepository;
 import fr.naavi.hike.repository.HikeRepository;
 import fr.naavi.hike.service.HikeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -46,6 +53,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class HikeController extends AbstractController {
     @Autowired
     private HikeRepository hikeRepository;
+
+    @Autowired
+    private HikeHistoryRepository hikeHistoryRepository;
 
     @Autowired
     private HikeService hikeService;
@@ -143,13 +153,175 @@ public class HikeController extends AbstractController {
                     )
             ),
             @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
-            @ApiResponse(responseCode = "403", ref = "#/components/responses/AccessDeniedError"),
             @ApiResponse(responseCode = "422", ref = "#/components/responses/ValidationError")
     })
     @PostMapping("/hikes")
     public HikeDto createHike(@RequestBody @Validated(ValidationGroups.OnCreate.class) HikeDTO hikeDto) {
         return this.hikeService.createHike(hikeDto);
     }
+
+    /**
+     * Endpoint to retrieve the history of a user.
+     *
+     * @param paginationDTO Pagination parameters.
+     * @return Paginator of history.
+     */
+    @Operation(
+            summary = "Consulter l'historique de randonnée",
+            description = "Permet a un membre de consulter son historique de randonnée",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            tags = {"Randonnée"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Historique des randonnées",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = PaginatorDTO.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError")
+    })
+    @GetMapping("/hikes/history")
+    public PaginatorDTO<HikeHistoryDto> getHistory(@Valid @ModelAttribute PaginationDTO paginationDTO) {
+        return this.hikeHistoryRepository.findAllWithPagination(paginationDTO, this.getUser().getId());
+    }
+
+    /**
+     * Endpoint to save the history of a user.
+     *
+     * @param hikeHistoryDTO History to save.
+     * @return Message of success.
+     */
+    @Operation(
+            summary = "Sauvegarder une randonnée",
+            description = "Permet a un membre de sauvegarder une randonnée qu'il vient de faire",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            tags = {"Randonnée"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Randonnée sauvegarder avec succès.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"hike.history.success\",\n"
+                                            + "  \"message\": \"The hike has been successfully saved.\",\n"
+                                            + "  \"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Randonnée introuvable",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"hike.not_found\",\n"
+                                            + "  \"message\": \"Hike not found\",\n"
+                                            + "  \"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "422", ref = "#/components/responses/ValidationError")
+    })
+    @PostMapping("/hikes/history")
+    public ApiResponseDTO saveHistory(@RequestBody @Validated HikeHistoryDTO hikeHistoryDTO) {
+        Hike hike = this.hikeRepository.findById(hikeHistoryDTO.getHikeId())
+                .orElseThrow(() -> new NaaviNotFoundException("hike.not_found", "Hike not found"));
+
+        this.hikeService.saveHikeHistory(this.getUser(), hike, hikeHistoryDTO);
+        return new ApiResponseDTO("hike.history.success", "The hike has been successfully saved.");
+    }
+
+    /**
+     * Endpoint to delete a history.
+     *
+     * @param id History ID.
+     * @return Message of success.
+     */
+    @Operation(
+            summary = "Supprimer une randonnée sauvegarder",
+            description = "Permet a un membre de supprimer une randonnée qu'il a fait",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            tags = {"Randonnée"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Randonnée supprimer avec succès.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"hike.history.success\",\n"
+                                            + "  \"message\": \"The hike has been successfully deleted.\",\n"
+                                            + "  \"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Accès refusé",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"hike.history.forbidden\",\n"
+                                            + "  \"message\": \"You are not allowed to delete this hike history.\",\n"
+                                            + "  \"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Randonnée introuvable",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"hike.history.not_found\",\n"
+                                            + "  \"message\": \"Hike history not found\",\n"
+                                            + "  \"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            )
+    })
+    @DeleteMapping("/hikes/history/{id}")
+    public ApiResponseDTO deleteHistory(@PathVariable Long id) {
+        HikeHistory hikeHistory = this.hikeHistoryRepository.findById(id)
+                .orElseThrow(() -> new NaaviNotFoundException("hike.history.not_found", "Hike history not found"));
+
+        if (
+                !(this.isGranted(RoleEnum.ROLE_ADMIN) || this.isGranted(RoleEnum.ROLE_MODERATOR))
+                        && !hikeHistory.getUser().equals(this.getUser().getId())
+        ) {
+            throw new NaaviForbiddenException("hike.history.forbidden", "You are not allowed to delete this hike history.");
+        }
+
+        this.hikeHistoryRepository.delete(hikeHistory);
+        return new ApiResponseDTO("hike.history.success", "The hike has been successfully deleted.");
+    }
+
+    //////////////////////
+    /// ADMINISTRATION ///
+    //////////////////////
 
     /**
      * Endpoint to update a hike.
@@ -247,5 +419,29 @@ public class HikeController extends AbstractController {
         this.hikeService.deleteHike(hike);
 
         return new ApiResponseDTO("hike.deleted", "Hike successfully deleted");
+    }
+
+    @Operation(
+            summary = "Consulter l'historique de randonnée d'un utilisateur",
+            description = "Permet a un administrateur de consulter l'historique de randonnée d'un utilisateur",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            tags = {"Administration"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Historique de randonnée",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = PaginatorDTO.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
+            @ApiResponse(responseCode = "403", ref = "#/components/responses/AccessDeniedError")
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/administration/hikes/history/user/{id}")
+    public PaginatorDTO<HikeHistoryDto> getUserHistory(@PathVariable Long id, @Valid @ModelAttribute PaginationDTO paginationDTO) {
+        return this.hikeHistoryRepository.findAllWithPagination(paginationDTO, id);
     }
 }

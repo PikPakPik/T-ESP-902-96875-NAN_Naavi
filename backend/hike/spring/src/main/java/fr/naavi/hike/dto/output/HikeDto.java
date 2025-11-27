@@ -2,10 +2,13 @@ package fr.naavi.hike.dto.output;
 
 import fr.naavi.hike.entity.Hike;
 import fr.naavi.hike.enums.DifficultyEnum;
+import fr.naavi.hike.enums.SeasonEnum;
+import fr.naavi.hike.enums.SourceEnum;
 import fr.naavi.hike.enums.StatusEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Schema(description = "Informations sur une randonnée")
 public class HikeDto {
@@ -33,8 +36,11 @@ public class HikeDto {
     @Schema(description = "Dénivelé du point d'arrivée", example = "200")
     private final Integer arrivalElevation;
 
+    @Schema(description = "Chemin de la randonnée au format WKB")
+    private final String wkbGeometry;
+
     @Schema(description = "Liste des points de la randonnée au format WKB")
-    private String wkbGeometry;
+    private final String wkbWaypoints;
 
     @Schema(description = "Distance de la randonnée en mètre")
     private final Integer distance;
@@ -47,6 +53,12 @@ public class HikeDto {
 
     @Schema(description = "Statut de la randonnée", example = "PUBLISHED", implementation = StatusEnum.class)
     private final StatusEnum status;
+
+    @Schema(description = "Liste des saisons conseillé pour pratiquer la randonnée")
+    private final List<SeasonEnum> seasons;
+
+    @Schema(description = "Source de la ranndonnée")
+    private final SourceEnum source;
 
     @Schema(description = "Date de création de la randonnée", example = "2024-06-01T12:00:00")
     private final LocalDateTime createdAt;
@@ -70,9 +82,12 @@ public class HikeDto {
         this.arrivalPointLongitude = hike.getArrivalPointLongitude();
         this.arrivalElevation = hike.getArrivalElevation();
         this.wkbGeometry = hike.getWkbGeometry();
+        this.wkbWaypoints = hike.getWkbWaypoints();
         this.distance = hike.getDistance();
         this.location = hike.getLocation();
         this.difficulty = hike.getDifficulty();
+        this.seasons = hike.getSeasons();
+        this.source = hike.getSource();
         this.status = hike.getStatus();
         this.createdAt = hike.getCreatedAt();
         this.updatedAt = hike.getUpdatedAt();
@@ -114,6 +129,10 @@ public class HikeDto {
         return wkbGeometry;
     }
 
+    public String getWkbWaypoints() {
+        return wkbWaypoints;
+    }
+
     public Integer getDistance() {
         return distance;
     }
@@ -124,6 +143,14 @@ public class HikeDto {
 
     public DifficultyEnum getDifficulty() {
         return difficulty;
+    }
+
+    public SourceEnum getSource() {
+        return source;
+    }
+
+    public List<SeasonEnum> getSeasons() {
+        return seasons;
     }
 
     public StatusEnum getStatus() {

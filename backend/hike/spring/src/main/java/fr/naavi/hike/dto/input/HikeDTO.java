@@ -1,14 +1,20 @@
 package fr.naavi.hike.dto.input;
 
-import fr.naavi.hike.enums.DifficultyEnum;
-import fr.naavi.hike.enums.StatusEnum;
 import fr.naavi.core.validation.ValidationGroups;
+import fr.naavi.hike.enums.DifficultyEnum;
+import fr.naavi.hike.enums.SeasonEnum;
+import fr.naavi.hike.enums.StatusEnum;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
+import java.util.List;
 
 public class HikeDTO {
     @Schema(description = "Nom de la randonnée", example = "Circuit de l'Oratoire au départ de saulges")
     @NotNull(groups = { ValidationGroups.OnCreate.class, ValidationGroups.OnUpdate.class })
+    @NotEmpty(groups = { ValidationGroups.OnCreate.class, ValidationGroups.OnUpdate.class })
     private String name;
 
     @Schema(description = "Point de départ de la randonnée (latitude)", example = "47.2180438348419")
@@ -35,8 +41,15 @@ public class HikeDTO {
     @NotNull(groups = ValidationGroups.OnCreate.class)
     private Integer arrivalElevation;
 
-    @Schema(description = "Liste des points de la randonnée au format WKB")
+    @Schema(description = "Chemin de la randonnée au format WKB")
+    @NotNull(groups = ValidationGroups.OnCreate.class)
+    @NotEmpty(groups = ValidationGroups.OnCreate.class)
     private String wkbGeometry;
+
+    @Schema(description = "Liste des points de la randonnée au format WKB")
+    @NotNull(groups = ValidationGroups.OnCreate.class)
+    @NotEmpty(groups = ValidationGroups.OnCreate.class)
+    private String wkbWaypoints;
 
     @Schema(description = "Distance de la randonnée en mètre", example = "3600")
     private Integer distance;
@@ -46,6 +59,12 @@ public class HikeDTO {
 
     @Schema(description = "Difficulté de la randonnée", example = "EASY", implementation = DifficultyEnum.class)
     private String difficulty;
+
+    @ArraySchema(schema = @Schema(
+            description = "Liste des saisons conseillé pour cette randonnée",
+            implementation = SeasonEnum.class)
+    )
+    private List<String> seasons;
 
     @Schema(description = "Statut de la randonnée", example = "PUBLISHED", implementation = StatusEnum.class)
     private String status;
@@ -82,6 +101,10 @@ public class HikeDTO {
         return wkbGeometry;
     }
 
+    public String getWkbWaypoints() {
+        return wkbWaypoints;
+    }
+
     public Integer getDistance() {
         return distance;
     }
@@ -92,6 +115,10 @@ public class HikeDTO {
 
     public String getDifficulty() {
         return difficulty;
+    }
+
+    public List<String> getSeasons() {
+        return seasons;
     }
 
     public String getStatus() {

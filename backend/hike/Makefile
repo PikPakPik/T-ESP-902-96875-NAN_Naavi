@@ -25,3 +25,7 @@ quality:
 .PHONY: bash
 bash:
 	docker compose exec -it spring /bin/sh
+
+.PHONY: test
+test:
+	docker compose exec spring ./mvnw -Pdev -Dspring.profiles.active=ci test
