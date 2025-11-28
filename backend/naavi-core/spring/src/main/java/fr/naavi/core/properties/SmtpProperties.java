@@ -8,6 +8,7 @@ public class SmtpProperties {
     private Integer port;
     private String username;
     private String password;
+    private String from;
     private Boolean propertiesMailSmtpAuth;
     private String propertiesMailTransportProtocol;
     private Boolean propertiesMailSmtpSslEnable;
@@ -44,6 +45,14 @@ public class SmtpProperties {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getFrom() {
+        return from;
+    }
+
+    public void setFrom(String from) {
+        this.from = from;
     }
 
     public Boolean getPropertiesMailSmtpAuth() {
