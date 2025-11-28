@@ -12,6 +12,7 @@ public class SmtpProperties {
     private String propertiesMailTransportProtocol;
     private Boolean propertiesMailSmtpSslEnable;
     private Boolean propertiesMailSmtpStarttlsEnable;
+    private Boolean propertiesMailSmtpStarttlsRequired;
 
     public String getHost() {
         return host;
@@ -75,5 +76,13 @@ public class SmtpProperties {
 
     public void setPropertiesMailSmtpStarttlsEnable(Boolean propertiesMailSmtpStarttlsEnable) {
         this.propertiesMailSmtpStarttlsEnable = propertiesMailSmtpStarttlsEnable;
+    }
+
+    public Boolean getPropertiesMailSmtpStarttlsRequired() {
+        return propertiesMailSmtpStarttlsRequired;
+    }
+
+    public void setPropertiesMailSmtpStarttlsRequired(Boolean propertiesMailSmtpStarttlsRequired) {
+        this.propertiesMailSmtpStarttlsRequired = propertiesMailSmtpStarttlsRequired;
     }
 }

@@ -54,6 +54,9 @@ public class NaaviCoreAutoConfiguration {
         if (smtpProps.getPropertiesMailSmtpStarttlsEnable() != null) {
             props.put("mail.smtp.starttls.enable", smtpProps.getPropertiesMailSmtpStarttlsEnable());
         }
+        if (smtpProps.getPropertiesMailSmtpStarttlsRequired() != null) {
+            props.put("mail.smtp.starttls.required", smtpProps.getPropertiesMailSmtpStarttlsRequired());
+        }
 
         return mailSender;
     }
