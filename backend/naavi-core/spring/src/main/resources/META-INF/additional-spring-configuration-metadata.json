@@ -74,7 +74,8 @@
     {
       "name": "spring.mail.from",
       "type": "java.lang.String",
-      "description": "Default sender address for emails"
+      "description": "Default sender address for emails",
+      "defaultValue": "no-reply@naavi-trails.fr"
     },
     {
       "name": "spring.mail.properties.mail.smtp.auth",
