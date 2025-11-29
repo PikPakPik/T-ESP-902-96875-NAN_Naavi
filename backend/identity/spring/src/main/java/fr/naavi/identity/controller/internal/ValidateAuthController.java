@@ -1,5 +1,8 @@
 package fr.naavi.identity.controller.internal;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.naavi.core.dto.InternalAuthTokenDTO;
 import fr.naavi.core.enums.JwtEnum;
 import fr.naavi.core.enums.TokenType;
 import fr.naavi.core.service.JwtService;
@@ -22,7 +25,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -86,29 +88,32 @@ public class ValidateAuthController extends AbstractController {
     }
 
     private String generateGuestToken() {
-        Map<String, Object> newClaims = new HashMap<>();
-        newClaims.put("type", TokenType.GUEST);
-        return this.generateToken(newClaims);
+        return this.generateToken(new InternalAuthTokenDTO(TokenType.LOGGED));
     }
 
     private String generateLoggedToken(User user) {
-        Map<String, Object> newClaims = new HashMap<>();
-        newClaims.put("type", TokenType.LOGGED);
-        newClaims.put("id", user.getId());
-        newClaims.put("firstname", user.getFirstname());
-        newClaims.put("lastname", user.getLastname());
-        newClaims.put("email", user.getEmail());
-        newClaims.put("roles", user.getRoles());
-        newClaims.put("permissions", user.getPermissions());
-        return this.generateToken(newClaims);
+        InternalAuthTokenDTO internalAuthTokenDTO = new InternalAuthTokenDTO(TokenType.LOGGED);
+        internalAuthTokenDTO.setId(user.getId());
+        internalAuthTokenDTO.setFirstname(user.getFirstname());
+        internalAuthTokenDTO.setLastname(user.getLastname());
+        internalAuthTokenDTO.setEmail(user.getEmail());
+        internalAuthTokenDTO.setRoles(user.getRoles());
+        internalAuthTokenDTO.setPermissions(user.getPermissions());
+        return this.generateToken(internalAuthTokenDTO);
     }
 
-    private String generateToken(Map<String, Object> newClaims) {
+    private String generateToken(InternalAuthTokenDTO claims) {
         Instant now = Instant.now();
         Instant expiration = now.plus(30, ChronoUnit.MINUTES);
+        ObjectMapper objectMapper = new ObjectMapper();
 
         JwtBuilder jwt = Jwts.builder()
-                .claims(newClaims)
+                .claims(
+                        objectMapper.convertValue(
+                                claims,
+                                new TypeReference<Map<String, Object>>() {}
+                        )
+                )
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiration));
 
