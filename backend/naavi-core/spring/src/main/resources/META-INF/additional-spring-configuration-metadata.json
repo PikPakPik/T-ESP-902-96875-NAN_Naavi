@@ -72,6 +72,11 @@
       "description": "Password for SMTP authentication"
     },
     {
+      "name": "spring.mail.from",
+      "type": "java.lang.String",
+      "description": "Default sender address for emails"
+    },
+    {
       "name": "spring.mail.properties.mail.smtp.auth",
       "type": "java.lang.Boolean",
       "description": "Enable SMTP authentication",
@@ -93,6 +98,12 @@
       "name": "spring.mail.properties.mail.smtp.starttls.enable",
       "type": "java.lang.Boolean",
       "description": "Enable STARTTLS encryption for SMTP connection",
+      "defaultValue": true
+    },
+    {
+      "name": "spring.mail.properties.mail.smtp.starttls.required",
+      "type": "java.lang.Boolean",
+      "description": "Enables TLS negotiation attempt via STARTTLS",
       "defaultValue": true
     }
   ]
