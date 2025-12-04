@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
-public class HikePaginationDTO extends PaginationDTO {
+public class GeoPaginationDTO extends PaginationDTO {
     @Schema(description = "Latitude de la position de référence", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull
     private Double latitude;

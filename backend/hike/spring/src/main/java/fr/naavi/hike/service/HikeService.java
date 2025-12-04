@@ -114,12 +114,23 @@ public class HikeService {
             hike.setWkbGeometry(hikeDto.getWkbGeometry());
         }
 
+        if (hikeDto.getWkbWaypoints() != null && !hikeDto.getWkbWaypoints().isEmpty()) {
+            hike.setWkbWaypoints(hikeDto.getWkbWaypoints());
+        }
+
         if (hikeDto.getDistance() != null) {
             hike.setDistance(hikeDto.getDistance());
         }
 
         if (hikeDto.getDuration() != null) {
             hike.setDuration(hikeDto.getDuration());
+        }
+
+        if (hikeDto.getSeasons() != null) {
+            hike.setSeasons(hikeDto.getSeasons().stream()
+                    .filter(this::isValidSeason)
+                    .map(SeasonEnum::valueOf)
+                    .toList());
         }
 
         if (hikeDto.getDifficulty() != null && isValidDifficulty(hikeDto.getDifficulty())) {

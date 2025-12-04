@@ -5,6 +5,7 @@ import fr.naavi.hike.enums.DifficultyEnum;
 import fr.naavi.hike.enums.SeasonEnum;
 import fr.naavi.hike.enums.SourceEnum;
 import fr.naavi.hike.enums.StatusEnum;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -54,10 +55,13 @@ public class HikeDto {
     @Schema(description = "Statut de la randonnée", example = "PUBLISHED", implementation = StatusEnum.class)
     private final StatusEnum status;
 
-    @Schema(description = "Liste des saisons conseillé pour pratiquer la randonnée")
+    @ArraySchema(schema = @Schema(
+            description = "Liste des saisons conseillé pour pratiquer la randonnée",
+            implementation = SeasonEnum.class)
+    )
     private final List<SeasonEnum> seasons;
 
-    @Schema(description = "Source de la ranndonnée")
+    @Schema(description = "Source de la ranndonnée", implementation = SourceEnum.class)
     private final SourceEnum source;
 
     @Schema(description = "Date de création de la randonnée", example = "2024-06-01T12:00:00")

@@ -300,42 +300,42 @@ public class Hike {
     }
 
     /**
-     * @return The status of the user, indicating their verification and access level.
+     * @return The status of the hike, indicating their verification and access level.
      */
     public StatusEnum getStatus() {
         return status;
     }
 
     /**
-     * @param status The status to set for the user, indicating their verification and access level.
+     * @param status The status to set for the hike, indicating their verification and access level.
      */
     public void setStatus(StatusEnum status) {
         this.status = status;
     }
 
     /**
-     * @return The timestamp when the user was created.
+     * @return The timestamp when the hike was created.
      */
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
     /**
-     * @param createdAt The timestamp to set for when the user was created.
+     * @param createdAt The timestamp to set for when the hike was created.
      */
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
     /**
-     * @return The timestamp when the user was last updated.
+     * @return The timestamp when the hike was last updated.
      */
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
 
     /**
-     * @param updatedAt The timestamp to set for when the user was last updated.
+     * @param updatedAt The timestamp to set for when the hike was last updated.
      */
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;

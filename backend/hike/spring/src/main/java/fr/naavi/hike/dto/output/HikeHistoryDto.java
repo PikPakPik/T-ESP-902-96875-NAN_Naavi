@@ -13,6 +13,9 @@ public class HikeHistoryDto {
     @Schema(description = "Nom de la randonnée", example = "Circuit de l'Oratoire au départ de saulges")
     private final String hike;
 
+    @Schema(description = "Durée de la randonnée (en secondes)", example = "3600")
+    private final Integer duration;
+
     @Schema(description = "Date de création de la randonnée", example = "2024-06-01T12:00:00")
     private final LocalDateTime createdAt;
 
@@ -25,6 +28,7 @@ public class HikeHistoryDto {
     public HikeHistoryDto(HikeHistory hikeHistory, boolean showId) {
         this.id = showId ? hikeHistory.getId() : null;
         this.hike = hikeHistory.getHike().getName();
+        this.duration = hikeHistory.getDuration();
         this.createdAt = hikeHistory.getCreatedAt();
     }
 
@@ -34,6 +38,10 @@ public class HikeHistoryDto {
 
     public String getHike() {
         return hike;
+    }
+
+    public Integer getDuration() {
+        return duration;
     }
 
     public LocalDateTime getCreatedAt() {

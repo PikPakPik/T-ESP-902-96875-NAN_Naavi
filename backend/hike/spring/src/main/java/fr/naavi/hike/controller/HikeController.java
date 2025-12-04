@@ -9,9 +9,9 @@ import fr.naavi.core.exception.children.NaaviForbiddenException;
 import fr.naavi.core.exception.children.NaaviNotFoundException;
 import fr.naavi.core.validation.ValidationGroups;
 import fr.naavi.hike.abstraction.AbstractController;
+import fr.naavi.hike.dto.input.GeoPaginationDTO;
 import fr.naavi.hike.dto.input.HikeDTO;
 import fr.naavi.hike.dto.input.HikeHistoryDTO;
-import fr.naavi.hike.dto.input.HikePaginationDTO;
 import fr.naavi.hike.dto.output.HikeDto;
 import fr.naavi.hike.dto.output.HikeHistoryDto;
 import fr.naavi.hike.entity.Hike;
@@ -23,6 +23,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -63,18 +64,18 @@ public class HikeController extends AbstractController {
     /**
      * Endpoint to retrieve all hikes.
      *
-     * @param hikePaginationDTO Pagination parameters.
+     * @param geoPaginationDTO Pagination parameters.
      * @return Paginator of hikes.
      */
     @Operation(
-            summary = "Rechercher une randonnée",
-            description = "Retourner la liste de randonnée",
+            summary = "Rechercher des randonnées",
+            description = "Retourner la liste des randonnées",
             tags = {"Randonnée"}
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Liste paginée des utilisateurs retournée avec succès.",
+                    description = "Liste paginée des randonnées retournée avec succès.",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = PaginatorDTO.class)
@@ -84,8 +85,8 @@ public class HikeController extends AbstractController {
     })
     @AuthenticationNotRequired
     @GetMapping("/hikes")
-    public PaginatorDTO<HikeDto> hikes(@Valid @ModelAttribute HikePaginationDTO hikePaginationDTO) {
-        return this.hikeRepository.findAllHikeWithPagination(hikePaginationDTO);
+    public PaginatorDTO<HikeDto> hikes(@Valid @ModelAttribute GeoPaginationDTO geoPaginationDTO) {
+        return this.hikeRepository.findAllHikeWithPagination(geoPaginationDTO);
     }
 
     /**
@@ -114,6 +115,7 @@ public class HikeController extends AbstractController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
                                     example = "{"
                                             + "\"i18nKey\": \"hike.not_found\",\n"
                                             + "\"message\": \"Hike not found\",\n"
@@ -150,6 +152,39 @@ public class HikeController extends AbstractController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = HikeDto.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Bad request",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "If status is invalid",
+                                            value = "{"
+                                                    + "\"i18nKey\": \"hike.status_invalid\","
+                                                    + "\"message\": \"The status '...' does not exist.\","
+                                                    + "\"extra\": null"
+                                                    + "}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "If difficulty is invalid",
+                                            value = "{"
+                                                    + "\"i18nKey\": \"hike.difficulty_invalid\","
+                                                    + "\"message\": \"The difficulty '...' does not exist.\","
+                                                    + "\"extra\": null"
+                                                    + "}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "If season is invalid",
+                                            value = "{"
+                                                    + "\"i18nKey\": \"hike.season_invalid\","
+                                                    + "\"message\": \"The season '...' does not exist.\","
+                                                    + "\"extra\": null"
+                                                    + "}"
+                                    )
+                            }
                     )
             ),
             @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
@@ -345,6 +380,39 @@ public class HikeController extends AbstractController {
                             schema = @Schema(implementation = HikeDto.class)
                     )
             ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Bad request",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "If status is invalid",
+                                            value = "{"
+                                                    + "\"i18nKey\": \"hike.status_invalid\","
+                                                    + "\"message\": \"The status '...' does not exist.\","
+                                                    + "\"extra\": null"
+                                                    + "}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "If difficulty is invalid",
+                                            value = "{"
+                                                    + "\"i18nKey\": \"hike.difficulty_invalid\","
+                                                    + "\"message\": \"The difficulty '...' does not exist.\","
+                                                    + "\"extra\": null"
+                                                    + "}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "If season is invalid",
+                                            value = "{"
+                                                    + "\"i18nKey\": \"hike.season_invalid\","
+                                                    + "\"message\": \"The season '...' does not exist.\","
+                                                    + "\"extra\": null"
+                                                    + "}"
+                                    )
+                            }
+                    )
+            ),
             @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
             @ApiResponse(responseCode = "403", ref = "#/components/responses/AccessDeniedError"),
             @ApiResponse(
@@ -353,6 +421,7 @@ public class HikeController extends AbstractController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
                                     example = "{\n"
                                             + "\"i18nKey\": \"hike.not_found\",\n"
                                             + "\"message\": \"Hike not found\",\n"
@@ -401,6 +470,7 @@ public class HikeController extends AbstractController {
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
                                     example = "{\n"
                                             + "\"i18nKey\": \"hike.not_found\",\n"
                                             + "\"message\": \"Hike not found\",\n"
@@ -421,6 +491,13 @@ public class HikeController extends AbstractController {
         return new ApiResponseDTO("hike.deleted", "Hike successfully deleted");
     }
 
+    /**
+     * Endpoint to retrieve the history of a user.
+     *
+     * @param id User ID.
+     * @param paginationDTO Pagination parameters.
+     * @return Paginator of history.
+     */
     @Operation(
             summary = "Consulter l'historique de randonnée d'un utilisateur",
             description = "Permet a un administrateur de consulter l'historique de randonnée d'un utilisateur",

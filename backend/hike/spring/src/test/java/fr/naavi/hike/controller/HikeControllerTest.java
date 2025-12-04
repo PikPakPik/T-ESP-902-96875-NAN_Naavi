@@ -9,7 +9,7 @@ import fr.naavi.hike.configuration.SecurityConfigurationTest;
 import fr.naavi.hike.dto.UserDTO;
 import fr.naavi.hike.dto.input.HikeDTO;
 import fr.naavi.hike.dto.input.HikeHistoryDTO;
-import fr.naavi.hike.dto.input.HikePaginationDTO;
+import fr.naavi.hike.dto.input.GeoPaginationDTO;
 import fr.naavi.hike.dto.output.HikeDto;
 import fr.naavi.hike.dto.output.HikeHistoryDto;
 import fr.naavi.hike.entity.Hike;
@@ -106,7 +106,7 @@ public class HikeControllerTest {
 
         PaginatorDTO<HikeDto> paginatorDTO = new PaginatorDTO<>(hikeList, hikeList.toArray().length, paginationDTO);
 
-        when(hikeRepository.findAllHikeWithPagination(any(HikePaginationDTO.class)))
+        when(hikeRepository.findAllHikeWithPagination(any(GeoPaginationDTO.class)))
                 .thenReturn(paginatorDTO);
 
         mockMvc.perform(get("/hikes")
@@ -122,7 +122,7 @@ public class HikeControllerTest {
                 .andExpect(jsonPath("$.nextPage").doesNotExist())
                 .andExpect(jsonPath("$.previousPage").doesNotExist());
 
-        verify(hikeRepository).findAllHikeWithPagination(any(HikePaginationDTO.class));
+        verify(hikeRepository).findAllHikeWithPagination(any(GeoPaginationDTO.class));
     }
 
     @Test
