@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
@@ -88,7 +89,10 @@ public class ValidateAuthController extends AbstractController {
     }
 
     private String generateGuestToken() {
-        return this.generateToken(new InternalAuthTokenDTO(TokenType.LOGGED));
+        InternalAuthTokenDTO dto = new InternalAuthTokenDTO(TokenType.GUEST);
+        dto.setRoles(Collections.emptyList());
+        dto.setPermissions(Collections.emptyList());
+        return this.generateToken(dto);
     }
 
     private String generateLoggedToken(User user) {
