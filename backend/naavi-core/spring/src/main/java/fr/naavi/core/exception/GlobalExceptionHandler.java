@@ -41,6 +41,6 @@ public class GlobalExceptionHandler {
                 "Validation failed",
                 errors
         );
-        return new ResponseEntity<>(response, HttpStatus.UNPROCESSABLE_ENTITY);
+        return new ResponseEntity<>(response, HttpStatus.UNPROCESSABLE_CONTENT);
     }
 }

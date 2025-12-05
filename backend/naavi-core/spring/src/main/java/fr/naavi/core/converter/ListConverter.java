@@ -1,14 +1,15 @@
 package fr.naavi.core.converter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
 import java.util.List;
 
 @SuppressWarnings("unused")
+@Converter
 public abstract class ListConverter<T> implements AttributeConverter<List<T>, String> {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final TypeReference<List<T>> typeReference;
@@ -26,7 +27,7 @@ public abstract class ListConverter<T> implements AttributeConverter<List<T>, St
     public String convertToDatabaseColumn(List<T> attribute) {
         try {
             return objectMapper.writeValueAsString(attribute);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             return "[]";
         }
     }
@@ -35,7 +36,7 @@ public abstract class ListConverter<T> implements AttributeConverter<List<T>, St
     public List<T> convertToEntityAttribute(String databaseValue) {
         try {
             return objectMapper.readValue(databaseValue, typeReference);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             return List.of();
         }
     }

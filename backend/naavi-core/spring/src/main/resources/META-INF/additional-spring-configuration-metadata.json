@@ -106,6 +106,45 @@
       "type": "java.lang.Boolean",
       "description": "Enables TLS negotiation attempt via STARTTLS",
       "defaultValue": true
+    },
+    {
+      "name": "s3.endpoint",
+      "type": "java.lang.String",
+      "description": "S3 endpoint URL",
+      "defaultValue": "https://naavi-images.s3.fr-par.scw.cloud"
+    },
+    {
+      "name": "s3.access-key",
+      "type": "java.lang.String",
+      "description": "S3 access key"
+    },
+    {
+      "name": "s3.secret-key",
+      "type": "java.lang.String",
+      "description": "S3 secret key"
+    },
+    {
+      "name": "s3.region",
+      "type": "java.lang.String",
+      "description": "S3 region",
+      "defaultValue": "fr-par"
+    },
+    {
+      "name": "s3.bucket",
+      "type": "java.lang.String",
+      "description": "S3 bucket name",
+      "defaultValue": "naavi-images"
+    },
+    {
+      "name": "cloudflare.turnstile.verify-url",
+      "type": "java.lang.String",
+      "description": "Cloudflare Turnstile verification URL",
+      "defaultValue": "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+    },
+    {
+      "name": "cloudflare.turnstile.secret-key",
+      "type": "java.lang.String",
+      "description": "Cloudflare Turnstile secret key"
     }
   ]
 }
