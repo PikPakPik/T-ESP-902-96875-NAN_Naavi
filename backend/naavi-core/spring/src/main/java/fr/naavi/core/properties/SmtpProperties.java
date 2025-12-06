@@ -5,15 +5,15 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "spring.mail")
 public class SmtpProperties {
     private String host;
-    private Integer port;
+    private Integer port = 587;
     private String username;
     private String password;
-    private String from;
-    private Boolean propertiesMailSmtpAuth;
-    private String propertiesMailTransportProtocol;
-    private Boolean propertiesMailSmtpSslEnable;
-    private Boolean propertiesMailSmtpStarttlsEnable;
-    private Boolean propertiesMailSmtpStarttlsRequired;
+    private String from = "no-reply@naavi-trails.fr";
+    private Boolean propertiesMailSmtpAuth = true;
+    private String propertiesMailTransportProtocol = "smtp";
+    private Boolean propertiesMailSmtpSslEnable = false;
+    private Boolean propertiesMailSmtpStarttlsEnable = true;
+    private Boolean propertiesMailSmtpStarttlsRequired = true;
 
     public String getHost() {
         return host;

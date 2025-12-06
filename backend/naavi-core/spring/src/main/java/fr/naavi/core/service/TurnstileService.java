@@ -2,6 +2,7 @@ package fr.naavi.core.service;
 
 import fr.naavi.core.properties.TurnstileProperties;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -19,6 +20,9 @@ public class TurnstileService {
     @Autowired
     private TurnstileProperties turnstileProperties;
 
+    @Autowired
+    private Environment environment;
+
     /**
      * Validates a Turnstile token with the Cloudflare API.
      * Sends a verification request to Cloudflare's Turnstile service to determine
@@ -29,6 +33,10 @@ public class TurnstileService {
      * @return true if the token is valid and the request is legitimate, false otherwise
      */
     public boolean validate(String token, String remoteIp) {
+        if (environment.matchesProfiles("dev", "ci")) {
+            return true;
+        }
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
