@@ -460,9 +460,9 @@ public class SecurityControllerTest {
                         .content(DtoFactory.toJson(dto)))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.i18nKey").value("security.email_available"))
-                .andExpect(jsonPath("$.message").value("This email address is available."))
-                .andExpect(jsonPath("$.extra.success").value(true));
+                .andExpect(jsonPath("$.i18nKey").value("security.email_unavailable"))
+                .andExpect(jsonPath("$.message").value("This email address is already taken."))
+                .andExpect(jsonPath("$.extra.success").value(false));
     }
 
     @Test
@@ -479,9 +479,9 @@ public class SecurityControllerTest {
                         .content(DtoFactory.toJson(dto)))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.i18nKey").value("security.email_unavailable"))
-                .andExpect(jsonPath("$.message").value("This email address is already taken."))
-                .andExpect(jsonPath("$.extra.success").value(false));
+                .andExpect(jsonPath("$.i18nKey").value("security.email_available"))
+                .andExpect(jsonPath("$.message").value("This email address is available."))
+                .andExpect(jsonPath("$.extra.success").value(true));
     }
 
     @Test

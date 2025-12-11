@@ -583,16 +583,16 @@ public class SecurityController extends AbstractController {
 
         if (user == null) {
             return new ApiResponseDTO(
-                    "security.email_unavailable",
-                    "This email address is already taken.",
-                    Map.of("success", false)
+                    "security.email_available",
+                    "This email address is available.",
+                    Map.of("success", true)
             );
         }
 
         return new ApiResponseDTO(
-                "security.email_available",
-                "This email address is available.",
-                Map.of("success", true)
+                "security.email_unavailable",
+                "This email address is already taken.",
+                Map.of("success", false)
         );
     }
 }
