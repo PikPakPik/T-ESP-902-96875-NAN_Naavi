@@ -83,6 +83,64 @@ public class UserController extends AbstractController {
         return new UserDto(this.getUser(), false);
     }
 
+    /**
+     * Endpoint to update the current authenticated user.
+     *
+     * @param userDto the user DTO
+     * @return the updated user
+     */
+    @Operation(
+            summary = "Mettre à jour l'utilisateur connecté",
+            description = "Met à jour les informations de l'utilisateur actuellement authentifié. Requiert une authentification.",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            tags = {"Utilisateur"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Informations de l'utilisateur mises à jour avec succès.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = UserDto.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Utilisateur non trouvé",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    example = "{\n"
+                                            + "\"i18nKey\": \"user.not_found\",\n"
+                                            + "\"message\": \"User not found\",\n"
+                                            + "\"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Conflit pendant l'enregistrement des données",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    example = "{\n"
+                                            + "\"i18nKey\": \"user.already_exist\",\n"
+                                            + "\"message\": \"User already exist with this email\",\n"
+                                            + "\"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "422", ref = "#/components/responses/ValidationError")
+    })
+    @PutMapping("/user")
+    public UserDto updateUser(@RequestBody @Validated UserDTO userDto) {
+        User user = this.userService.updateUser(this.getUser().getId(), userDto, false);
+        return new UserDto(user, false);
+    }
+
     //////////////////////
     /// ADMINISTRATION ///
     //////////////////////
@@ -262,7 +320,7 @@ public class UserController extends AbstractController {
                                                     + "}"
                                     ),
                                     @ExampleObject(
-                                            name = "If statis is invalid",
+                                            name = "If status is invalid",
                                             value = "{"
                                                     + "\"i18nKey\": \"user.status_invalid\","
                                                     + "\"message\": \"The status '...' does not exist.\","
@@ -301,12 +359,13 @@ public class UserController extends AbstractController {
                                             + "}"
                             )
                     )
-            )
+            ),
+            @ApiResponse(responseCode = "422", ref = "#/components/responses/ValidationError")
     })
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/administration/users/{id}")
     public UserDto updateUser(@PathVariable Long id, @RequestBody @Validated UserDTO userDto) {
-        User user = userService.updateUser(id, userDto);
+        User user = userService.updateUser(id, userDto, true);
         return new UserDto(user, true);
     }
 

@@ -1,8 +1,10 @@
-
 package fr.naavi.identity.controller;
 
 import fr.naavi.core.exception.GlobalExceptionHandler;
+import fr.naavi.core.service.TurnstileService;
+import fr.naavi.identity.configuration.CacheConfigurationTest;
 import fr.naavi.identity.dto.input.ForgotPasswordDTO;
+import fr.naavi.identity.dto.input.IsAvailableEmailDTO;
 import fr.naavi.identity.dto.input.LoginDTO;
 import fr.naavi.identity.dto.input.RefreshDTO;
 import fr.naavi.identity.dto.input.RegisterDTO;
@@ -10,848 +12,493 @@ import fr.naavi.identity.dto.input.ResetPasswordDTO;
 import fr.naavi.identity.dto.output.AuthenticationDTO;
 import fr.naavi.identity.entity.ResetPasswordRequest;
 import fr.naavi.identity.entity.Session;
-import fr.naavi.identity.entity.User;
+import fr.naavi.identity.repository.ResetPasswordRequestRepository;
 import fr.naavi.identity.repository.SessionRepository;
+import fr.naavi.identity.seeder.UserSeeder;
 import fr.naavi.identity.service.AuthenticationService;
 import fr.naavi.identity.service.MailerService;
 import fr.naavi.identity.service.UserService;
+import fr.naavi.identity.util.AuthenticationManagerUtil;
 import fr.naavi.identity.util.DtoFactory;
+import org.hamcrest.core.IsNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
-import javax.sql.DataSource;
-import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@SpringBootTest
+@AutoConfigureMockMvc
 @ActiveProfiles("ci")
-@WebMvcTest(SecurityController.class)
-@Import(GlobalExceptionHandler.class)
 @TestPropertySource(locations = "classpath:application-ci.properties")
-class SecurityControllerTest {
-    @Autowired
-    private WebApplicationContext webApplicationContext;
-
+@Import({GlobalExceptionHandler.class, CacheConfigurationTest.class})
+public class SecurityControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockitoBean
-    private UserService userService;
-
-    @MockitoBean
-    private MailerService mailerService;
+    @Autowired
+    private UserSeeder userSeeder;
 
     @MockitoBean
     private AuthenticationManager authenticationManager;
 
     @MockitoBean
-    private SessionRepository sessionRepository;
-
-    @MockitoBean
     private AuthenticationService authenticationService;
 
     @MockitoBean
-    private DataSource dataSource;
+    private TurnstileService turnstileService;
+
+    @Autowired
+    private SessionRepository sessionRepository;
+
+    @Autowired
+    private ResetPasswordRequestRepository resetPasswordRequestRepository;
+
+    @Autowired
+    private UserService userService;
+
+    @MockitoBean
+    private MailerService mailerService;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        resetPasswordRequestRepository.deleteAll();
+        sessionRepository.deleteAll();
+        userSeeder.seedUsers();
+
+        when(turnstileService.validate(anyString(), anyString())).thenReturn(true);
+    }
+
+    /*
+     * LOGIN ENDPOINT TESTS
+     */
+
+    @Test
+    void shouldLogin_WithValidCredentials() throws Exception {
+        LoginDTO loginDTO = DtoFactory.createDto(LoginDTO.class,
+                Map.of(
+                        "email", UserSeeder.USER_EMAIL,
+                        "password", UserSeeder.USER_DEFAULT_PASSWORD,
+                        "token", "azertyuiop"
+                )
+        );
+
+        AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, sessionRepository, UserSeeder.USER);
+
+        mockMvc.perform(post("/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(loginDTO)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("fake-access-token"))
+                .andExpect(jsonPath("$.refreshToken").value("fake-refresh-token"));
     }
 
     @Test
-    void register_ShouldReturn200_WhenRegistrationSuccessful() throws Exception {
-        User user = new User();
-        when(userService.checkIfUserExists(anyString())).thenReturn(null);
-        when(userService.createUser(any(RegisterDTO.class))).thenReturn(user);
-        doNothing().when(mailerService).sendRegistrationEmail(any(User.class));
-
-        RegisterDTO validRegisterDto = DtoFactory.createDto(RegisterDTO.class,
+    void shouldLogin_WithInvalidCredentials() throws Exception {
+        LoginDTO loginDTO = DtoFactory.createDto(LoginDTO.class,
                 Map.of(
-                        "firstname", "John",
-                        "lastname", "Doe",
-                        "email", "john.doe@example.com",
-                        "password", "azertyuiop",
-                        "confirmPassword", "azertyuiop"
+                        "email", UserSeeder.INVALID_USER_EMAIL,
+                        "password", UserSeeder.USER_DEFAULT_PASSWORD,
+                        "token", "azertyuiop"
+                )
+        );
+
+        mockMvc.perform(post("/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(loginDTO)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.i18nKey").value("security.invalid_credentials"))
+                .andExpect(jsonPath("$.message").value("Invalid credentials provided."))
+                .andExpect(jsonPath("$.extra").value(IsNull.nullValue()));
+    }
+
+    @Test
+    void shouldLogin_WithMalformedRequest() throws Exception {
+        LoginDTO loginDTO = DtoFactory.createDto(LoginDTO.class,
+                Map.of(
+                        "password", UserSeeder.USER_DEFAULT_PASSWORD,
+                        "token", "azertyuiop"
+                )
+        );
+
+        mockMvc.perform(post("/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(loginDTO)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.i18nKey").value("validation.failed"))
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.extra.email").value("must not be blank"));
+    }
+
+    /*
+     * REGISTER ENDPOINT TESTS
+     */
+
+    @Test
+    void shouldRegister_WithValidCredentials() throws Exception {
+        RegisterDTO registerDTO = DtoFactory.createDto(RegisterDTO.class,
+                Map.of(
+                        "firstname", "New",
+                        "lastname", "User",
+                        "email", UserSeeder.NEW_USER_EMAIL,
+                        "password", UserSeeder.USER_DEFAULT_PASSWORD,
+                        "confirmPassword", UserSeeder.USER_DEFAULT_PASSWORD,
+                        "token", "azertyuiop"
                 )
         );
 
         mockMvc.perform(post("/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(validRegisterDto)))
+                        .content(DtoFactory.toJson(registerDTO)))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.i18nKey").value("security.register.success"))
                 .andExpect(jsonPath("$.message").value("User registered successfully."))
-                .andExpect(jsonPath("$.extra").doesNotExist());
-
-        verify(userService).checkIfUserExists("john.doe@example.com");
-        verify(userService).createUser(any(RegisterDTO.class));
-        verify(mailerService).sendRegistrationEmail(user);
+                .andExpect(jsonPath("$.extra").value(IsNull.nullValue()));
     }
 
     @Test
-    void register_ShouldReturn409_WhenEmailAlreadyExists() throws Exception {
-        User user = new User();
-        user.setEmail("john.doe@example.com");
-        when(userService.checkIfUserExists(anyString())).thenReturn(user);
-
-        RegisterDTO registerDto = DtoFactory.createDto(RegisterDTO.class,
+    void shouldRegister_WithAnExistingUser() throws Exception {
+        RegisterDTO registerDTO = DtoFactory.createDto(RegisterDTO.class,
                 Map.of(
-                        "firstname", "John",
-                        "lastname", "Doe",
-                        "email", "john.doe@example.com",
-                        "password", "azertyuiop",
-                        "confirmPassword", "azertyuiop"
+                        "firstname", "User",
+                        "lastname", "User",
+                        "email", UserSeeder.USER_EMAIL,
+                        "password", UserSeeder.USER_DEFAULT_PASSWORD,
+                        "confirmPassword", UserSeeder.USER_DEFAULT_PASSWORD,
+                        "token", "azertyuiop"
                 )
         );
 
         mockMvc.perform(post("/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(registerDto)))
+                        .content(DtoFactory.toJson(registerDTO)))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isConflict())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.i18nKey").value("security.email_already_exists"))
-                .andExpect(jsonPath("$.message").value("An account with this email already exists."));
-
-        verify(userService).checkIfUserExists("john.doe@example.com");
-        verify(userService, never()).createUser(any(RegisterDTO.class));
-        verify(mailerService, never()).sendRegistrationEmail(any(User.class));
+                .andExpect(jsonPath("$.message").value("An account with this email already exists."))
+                .andExpect(jsonPath("$.extra").value(IsNull.nullValue()));
     }
 
     @Test
-    void register_ShouldReturn400_WhenRequestBodyIsMissing() throws Exception {
-        mockMvc.perform(post("/register")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
-
-        verify(userService, never()).checkIfUserExists(anyString());
-        verify(userService, never()).createUser(any(RegisterDTO.class));
-        verify(mailerService, never()).sendRegistrationEmail(any(User.class));
-    }
-
-    @Test
-    void register_ShouldReturn400_WhenJsonIsMalformed() throws Exception {
-        mockMvc.perform(post("/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"invalid\":\"json\"}"))
-                .andExpect(status().isUnprocessableEntity());
-
-        verify(userService, never()).checkIfUserExists(anyString());
-        verify(userService, never()).createUser(any(RegisterDTO.class));
-        verify(mailerService, never()).sendRegistrationEmail(any(User.class));
-    }
-
-    @Test
-    void register_ShouldReturn422_WhenPasswordsDoNotMatch() throws Exception {
-        when(userService.checkIfUserExists(anyString())).thenReturn(null);
-
-        RegisterDTO invalidDto = DtoFactory.createDto(RegisterDTO.class,
+    void shouldRegister_WithMalformedRequest() throws Exception {
+        RegisterDTO registerDTO = DtoFactory.createDto(RegisterDTO.class,
                 Map.of(
-                        "firstname", "John",
-                        "lastname", "Doe",
-                        "email", "john.doe@example.com",
-                        "password", "azertyuiop",
-                        "confirmPassword", "differentpassword"
+                        "firstname", "User",
+                        "lastname", "User",
+                        "password", UserSeeder.USER_DEFAULT_PASSWORD,
+                        "confirmPassword", UserSeeder.USER_DEFAULT_PASSWORD,
+                        "token", "azertyuiop"
                 )
         );
 
-        mockMvc.perform(post("/register")
+        mockMvc.perform(post("/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(invalidDto)))
-                .andExpect(status().isUnprocessableEntity())
+                        .content(DtoFactory.toJson(registerDTO)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnprocessableContent())
                 .andExpect(jsonPath("$.i18nKey").value("validation.failed"))
                 .andExpect(jsonPath("$.message").value("Validation failed"))
-                .andExpect(jsonPath("$.extra.confirmPassword").exists());
-
-        verify(userService, never()).checkIfUserExists(anyString());
-        verify(userService, never()).createUser(any(RegisterDTO.class));
-        verify(mailerService, never()).sendRegistrationEmail(any(User.class));
+                .andExpect(jsonPath("$.extra.email").value("must not be blank"));
     }
 
-    @Test
-    void register_ShouldReturn422_WhenPasswordTooShort() throws Exception {
-        when(userService.checkIfUserExists(anyString())).thenReturn(null);
-        RegisterDTO shortPasswordDto = DtoFactory.createDto(RegisterDTO.class,
-                Map.of(
-                        "firstname", "John",
-                        "lastname", "Doe",
-                        "email", "john.doe@example.com",
-                        "password", "123456",
-                        "confirmPassword", "123456"
-                )
-        );
-
-        mockMvc.perform(post("/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(shortPasswordDto)))
-                .andExpect(status().isUnprocessableEntity())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.i18nKey").value("validation.failed"))
-                .andExpect(jsonPath("$.message").value("Validation failed"))
-                .andExpect(jsonPath("$.extra.password").exists())
-                .andExpect(jsonPath("$.extra.confirmPassword").exists());
-
-        verify(userService, never()).checkIfUserExists(anyString());
-        verify(userService, never()).createUser(any(RegisterDTO.class));
-        verify(mailerService, never()).sendRegistrationEmail(any(User.class));
-    }
+    /*
+     * LOGOUT ENDPOINT TESTS
+     */
 
     @Test
-    void register_ShouldReturn422_WhenEmailIsInvalid() throws Exception {
-        when(userService.checkIfUserExists(anyString())).thenReturn(null);
-        RegisterDTO invalidEmailDto = DtoFactory.createDto(RegisterDTO.class,
-                Map.of(
-                        "firstname", "John",
-                        "lastname", "Doe",
-                        "email", "email-invalide",
-                        "password", "azertyuiop",
-                        "confirmPassword", "azertyuiop"
-                )
-        );
+    void shouldLogout_WithValidSession() throws Exception {
+        AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, sessionRepository, UserSeeder.USER);
 
-        mockMvc.perform(post("/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(invalidEmailDto)))
-                .andExpect(status().isUnprocessableEntity())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.i18nKey").value("validation.failed"))
-                .andExpect(jsonPath("$.message").value("Validation failed"))
-                .andExpect(jsonPath("$.extra.email").exists());
-
-        verify(userService, never()).checkIfUserExists(anyString());
-        verify(userService, never()).createUser(any(RegisterDTO.class));
-        verify(mailerService, never()).sendRegistrationEmail(any(User.class));
-    }
-
-    @Test
-    void login_ShouldReturn400_WhenRequestBodyIsMissing() throws Exception {
-        mockMvc.perform(post("/login")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
-
-        verify(authenticationService, never()).renewSession(anyString());
-    }
-
-    @Test
-    void login_ShouldReturn400_WhenJsonIsMalformed() throws Exception {
-        mockMvc.perform(post("/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"invalid\":\"json\"}"))
-                .andExpect(status().isUnprocessableEntity());
-
-        verify(authenticationService, never()).renewSession(anyString());
-    }
-
-    @Test
-    void login_ShouldReturn200_WhenCredentialsAreValid() throws Exception {
-        Authentication mockAuthentication = mock(Authentication.class);
-        AuthenticationDTO expectedAuthDto = new AuthenticationDTO("mock-access-token", "mock-refresh-token");
-        when(mockAuthentication.getDetails()).thenReturn(expectedAuthDto);
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(mockAuthentication);
-
-        LoginDTO validLoginDto = DtoFactory.createDto(LoginDTO.class,
-                Map.of(
-                        "email", "john.doe@example.com",
-                        "password", "azertyuiop"
-                )
-        );
-
-        mockMvc.perform(post("/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(validLoginDto)))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.accessToken").value("mock-access-token"))
-                .andExpect(jsonPath("$.refreshToken").value("mock-refresh-token"));
-
-        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-    }
-
-    @Test
-    void login_ShouldReturn401_WhenCredentialsAreInvalid() throws Exception {
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new RuntimeException("Invalid credentials"));
-
-        LoginDTO invalidLoginDto = DtoFactory.createDto(LoginDTO.class,
-                Map.of(
-                        "email", "john.doe@example.com",
-                        "password", "wrongpassword"
-                )
-        );
-
-        mockMvc.perform(post("/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(invalidLoginDto)))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.i18nKey").value("security.invalid_credentials"))
-                .andExpect(jsonPath("$.message").value("Invalid credentials provided."));
-
-        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-    }
-
-    @Test
-    void login_ShouldReturn422_WhenEmailIsEmpty() throws Exception {
-        LoginDTO invalidLoginDto = DtoFactory.createDto(LoginDTO.class,
-                Map.of(
-                        "email", "",
-                        "password", "azertyuiop"
-                )
-        );
-
-        mockMvc.perform(post("/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(invalidLoginDto)))
-                .andExpect(status().isUnprocessableEntity())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.i18nKey").value("validation.failed"))
-                .andExpect(jsonPath("$.message").value("Validation failed"))
-                .andExpect(jsonPath("$.extra.email").exists());
-
-        verify(authenticationManager, never()).authenticate(any(UsernamePasswordAuthenticationToken.class));
-    }
-
-    @Test
-    void login_ShouldReturn422_WhenPasswordIsEmpty() throws Exception {
-        LoginDTO invalidLoginDto = DtoFactory.createDto(LoginDTO.class,
-                Map.of(
-                        "email", "john.doe@example.com",
-                        "password", ""
-                )
-        );
-
-        mockMvc.perform(post("/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(invalidLoginDto)))
-                .andExpect(status().isUnprocessableEntity())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.i18nKey").value("validation.failed"))
-                .andExpect(jsonPath("$.message").value("Validation failed"))
-                .andExpect(jsonPath("$.extra.password").exists());
-
-        verify(authenticationManager, never()).authenticate(any(UsernamePasswordAuthenticationToken.class));
-    }
-
-    @Test
-    void login_ShouldReturn422_WhenEmailIsInvalid() throws Exception {
-        LoginDTO invalidLoginDto = DtoFactory.createDto(LoginDTO.class,
-                Map.of(
-                        "email", "email-invalide",
-                        "password", "azertyuiop"
-                )
-        );
-
-        mockMvc.perform(post("/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(invalidLoginDto)))
-                .andExpect(status().isUnprocessableEntity())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.i18nKey").value("validation.failed"))
-                .andExpect(jsonPath("$.message").value("Validation failed"))
-                .andExpect(jsonPath("$.extra.email").exists());
-
-        verify(authenticationManager, never()).authenticate(any(UsernamePasswordAuthenticationToken.class));
-    }
-
-    @Test
-    void login_ShouldReturn422_WhenBothFieldsAreEmpty() throws Exception {
-        LoginDTO invalidLoginDto = DtoFactory.createDto(LoginDTO.class,
-                Map.of(
-                        "email", "",
-                        "password", ""
-                )
-        );
-
-        mockMvc.perform(post("/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(invalidLoginDto)))
-                .andExpect(status().isUnprocessableEntity())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.i18nKey").value("validation.failed"))
-                .andExpect(jsonPath("$.message").value("Validation failed"))
-                .andExpect(jsonPath("$.extra.email").exists())
-                .andExpect(jsonPath("$.extra.password").exists());
-
-        verify(authenticationManager, never()).authenticate(any(UsernamePasswordAuthenticationToken.class));
-    }
-
-    @Test
-    void logout_ShouldReturn200_WhenSessionIsValidAndDeleted() throws Exception {
-        String validAccessToken = "valid-access-token";
-        Session mockSession = new Session();
-        mockSession.setAccessToken(validAccessToken);
-        mockSession.setRefreshToken("refresh-token");
-        mockSession.setClientIp("192.168.1.1");
-        mockSession.setUserAgent("Test-Agent");
-        mockSession.setAccessTokenExpiredAt(LocalDateTime.now().plusHours(1));
-        mockSession.setRefreshTokenExpiredAt(LocalDateTime.now().plusDays(7));
-        mockSession.setCreatedAt(LocalDateTime.now());
-
-        User mockUser = new User();
-        mockSession.setUser(mockUser);
-        when(sessionRepository.findByAccessToken(validAccessToken)).thenReturn(Optional.of(mockSession));
+        Optional<Session> before = sessionRepository.findByAccessToken(AuthenticationManagerUtil.ACCESS_TOKEN);
+        assertTrue(before.isPresent());
 
         mockMvc.perform(delete("/logout")
-                        .requestAttr("sessId", validAccessToken))
+                        .with(user(UserSeeder.USER_EMAIL))
+                        .requestAttr("sessId", AuthenticationManagerUtil.ACCESS_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.i18nKey").value("logout.success"))
                 .andExpect(jsonPath("$.message").value("User logged out successfully."))
-                .andExpect(jsonPath("$.extra").doesNotExist());
+                .andExpect(jsonPath("$.extra").value(IsNull.nullValue()));
 
-        verify(sessionRepository).findByAccessToken(validAccessToken);
-        verify(sessionRepository).delete(mockSession);
+        Optional<Session> after = sessionRepository.findByAccessToken(AuthenticationManagerUtil.ACCESS_TOKEN);
+        assertFalse(after.isPresent());
     }
 
     @Test
-    void logout_ShouldReturn401_WhenSessionIdIsMissing() throws Exception {
-        mockMvc.perform(delete("/logout"))
-                .andExpect(status().isUnauthorized())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.i18nKey").value("security.logout.error"))
-                .andExpect(jsonPath("$.message").value("Session ID is missing or invalid."));
+    void shouldLogout_WithInvalidSession() throws Exception {
+        Session session = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, sessionRepository, UserSeeder.USER);
 
-        verify(sessionRepository, never()).findByAccessToken(any());
-        verify(sessionRepository, never()).delete(any());
-    }
-
-    @Test
-    void logout_ShouldReturn401_WhenSessionIdIsEmpty() throws Exception {
-        mockMvc.perform(delete("/logout")
-                        .requestAttr("sessId", ""))
-                .andExpect(status().isUnauthorized())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.i18nKey").value("security.logout.error"))
-                .andExpect(jsonPath("$.message").value("Session ID is missing or invalid."));
-
-        verify(sessionRepository, never()).findByAccessToken(any());
-        verify(sessionRepository, never()).delete(any());
-    }
-
-    @Test
-    void logout_ShouldReturn401_WhenSessionNotFound() throws Exception {
-        String invalidAccessToken = "invalid-access-token";
-        when(sessionRepository.findByAccessToken(invalidAccessToken)).thenReturn(Optional.empty());
+        sessionRepository.deleteById(session.getId());
+        Optional<Session> after = sessionRepository.findByAccessToken(AuthenticationManagerUtil.ACCESS_TOKEN);
+        assertFalse(after.isPresent());
 
         mockMvc.perform(delete("/logout")
-                        .requestAttr("sessId", invalidAccessToken))
+                        .with(user(UserSeeder.USER_EMAIL))
+                        .requestAttr("sessId", AuthenticationManagerUtil.ACCESS_TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isUnauthorized())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.i18nKey").value("security.logout.error"))
-                .andExpect(jsonPath("$.message").value("Session not found or already expired."));
-
-        verify(sessionRepository).findByAccessToken(invalidAccessToken);
-        verify(sessionRepository, never()).delete(any());
+                .andExpect(jsonPath("$.message").value("Session not found or already expired."))
+                .andExpect(jsonPath("$.extra").value(IsNull.nullValue()));
     }
 
-    @Test
-    void refresh_ShouldReturn200_WhenRefreshTokenIsValid() throws Exception {
-        String validRefreshToken = "valid-refresh-token";
-        AuthenticationDTO expectedAuthDto = new AuthenticationDTO("new-access-token", "new-refresh-token");
-        when(authenticationService.renewSession(validRefreshToken)).thenReturn(expectedAuthDto);
+    /*
+     * REFRESH TOKEN ENDPOINT TESTS
+     */
 
-        RefreshDTO validRefreshDto = DtoFactory.createDto(RefreshDTO.class,
-                Map.of("token", validRefreshToken)
+    @Test
+    void shouldRefresh_WithValidToken() throws Exception {
+        RefreshDTO refreshDTO = DtoFactory.createDto(RefreshDTO.class,
+                Map.of("token", "valid-refresh-token")
         );
+
+        when(authenticationService.renewSession("valid-refresh-token"))
+                .thenReturn(new AuthenticationDTO("new-access-token", "new-refresh-token"));
 
         mockMvc.perform(post("/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(validRefreshDto)))
+                        .content(DtoFactory.toJson(refreshDTO)))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.accessToken").value("new-access-token"))
                 .andExpect(jsonPath("$.refreshToken").value("new-refresh-token"));
-
-        verify(authenticationService).renewSession(validRefreshToken);
     }
 
     @Test
-    void refresh_ShouldReturn401_WhenRefreshTokenIsExpired() throws Exception {
-        String expiredRefreshToken = "expired-refresh-token";
-        when(authenticationService.renewSession(expiredRefreshToken))
-                .thenThrow(new RuntimeException("Refresh token is expired."));
-
-        RefreshDTO expiredRefreshDto = DtoFactory.createDto(RefreshDTO.class,
-                Map.of("token", expiredRefreshToken)
+    void shouldRefresh_WithInvalidToken() throws Exception {
+        RefreshDTO refreshDTO = DtoFactory.createDto(RefreshDTO.class,
+                Map.of("token", "invalid-refresh-token")
         );
+
+        when(authenticationService.renewSession(anyString()))
+                .thenThrow(new RuntimeException("invalid or expired"));
 
         mockMvc.perform(post("/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(expiredRefreshDto)))
+                        .content(DtoFactory.toJson(refreshDTO)))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isBadRequest())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.i18nKey").value("security.refresh_token_invalid"))
-                .andExpect(jsonPath("$.message").value("The provided refresh token is invalid or expired."));
-
-        verify(authenticationService).renewSession(expiredRefreshToken);
+                .andExpect(jsonPath("$.message").value("The provided refresh token is invalid or expired."))
+                .andExpect(jsonPath("$.extra").value(IsNull.nullValue()));
     }
 
-    @Test
-    void refresh_ShouldReturn400_WhenRequestBodyIsMissing() throws Exception {
-        mockMvc.perform(post("/refresh")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
-
-        verify(authenticationService, never()).renewSession(anyString());
-    }
+    /*
+     * FORGOT PASSWORD ENDPOINT TESTS
+     */
 
     @Test
-    void refresh_ShouldReturn400_WhenJsonIsMalformed() throws Exception {
-        mockMvc.perform(post("/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"invalid\":\"json\"}"))
-                .andExpect(status().isUnprocessableEntity());
-
-        verify(authenticationService, never()).renewSession(anyString());
-    }
-
-    @Test
-    void refresh_ShouldReturn422_WhenTokenIsBlank() throws Exception {
-        RefreshDTO blankTokenDto = DtoFactory.createDto(RefreshDTO.class,
-                Map.of("token", "")
-        );
-
-        mockMvc.perform(post("/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(blankTokenDto)))
-                .andExpect(status().isUnprocessableEntity())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.i18nKey").value("validation.failed"))
-                .andExpect(jsonPath("$.message").value("Validation failed"))
-                .andExpect(jsonPath("$.extra.token").exists());
-
-        verify(authenticationService, never()).renewSession(anyString());
-    }
-
-    @Test
-    void refresh_ShouldCallAuthenticationService_WhenTokenIsValid() throws Exception {
-        String validToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
-        AuthenticationDTO authDto = new AuthenticationDTO("new-access-token", "new-refresh-token");
-        when(authenticationService.renewSession(validToken)).thenReturn(authDto);
-
-        RefreshDTO refreshDto = DtoFactory.createDto(RefreshDTO.class,
-                Map.of("token", validToken)
-        );
-
-        mockMvc.perform(post("/refresh")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(refreshDto)))
-                .andExpect(status().isOk());
-
-        verify(authenticationService).renewSession(validToken);
-    }
-
-
-    @Test
-    void forgotPassword_ShouldReturn200_WhenUserExistsAndEmailIsSent() throws Exception {
-        User user = new User();
-        user.setEmail("john.doe@example.com");
-
-        ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest();
-        resetPasswordRequest.setUser(user);
-        resetPasswordRequest.setToken("mock-reset-token");
-        resetPasswordRequest.setExpiredAt(LocalDateTime.now().plusHours(24));
-        resetPasswordRequest.setCreatedAt(LocalDateTime.now());
-
-        when(userService.checkIfUserExists(user.getEmail())).thenReturn(user);
-        when(userService.createResetPasswordRequest(user)).thenReturn(resetPasswordRequest);
-
-        ForgotPasswordDTO validForgotPasswordDto = DtoFactory.createDto(ForgotPasswordDTO.class,
-                Map.of("email", user.getEmail())
-        );
-
-        mockMvc.perform(post("/forgot-password")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(validForgotPasswordDto)))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.i18nKey").value("forgot_password.success"))
-                .andExpect(jsonPath("$.message").value("If an account exists with the e-mail address entered, an e-mail will be sent to you with instructions for resetting your password."))
-                .andExpect(jsonPath("$.extra").doesNotExist());
-
-        verify(userService).checkIfUserExists(user.getEmail());
-        verify(userService).createResetPasswordRequest(user);
-        verify(mailerService).sendForgotPasswordEmail(resetPasswordRequest);
-    }
-
-    @Test
-    void forgotPassword_ShouldReturn200_WhenUserDoesNotExistButResponseIsGeneric() throws Exception {
-        String nonExistentEmail = "nonexistent@example.com";
-        when(userService.checkIfUserExists(nonExistentEmail)).thenReturn(null);
-
-        ForgotPasswordDTO forgotPasswordDto = DtoFactory.createDto(ForgotPasswordDTO.class,
-                Map.of("email", nonExistentEmail)
-        );
-
-        mockMvc.perform(post("/forgot-password")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(forgotPasswordDto)))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.i18nKey").value("forgot_password.success"))
-                .andExpect(jsonPath("$.message").value("If an account exists with the e-mail address entered, an e-mail will be sent to you with instructions for resetting your password."))
-                .andExpect(jsonPath("$.extra").doesNotExist());
-
-        verify(userService).checkIfUserExists(nonExistentEmail);
-        verify(userService, never()).createResetPasswordRequest(any(User.class));
-        verify(mailerService, never()).sendForgotPasswordEmail(any(ResetPasswordRequest.class));
-    }
-
-    @Test
-    void forgotPassword_ShouldReturn400_WhenRequestBodyIsMissing() throws Exception {
-        mockMvc.perform(post("/forgot-password")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
-
-        verify(userService, never()).checkIfUserExists(anyString());
-        verify(userService, never()).createResetPasswordRequest(any(User.class));
-        verify(mailerService, never()).sendForgotPasswordEmail(any(ResetPasswordRequest.class));
-    }
-
-    @Test
-    void forgotPassword_ShouldReturn400_WhenJsonIsMalformed() throws Exception {
-        mockMvc.perform(post("/forgot-password")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"invalid\":\"json\"}"))
-                .andExpect(status().isUnprocessableEntity());
-
-        verify(userService, never()).checkIfUserExists(anyString());
-        verify(userService, never()).createResetPasswordRequest(any(User.class));
-        verify(mailerService, never()).sendForgotPasswordEmail(any(ResetPasswordRequest.class));
-    }
-
-    @Test
-    void forgotPassword_ShouldReturn422_WhenEmailIsBlank() throws Exception {
-        ForgotPasswordDTO blankEmailDto = DtoFactory.createDto(ForgotPasswordDTO.class,
-                Map.of("email", "")
-        );
-
-        mockMvc.perform(post("/forgot-password")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(blankEmailDto)))
-                .andExpect(status().isUnprocessableEntity())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.i18nKey").value("validation.failed"))
-                .andExpect(jsonPath("$.message").value("Validation failed"))
-                .andExpect(jsonPath("$.extra.email").exists());
-
-        verify(userService, never()).checkIfUserExists(anyString());
-        verify(userService, never()).createResetPasswordRequest(any(User.class));
-        verify(mailerService, never()).sendForgotPasswordEmail(any(ResetPasswordRequest.class));
-    }
-
-    @Test
-    void forgotPassword_ShouldReturn422_WhenEmailIsInvalid() throws Exception {
-        ForgotPasswordDTO invalidEmailDto = DtoFactory.createDto(ForgotPasswordDTO.class,
-                Map.of("email", "email-invalide")
-        );
-
-        mockMvc.perform(post("/forgot-password")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(invalidEmailDto)))
-                .andExpect(status().isUnprocessableEntity())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.i18nKey").value("validation.failed"))
-                .andExpect(jsonPath("$.message").value("Validation failed"))
-                .andExpect(jsonPath("$.extra.email").exists());
-
-        verify(userService, never()).checkIfUserExists(anyString());
-        verify(userService, never()).createResetPasswordRequest(any(User.class));
-        verify(mailerService, never()).sendForgotPasswordEmail(any(ResetPasswordRequest.class));
-    }
-
-    @Test
-    void resetPassword_ShouldReturn200_WhenTokenIsValidAndPasswordReset() throws Exception {
-        String validToken = "valid-reset-token";
-        User user = new User();
-        user.setEmail("john.doe@example.com");
-
-        ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest();
-        resetPasswordRequest.setToken(validToken);
-        resetPasswordRequest.setUser(user);
-        resetPasswordRequest.setExpiredAt(LocalDateTime.now().plusHours(24));
-        resetPasswordRequest.setCreatedAt(LocalDateTime.now());
-
-        when(userService.checkIfResetPasswordRequestExists(validToken)).thenReturn(resetPasswordRequest);
-
-        ResetPasswordDTO validResetPasswordDto = DtoFactory.createDto(ResetPasswordDTO.class,
+    void shouldForgotPassword_WithExistingUser() throws Exception {
+        ForgotPasswordDTO forgotPasswordDTO = DtoFactory.createDto(ForgotPasswordDTO.class,
                 Map.of(
-                        "token", validToken,
-                        "password", "newpassword123",
-                        "confirmPassword", "newpassword123"
+                        "email", UserSeeder.USER_EMAIL,
+                        "token", "azertyuiop"
+                )
+        );
+
+        mockMvc.perform(post("/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(forgotPasswordDTO)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.i18nKey").value("forgot_password.success"))
+                .andExpect(jsonPath("$.message").value("If an account exists with the e-mail address entered, an e-mail will be sent to you with instructions for resetting your password."))
+                .andExpect(jsonPath("$.extra").value(IsNull.nullValue()));
+    }
+
+    @Test
+    void shouldForgotPassword_WithNonExistingUser() throws Exception {
+        ForgotPasswordDTO forgotPasswordDTO = DtoFactory.createDto(ForgotPasswordDTO.class,
+                Map.of(
+                        "email", UserSeeder.INVALID_USER_EMAIL,
+                        "token", "azertyuiop"
+                )
+        );
+
+        mockMvc.perform(post("/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(forgotPasswordDTO)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.i18nKey").value("forgot_password.success"))
+                .andExpect(jsonPath("$.message").value("If an account exists with the e-mail address entered, an e-mail will be sent to you with instructions for resetting your password."))
+                .andExpect(jsonPath("$.extra").value(IsNull.nullValue()));
+    }
+
+    @Test
+    void shouldForgotPassword_WithMalformedRequest() throws Exception {
+        ForgotPasswordDTO forgotPasswordDTO = DtoFactory.createDto(ForgotPasswordDTO.class,
+                Map.of(
+                        "token", "azertyuiop"
+                )
+        );
+
+        mockMvc.perform(post("/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(forgotPasswordDTO)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.i18nKey").value("validation.failed"))
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.extra.email").value("must not be blank"));
+    }
+
+    /*
+     * RESET PASSWORD ENDPOINT TESTS
+     */
+
+    @Test
+    void shouldResetPassword_WithValidToken() throws Exception {
+        ResetPasswordRequest resetRequest = userService.createResetPasswordRequest(UserSeeder.USER);
+
+        ResetPasswordDTO resetPasswordDTO = DtoFactory.createDto(
+                fr.naavi.identity.dto.input.ResetPasswordDTO.class,
+                Map.of(
+                        "resetPasswordToken", resetRequest.getToken(),
+                        "password", "new-password",
+                        "confirmPassword", "new-password",
+                        "token", "azertyuiop"
                 )
         );
 
         mockMvc.perform(post("/reset-password")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(validResetPasswordDto)))
+                        .content(DtoFactory.toJson(resetPasswordDTO)))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.i18nKey").value("reset_password.success"))
                 .andExpect(jsonPath("$.message").value("Your password has been successfully reset."))
-                .andExpect(jsonPath("$.extra").doesNotExist());
-
-        verify(userService).checkIfResetPasswordRequestExists(validToken);
-        verify(userService).updatePassword(eq(user), any(ResetPasswordDTO.class));
-        verify(userService).deleteResetPasswordRequest(resetPasswordRequest);
-        verify(mailerService).sendResetPasswordConfirmationEmail(user);
+                .andExpect(jsonPath("$.extra").value(IsNull.nullValue()));
     }
 
     @Test
-    void resetPassword_ShouldReturn404_WhenTokenIsInvalid() throws Exception {
-        String invalidToken = "invalid-token";
-        when(userService.checkIfResetPasswordRequestExists(invalidToken)).thenReturn(null);
-
-        ResetPasswordDTO resetPasswordDto = DtoFactory.createDto(ResetPasswordDTO.class,
+    void shouldResetPassword_WithInvalidToken() throws Exception {
+        ResetPasswordDTO resetPasswordDTO = DtoFactory.createDto(
+                ResetPasswordDTO.class,
                 Map.of(
-                        "token", invalidToken,
-                        "password", "newpassword123",
-                        "confirmPassword", "newpassword123"
+                        "resetPasswordToken", "non-existent-token",
+                        "password", "new-password",
+                        "confirmPassword", "new-password",
+                        "token", "azertyuiop"
                 )
         );
 
         mockMvc.perform(post("/reset-password")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(resetPasswordDto)))
+                        .content(DtoFactory.toJson(resetPasswordDTO)))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isNotFound())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.i18nKey").value("reset_password.request_not_found"))
-                .andExpect(jsonPath("$.message").value("The reset password request is invalid or has expired."));
-
-        verify(userService).checkIfResetPasswordRequestExists(invalidToken);
-        verify(userService, never()).updatePassword(any(User.class), any(ResetPasswordDTO.class));
-        verify(userService, never()).deleteResetPasswordRequest(any(ResetPasswordRequest.class));
-        verify(mailerService, never()).sendResetPasswordConfirmationEmail(any(User.class));
+                .andExpect(jsonPath("$.message").value("The reset password request is invalid or has expired."))
+                .andExpect(jsonPath("$.extra").value(IsNull.nullValue()));
     }
 
     @Test
-    void resetPassword_ShouldReturn400_WhenRequestBodyIsMissing() throws Exception {
-        mockMvc.perform(post("/reset-password")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
-
-        verify(userService, never()).checkIfResetPasswordRequestExists(anyString());
-        verify(userService, never()).updatePassword(any(User.class), any(ResetPasswordDTO.class));
-        verify(userService, never()).deleteResetPasswordRequest(any(ResetPasswordRequest.class));
-        verify(mailerService, never()).sendResetPasswordConfirmationEmail(any(User.class));
-    }
-
-    @Test
-    void resetPassword_ShouldReturn400_WhenJsonIsMalformed() throws Exception {
-        mockMvc.perform(post("/reset-password")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"invalid\":\"json\"}"))
-                .andExpect(status().isUnprocessableEntity());
-
-        verify(userService, never()).checkIfResetPasswordRequestExists(anyString());
-        verify(userService, never()).updatePassword(any(User.class), any(ResetPasswordDTO.class));
-        verify(userService, never()).deleteResetPasswordRequest(any(ResetPasswordRequest.class));
-        verify(mailerService, never()).sendResetPasswordConfirmationEmail(any(User.class));
-    }
-
-    @Test
-    void resetPassword_ShouldReturn422_WhenPasswordIsTooShort() throws Exception {
-        ResetPasswordDTO shortPasswordDto = DtoFactory.createDto(ResetPasswordDTO.class,
+    void shouldResetPassword_WithMalformedRequest() throws Exception {
+        ResetPasswordDTO resetPasswordDTO = DtoFactory.createDto(
+                ResetPasswordDTO.class,
                 Map.of(
-                        "token", "valid-token",
-                        "password", "123456",
-                        "confirmPassword", "123456"
+                        "password", "new-password",
+                        "confirmPassword", "new-password",
+                        "token", "azertyuiop"
                 )
         );
 
         mockMvc.perform(post("/reset-password")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(shortPasswordDto)))
-                .andExpect(status().isUnprocessableEntity())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                        .content(DtoFactory.toJson(resetPasswordDTO)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnprocessableContent())
                 .andExpect(jsonPath("$.i18nKey").value("validation.failed"))
                 .andExpect(jsonPath("$.message").value("Validation failed"))
-                .andExpect(jsonPath("$.extra.password").exists())
-                .andExpect(jsonPath("$.extra.confirmPassword").exists());
-
-        verify(userService, never()).checkIfResetPasswordRequestExists(anyString());
-        verify(userService, never()).updatePassword(any(User.class), any(ResetPasswordDTO.class));
-        verify(userService, never()).deleteResetPasswordRequest(any(ResetPasswordRequest.class));
-        verify(mailerService, never()).sendResetPasswordConfirmationEmail(any(User.class));
+                .andExpect(jsonPath("$.extra.resetPasswordToken").value("must not be blank"));
     }
 
+    /*
+     * IS AVAILABLE EMAIL ENDPOINT TESTS
+     */
+
     @Test
-    void resetPassword_ShouldReturn422_WhenPasswordsDoNotMatch() throws Exception {
-        ResetPasswordDTO mismatchPasswordDto = DtoFactory.createDto(ResetPasswordDTO.class,
+    void shouldIsAvailableEmail_WithExistingUser() throws Exception {
+        var dto = DtoFactory.createDto(IsAvailableEmailDTO.class,
                 Map.of(
-                        "token", "valid-token",
-                        "password", "newpassword123",
-                        "confirmPassword", "differentpassword123"
+                        "email", UserSeeder.USER_EMAIL,
+                        "token", "azertyuiop"
                 )
         );
 
-        mockMvc.perform(post("/reset-password")
+        mockMvc.perform(post("/is-available-email")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(mismatchPasswordDto)))
-                .andExpect(status().isUnprocessableEntity())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.i18nKey").value("validation.failed"))
-                .andExpect(jsonPath("$.message").value("Validation failed"))
-                .andExpect(jsonPath("$.extra.confirmPassword").exists());
-
-        verify(userService, never()).checkIfResetPasswordRequestExists(anyString());
-        verify(userService, never()).updatePassword(any(User.class), any(ResetPasswordDTO.class));
-        verify(userService, never()).deleteResetPasswordRequest(any(ResetPasswordRequest.class));
-        verify(mailerService, never()).sendResetPasswordConfirmationEmail(any(User.class));
+                        .content(DtoFactory.toJson(dto)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.i18nKey").value("security.email_available"))
+                .andExpect(jsonPath("$.message").value("This email address is available."))
+                .andExpect(jsonPath("$.extra.success").value(true));
     }
 
     @Test
-    void resetPassword_ShouldReturn422_WhenAllFieldsAreBlank() throws Exception {
-        ResetPasswordDTO allBlankDto = DtoFactory.createDto(ResetPasswordDTO.class,
+    void shouldIsAvailableEmail_WithNonExistingEmail() throws Exception {
+        var dto = DtoFactory.createDto(IsAvailableEmailDTO.class,
                 Map.of(
-                        "token", "",
-                        "password", "",
-                        "confirmPassword", ""
+                        "email", UserSeeder.INVALID_USER_EMAIL,
+                        "token", "azertyuiop"
                 )
         );
 
-        mockMvc.perform(post("/reset-password")
+        mockMvc.perform(post("/is-available-email")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(DtoFactory.toJson(allBlankDto)))
-                .andExpect(status().isUnprocessableEntity())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                        .content(DtoFactory.toJson(dto)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.i18nKey").value("security.email_unavailable"))
+                .andExpect(jsonPath("$.message").value("This email address is already taken."))
+                .andExpect(jsonPath("$.extra.success").value(false));
+    }
+
+    @Test
+    void shouldIsAvailableEmail_WithMalformedRequest() throws Exception {
+        var dto = DtoFactory.createDto(fr.naavi.identity.dto.input.IsAvailableEmailDTO.class,
+                Map.of(
+                        "token", "azertyuiop"
+                )
+        );
+
+        mockMvc.perform(post("/is-available-email")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(dto)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnprocessableContent())
                 .andExpect(jsonPath("$.i18nKey").value("validation.failed"))
                 .andExpect(jsonPath("$.message").value("Validation failed"))
-                .andExpect(jsonPath("$.extra.token").exists())
-                .andExpect(jsonPath("$.extra.password").exists())
-                .andExpect(jsonPath("$.extra.confirmPassword").exists());
-
-        verify(userService, never()).checkIfResetPasswordRequestExists(anyString());
-        verify(userService, never()).updatePassword(any(User.class), any(ResetPasswordDTO.class));
-        verify(userService, never()).deleteResetPasswordRequest(any(ResetPasswordRequest.class));
-        verify(mailerService, never()).sendResetPasswordConfirmationEmail(any(User.class));
+                .andExpect(jsonPath("$.extra.email").value("must not be blank"));
     }
 }

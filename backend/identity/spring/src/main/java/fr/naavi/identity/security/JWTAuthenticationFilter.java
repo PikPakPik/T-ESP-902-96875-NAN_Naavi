@@ -1,6 +1,6 @@
 package fr.naavi.identity.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import fr.naavi.core.dto.ApiResponseDTO;
 import fr.naavi.core.enums.JwtEnum;
 import fr.naavi.core.service.JwtService;

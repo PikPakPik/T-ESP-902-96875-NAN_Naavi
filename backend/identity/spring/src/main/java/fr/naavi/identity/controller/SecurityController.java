@@ -5,8 +5,11 @@ import fr.naavi.core.dto.ApiResponseDTO;
 import fr.naavi.core.exception.GenericHttpException;
 import fr.naavi.core.exception.children.NaaviBadCredentialsException;
 import fr.naavi.core.exception.children.NaaviUnauthorizedException;
+import fr.naavi.core.service.TurnstileService;
+import fr.naavi.core.utils.RequestUtils;
 import fr.naavi.identity.abstraction.AbstractController;
 import fr.naavi.identity.dto.input.ForgotPasswordDTO;
+import fr.naavi.identity.dto.input.IsAvailableEmailDTO;
 import fr.naavi.identity.dto.input.LoginDTO;
 import fr.naavi.identity.dto.input.RefreshDTO;
 import fr.naavi.identity.dto.input.RegisterDTO;
@@ -36,6 +39,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -45,6 +49,7 @@ public class SecurityController extends AbstractController {
     private final MailerService mailerService;
     private final SessionRepository sessionRepository;
     private final AuthenticationService authenticationService;
+    private final TurnstileService turnstileService;
 
     /**
      * Constructs a SecurityController
@@ -55,13 +60,15 @@ public class SecurityController extends AbstractController {
             AuthenticationManager authenticationManager,
             MailerService mailerService,
             SessionRepository sessionRepository,
-            AuthenticationService authenticationService
+            AuthenticationService authenticationService,
+            TurnstileService turnstileService
     ) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
         this.mailerService = mailerService;
         this.sessionRepository = sessionRepository;
         this.authenticationService = authenticationService;
+        this.turnstileService = turnstileService;
     }
 
     /**
@@ -87,23 +94,39 @@ public class SecurityController extends AbstractController {
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "Identifiants invalides.",
+                    description = "Échec lors de la tentative d'authentification",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(
-                                    implementation = ApiResponseDTO.class,
-                                    example = "{\n"
-                                            + "  \"i18nKey\": \"security.invalid_credentials\",\n"
-                                            + "  \"message\": \"Invalid credentials provided.\",\n"
-                                            + "  \"extra\": null\n"
-                                            + "}"
-                            )
+                            examples = {
+                                    @ExampleObject(
+                                            name = "If credentials are invalid",
+                                            value = "{\n"
+                                                    + "  \"i18nKey\": \"security.invalid_credentials\",\n"
+                                                    + "  \"message\": \"Invalid credentials provided.\",\n"
+                                                    + "  \"extra\": null\n"
+                                                    + "}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "If turnstile validation fails",
+                                            value = "{\n"
+                                                    + "  \"i18nKey\": \"unauthorized\",\n"
+                                                    + "  \"message\": \"Can't access this resource\",\n"
+                                                    + "  \"extra\": null\n"
+                                                    + "}"
+                                    )
+                            }
                     )
             ),
             @ApiResponse(responseCode = "422", ref = "#/components/responses/ValidationError"),
     })
     @PostMapping("/login")
     public AuthenticationDTO login(@RequestBody @Validated LoginDTO loginDto) {
+        boolean turnstile = this.turnstileService.validate(loginDto.getToken(), RequestUtils.getClientIpAddress());
+
+        if (!turnstile) {
+            throw new NaaviUnauthorizedException();
+        }
+
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword())
@@ -147,6 +170,21 @@ public class SecurityController extends AbstractController {
                     )
             ),
             @ApiResponse(
+                    responseCode = "401",
+                    description = "Échec de la validation du token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"unauthorized\",\n"
+                                            + "  \"message\": \"Can't access this resource\",\n"
+                                            + "  \"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
                     responseCode = "409",
                     description = "Un compte avec cet e-mail existe déjà.",
                     content = @Content(
@@ -166,6 +204,12 @@ public class SecurityController extends AbstractController {
     @PostMapping("/register")
     @AuthenticationNotRequired
     public ApiResponseDTO register(@RequestBody @Validated RegisterDTO registerDto) {
+        boolean turnstile = this.turnstileService.validate(registerDto.getToken(), RequestUtils.getClientIpAddress());
+
+        if (!turnstile) {
+            throw new NaaviUnauthorizedException();
+        }
+
         User existingUser = this.userService.checkIfUserExists(registerDto.getEmail());
 
         if (existingUser != null) {
@@ -341,11 +385,32 @@ public class SecurityController extends AbstractController {
                             )
                     )
             ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Échec de la validation du token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"unauthorized\",\n"
+                                            + "  \"message\": \"Can't access this resource\",\n"
+                                            + "  \"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
             @ApiResponse(responseCode = "422", ref = "#/components/responses/ValidationError"),
     })
     @PostMapping("/forgot-password")
     @AuthenticationNotRequired
     public ApiResponseDTO forgotPassword(@RequestBody @Validated ForgotPasswordDTO forgotPasswordDTO) {
+        boolean turnstile = this.turnstileService.validate(forgotPasswordDTO.getToken(), RequestUtils.getClientIpAddress());
+
+        if (!turnstile) {
+            throw new NaaviUnauthorizedException();
+        }
+
         User user = this.userService.checkIfUserExists(forgotPasswordDTO.getEmail());
 
         if (user != null) {
@@ -356,7 +421,7 @@ public class SecurityController extends AbstractController {
         return new ApiResponseDTO(
                 "forgot_password.success",
                 "If an account exists with the e-mail address entered, an e-mail will be "
-                + "sent to you with instructions for resetting your password."
+                        + "sent to you with instructions for resetting your password."
         );
     }
 
@@ -403,12 +468,33 @@ public class SecurityController extends AbstractController {
                             )
                     )
             ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Échec de la validation du token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"unauthorized\",\n"
+                                            + "  \"message\": \"Can't access this resource\",\n"
+                                            + "  \"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
             @ApiResponse(responseCode = "422", ref = "#/components/responses/ValidationError"),
     })
     @PostMapping("/reset-password")
     @AuthenticationNotRequired
     public ApiResponseDTO resetPassword(@RequestBody @Validated ResetPasswordDTO resetPasswordDTO) {
-        ResetPasswordRequest resetPasswordRequest = this.userService.checkIfResetPasswordRequestExists(resetPasswordDTO.getToken());
+        boolean turnstile = this.turnstileService.validate(resetPasswordDTO.getToken(), RequestUtils.getClientIpAddress());
+
+        if (!turnstile) {
+            throw new NaaviUnauthorizedException();
+        }
+
+        ResetPasswordRequest resetPasswordRequest = this.userService.checkIfResetPasswordRequestExists(resetPasswordDTO.getResetPasswordToken());
 
         if (resetPasswordRequest == null) {
             throw new GenericHttpException(
@@ -424,5 +510,89 @@ public class SecurityController extends AbstractController {
         this.mailerService.sendResetPasswordConfirmationEmail(user);
 
         return new ApiResponseDTO("reset_password.success", "Your password has been successfully reset.");
+    }
+
+    /**
+     * Endpoint to check if an email address is available.
+     *
+     * @param isAvailableEmailDTO the email address to check
+     * @return an ApiResponseDTO indicating success or failure
+     */
+    @Operation(
+            summary = "Vérification de la disponibilité de l'e-mail",
+            description = "Permet de vérifier si une adresse e-mail est disponible pour l'inscription.",
+            tags = {"Sécurité"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Vérification de la disponibilité de l'e-mail réussie.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "If email is available",
+                                            value = "{\n"
+                                                    + "  \"i18nKey\": \"security.email_available\",\n"
+                                                    + "  \"message\": \"This email address is available.\",\n"
+                                                    + "  \"extra\": {\n"
+                                                    + "    \"success\": true\n"
+                                                    + "  }\n"
+                                                    + "}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "If email is unavailable",
+                                            value = "{\n"
+                                                    + "  \"i18nKey\": \"security.email_unavailable\",\n"
+                                                    + "  \"message\": \"This email address is already taken.\",\n"
+                                                    + "  \"extra\": {\n"
+                                                    + "    \"success\": false\n"
+                                                    + "  }\n"
+                                                    + "}"
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Échec de la validation du token",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"unauthorized\",\n"
+                                            + "  \"message\": \"Can't access this resource\",\n"
+                                            + "  \"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "422", ref = "#/components/responses/ValidationError"),
+    })
+    @PostMapping("/is-available-email")
+    @AuthenticationNotRequired
+    public ApiResponseDTO isAvailableEmail(@RequestBody @Validated IsAvailableEmailDTO isAvailableEmailDTO) {
+        boolean turnstile = this.turnstileService.validate(isAvailableEmailDTO.getToken(), RequestUtils.getClientIpAddress());
+
+        if (!turnstile) {
+            throw new NaaviUnauthorizedException();
+        }
+
+        User user = this.userService.checkIfUserExists(isAvailableEmailDTO.getEmail());
+
+        if (user == null) {
+            return new ApiResponseDTO(
+                    "security.email_unavailable",
+                    "This email address is already taken.",
+                    Map.of("success", false)
+            );
+        }
+
+        return new ApiResponseDTO(
+                "security.email_available",
+                "This email address is available.",
+                Map.of("success", true)
+        );
     }
 }

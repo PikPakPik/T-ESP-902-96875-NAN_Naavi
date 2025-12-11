@@ -169,7 +169,7 @@ public class UserService {
      * @param userDto The DTO containing the new details.
      * @return The updated User entity.
      */
-    public User updateUser(Long id, UserDTO userDto) {
+    public User updateUser(Long id, UserDTO userDto, Boolean fromAdmin) {
         User user = userRepository.findByIdAndStatusNotDeleted(id)
                 .orElseThrow(() -> new NaaviNotFoundException("user.not_found", "User not found"));
 
@@ -189,21 +189,24 @@ public class UserService {
             }
             user.setEmail(userDto.getEmail());
         }
-        if (userDto.getRoles() != null) {
-            user.setRoles(userDto.getRoles().stream()
-                    .filter(role -> !role.equals(RoleEnum.ROLE_USER.name()))
-                    .filter(this::isValidRole)
-                    .map(RoleEnum::valueOf)
-                    .toList());
-        }
-        if (userDto.getPermissions() != null) {
-            user.setPermissions(userDto.getPermissions().stream()
-                    .filter(this::isValidPermission)
-                    .map(PermissionEnum::valueOf)
-                    .toList());
-        }
-        if (userDto.getStatus() != null && isValidStatus(userDto.getStatus())) {
-            user.setStatus(StatusEnum.valueOf(userDto.getStatus()));
+
+        if (fromAdmin) {
+            if (userDto.getRoles() != null) {
+                user.setRoles(userDto.getRoles().stream()
+                        .filter(role -> !role.equals(RoleEnum.ROLE_USER.name()))
+                        .filter(this::isValidRole)
+                        .map(RoleEnum::valueOf)
+                        .toList());
+            }
+            if (userDto.getPermissions() != null) {
+                user.setPermissions(userDto.getPermissions().stream()
+                        .filter(this::isValidPermission)
+                        .map(PermissionEnum::valueOf)
+                        .toList());
+            }
+            if (userDto.getStatus() != null && isValidStatus(userDto.getStatus())) {
+                user.setStatus(StatusEnum.valueOf(userDto.getStatus()));
+            }
         }
 
         return userRepository.save(user);

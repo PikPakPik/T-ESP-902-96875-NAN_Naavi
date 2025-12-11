@@ -1,6 +1,6 @@
 package fr.naavi.identity.converter;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
 import fr.naavi.core.converter.ListConverter;
 import fr.naavi.core.enums.RoleEnum;
 import jakarta.persistence.Converter;

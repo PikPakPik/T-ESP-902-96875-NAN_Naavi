@@ -2,12 +2,14 @@ package fr.naavi.identity.dto.input;
 
 import fr.naavi.core.validator.EqualTo;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 @EqualTo(sourceProperty = "confirmPassword", targetProperty = "password")
 public class ResetPasswordDTO {
     @NotBlank
-    private String token;
+    private String resetPasswordToken;
 
     @NotBlank
     @Size(min = 8)
@@ -17,8 +19,13 @@ public class ResetPasswordDTO {
     @Size(min = 8)
     private String confirmPassword;
 
-    public String getToken() {
-        return token;
+    @NotBlank
+    @NotNull
+    @NotEmpty
+    private String token;
+
+    public String getResetPasswordToken() {
+        return resetPasswordToken;
     }
 
     public String getPassword() {
@@ -27,5 +34,9 @@ public class ResetPasswordDTO {
 
     public String getConfirmPassword() {
         return confirmPassword;
+    }
+
+    public String getToken() {
+        return token;
     }
 }

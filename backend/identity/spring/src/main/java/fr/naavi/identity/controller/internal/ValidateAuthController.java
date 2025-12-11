@@ -1,7 +1,7 @@
 package fr.naavi.identity.controller.internal;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import fr.naavi.core.dto.InternalAuthTokenDTO;
 import fr.naavi.core.enums.JwtEnum;
 import fr.naavi.core.enums.TokenType;

@@ -1,6 +1,6 @@
 package fr.naavi.identity.configuration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import fr.naavi.core.service.JwtService;
 import fr.naavi.identity.repository.SessionRepository;
 import fr.naavi.identity.security.AuthenticationNotRequiredMatcher;
