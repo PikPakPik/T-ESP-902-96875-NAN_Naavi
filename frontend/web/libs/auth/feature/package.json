@@ -5,6 +5,7 @@
     "@angular/common": "*",
     "@angular/core": "*",
     "@angular/forms": "*",
+    "@angular/router": "*",
     "primeng": "*",
     "@web/auth/data-access": "*"
   },

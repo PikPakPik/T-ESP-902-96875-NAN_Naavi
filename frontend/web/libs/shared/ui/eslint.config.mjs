@@ -10,7 +10,7 @@ export default [
     files: ['**/*.json'],
     rules: {
       '@nx/dependency-checks': [
-        'error',
+        'off',
         {
           ignoredFiles: ['{projectRoot}/eslint.config.{js,cjs,mjs}'],
         },

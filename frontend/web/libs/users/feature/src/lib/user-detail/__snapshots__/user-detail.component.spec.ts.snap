@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`UserDetailComponent visual state Given loading user state When rendering component Then should display skeleton loader 1`] = `
+<user-detail
+  back={[Function OutputEmitterRef]}
+  currentPage={[Function Function]}
+  history={[Function Function]}
+  limit={[Function Function]}
+  loadingHistory={[Function Function]}
+  loadingUser={[Function Function]}
+  nextPage={[Function Function]}
+  pageChange={[Function OutputEmitterRef]}
+  previousPage={[Function Function]}
+  totalHistory={[Function Function]}
+  totalPages={[Function Function]}
+  user={[Function Function]}
+>
+  <div>
+    user-detail-stub
+  </div>
+</user-detail>
+`;
+
+exports[`UserDetailComponent visual state Given user and history When rendering component Then should display user card and history table 1`] = `
+<user-detail
+  back={[Function OutputEmitterRef]}
+  currentPage={[Function Function]}
+  history={[Function Function]}
+  limit={[Function Function]}
+  loadingHistory={[Function Function]}
+  loadingUser={[Function Function]}
+  nextPage={[Function Function]}
+  pageChange={[Function OutputEmitterRef]}
+  previousPage={[Function Function]}
+  totalHistory={[Function Function]}
+  totalPages={[Function Function]}
+  user={[Function Function]}
+>
+  <div>
+    user-detail-stub
+  </div>
+</user-detail>
+`;

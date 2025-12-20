@@ -2,9 +2,12 @@
 
 exports[`AuthFeatureComponent visual state Given default component state When rendering component Then should display login form with email input, password input, remember me checkbox, login button and forgot password link 1`] = `
 <web-auth-feature
-  loading="false"
+  error={[Function Function]}
+  loading={[Function Function]}
   loginForm={[Function FormGroup]}
   showForgotPasswordModal="false"
+  turnstileElementId={[Function String]}
+  turnstileToken="null"
 >
   <div
     class="login-container min-h-screen flex items-center justify-center p-4"
@@ -21,12 +24,10 @@ exports[`AuthFeatureComponent visual state Given default component state When re
           <h1
             class="welcome-title"
           >
-            Bienvenue
           </h1>
           <p
             class="welcome-subtitle"
           >
-            Connectez-vous à votre compte
           </p>
         </div>
       </div>
@@ -44,12 +45,10 @@ exports[`AuthFeatureComponent visual state Given default component state When re
               style="font-size: 3rem; color: var(--primary-color);"
             />
             <h2>
-              Connexion
             </h2>
             <p
               class="subtitle"
             >
-              Accédez à votre espace personnel
             </p>
           </div>
           <form
@@ -62,14 +61,12 @@ exports[`AuthFeatureComponent visual state Given default component state When re
               <label
                 for="email"
               >
-                Adresse email
               </label>
               <input
                 class="w-full"
                 formcontrolname="email"
                 id="email"
                 pinputtext=""
-                placeholder="votre@email.com"
               />
             </div>
             <div
@@ -78,19 +75,24 @@ exports[`AuthFeatureComponent visual state Given default component state When re
               <label
                 for="password"
               >
-                Mot de passe
               </label>
               <p-password
-                data-pc-name="password"
-                data-pc-section="root"
                 formcontrolname="password"
                 inputstyleclass="w-full"
-                placeholder="Votre mot de passe"
               >
                 <input
                   pinputtext=""
                 />
+                <p-overlay>
+                </p-overlay>
               </p-password>
+            </div>
+            <div
+              class="field mb-4"
+            >
+              <div
+                id="turnstile-widget"
+              />
             </div>
             <div
               class="flex justify-between items-center mb-6"
@@ -112,7 +114,6 @@ exports[`AuthFeatureComponent visual state Given default component state When re
                   class="ml-2 text-sm"
                   for="rememberMe"
                 >
-                   Se souvenir de moi 
                 </label>
               </div>
               <a
@@ -120,12 +121,10 @@ exports[`AuthFeatureComponent visual state Given default component state When re
                 role="button"
                 tabindex="0"
               >
-                 Mot de passe oublié ? 
               </a>
             </div>
             <p-button
-              label="Se connecter"
-              styleclass="w-full login-button"
+              class="w-full login-button"
               type="submit"
             >
               <button
@@ -139,8 +138,8 @@ exports[`AuthFeatureComponent visual state Given default component state When re
       </div>
     </div>
   </div><p-dialog
+    class="forgot-password-dialog"
     header=""
-    styleclass="forgot-password-dialog"
   >
   </p-dialog>
 </web-auth-feature>
@@ -148,9 +147,12 @@ exports[`AuthFeatureComponent visual state Given default component state When re
 
 exports[`AuthFeatureComponent visual state Given forgot password modal open When rendering component Then should display modal with forgot password component 1`] = `
 <web-auth-feature
-  loading="false"
+  error={[Function Function]}
+  loading={[Function Function]}
   loginForm={[Function FormGroup]}
   showForgotPasswordModal={[Function Boolean]}
+  turnstileElementId={[Function String]}
+  turnstileToken="null"
 >
   <div
     class="login-container min-h-screen flex items-center justify-center p-4"
@@ -172,7 +174,7 @@ exports[`AuthFeatureComponent visual state Given forgot password modal open When
           <p
             class="welcome-subtitle"
           >
-            Connectez-vous à votre compte
+             Connectez-vous à votre compte 
           </p>
         </div>
       </div>
@@ -212,10 +214,13 @@ exports[`AuthFeatureComponent visual state Given forgot password modal open When
               </label>
               <input
                 class="w-full p-component p-inputtext ng-untouched ng-pristine"
+                data-p=""
+                data-pc-name="inputtext"
+                data-pc-section="root"
                 formcontrolname="email"
                 id="email"
-                pc328=""
-                pc329=""
+                pc347=""
+                pc348=""
                 pinputtext=""
                 placeholder="votre@email.com"
               />
@@ -230,19 +235,22 @@ exports[`AuthFeatureComponent visual state Given forgot password modal open When
               </label>
               <p-password
                 class="p-component p-inputwrapper p-password ng-untouched ng-pristine ng-invalid"
+                data-p=""
                 data-pc-name="password"
                 data-pc-section="root"
                 formcontrolname="password"
                 inputstyleclass="w-full"
-                pc330=""
-                placeholder="Votre mot de passe"
+                pc349=""
                 style="position: relative;"
               >
                 <input
                   class="p-password-input w-full p-component p-inputtext"
-                  data-pc-section="input"
-                  pc334=""
-                  pc335=""
+                  data-p=""
+                  data-pc-extend="inputtext"
+                  data-pc-name="pcinputtext"
+                  data-pc-section="root"
+                  pc353=""
+                  pc354=""
                   pinputtext=""
                   placeholder="Votre mot de passe"
                   type="password"
@@ -250,10 +258,10 @@ exports[`AuthFeatureComponent visual state Given forgot password modal open When
                 <svg
                   class="p-password-toggle-mask-icon p-password-unmask-icon p-icon"
                   data-p-icon="eye"
-                  data-pc-section="showIcon"
+                  data-pc-section="unmaskicon"
                   fill="none"
                   height="14"
-                  pc346=""
+                  pc366=""
                   viewBox="0 0 14 14"
                   width="14"
                   xmlns="http://www.w3.org/2000/svg"
@@ -265,7 +273,19 @@ exports[`AuthFeatureComponent visual state Given forgot password modal open When
                     fill-rule="evenodd"
                   />
                 </svg>
+                <p-overlay
+                  data-pc-section="host"
+                  pc355=""
+                >
+                </p-overlay>
               </p-password>
+            </div>
+            <div
+              class="field mb-4"
+            >
+              <div
+                id="turnstile-widget"
+              />
             </div>
             <div
               class="flex justify-between items-center mb-6"
@@ -275,20 +295,26 @@ exports[`AuthFeatureComponent visual state Given forgot password modal open When
               >
                 <p-checkbox
                   class="p-checkbox p-component ng-untouched ng-pristine ng-valid"
+                  data-p=""
                   data-p-checked="false"
                   data-p-disabled="false"
                   data-p-highlight="false"
+                  data-pc-name="checkbox"
+                  data-pc-section="root"
                   formcontrolname="rememberMe"
                   inputid="rememberMe"
-                  pc331=""
+                  pc350=""
                 >
                   <input
                     class="p-checkbox-input"
+                    data-pc-section="input"
                     id="rememberMe"
                     type="checkbox"
                   />
                   <div
                     class="p-checkbox-box"
+                    data-p=""
+                    data-pc-section="box"
                   >
                   </div>
                 </p-checkbox>
@@ -308,24 +334,28 @@ exports[`AuthFeatureComponent visual state Given forgot password modal open When
               </a>
             </div>
             <p-button
-              label="Se connecter"
-              pc332=""
-              styleclass="w-full login-button"
+              class="w-full login-button"
+              data-pc-section="host"
+              pc351=""
               type="submit"
             >
               <button
                 autofocus="true"
-                class="p-ripple login-button p-button p-component w-full"
+                class="p-ripple p-button p-component"
+                data-p=""
+                data-p-disabled="true"
                 data-pc-name="button"
                 data-pc-section="root"
                 disabled=""
-                pc336=""
-                pc337=""
+                pc351=""
+                pc356=""
+                pc357=""
                 pripple=""
                 type="submit"
               >
                 <span
                   class="p-button-label"
+                  data-p=""
                   data-pc-section="label"
                 >
                   Se connecter
@@ -337,22 +367,33 @@ exports[`AuthFeatureComponent visual state Given forgot password modal open When
       </div>
     </div>
   </div><p-dialog
+    class="forgot-password-dialog"
+    data-pc-section="host"
     header=""
-    pc333=""
-    styleclass="forgot-password-dialog"
+    pc352=""
   >
     <div
-      class="p-dialog-mask p-overlay-mask p-overlay-mask-enter"
-      style="align-items: center; display: flex; height: 100%; justify-content: center; left: 0px; pointer-events: auto; position: fixed; top: 0px; width: 100%;"
+      class="p-dialog-mask p-overlay-mask"
+      data-p="modal"
+      data-p-scrollblocker-active="true"
+      data-pc-section="mask"
+      pc367=""
+      style="align-items: center; display: flex; height: 100%; justify-content: center; left: 0px; pointer-events: auto; position: fixed; top: 0px; width: 100%; z-index: 1101; --pui-motion-height: 0px;"
     >
       <div
         aria-labelledby="pn_id_37_header"
         aria-modal="true"
-        class="ng-trigger ng-trigger-animation forgot-password-dialog p-component p-dialog ng-animating"
-        pc347=""
+        class="p-component p-dialog"
+        data-p="modal"
+        data-pc-name="dialog"
+        data-pc-section="root"
+        pc352=""
+        pc368=""
+        pc369=""
         pfocustrap=""
+        pn_id_38=""
         role="dialog"
-        style="display: flex; flex-direction: column; pointer-events: auto;"
+        style="display: flex; flex-direction: column; pointer-events: auto; --pui-motion-height: 0px; z-index: 1102;"
       >
         <span
           aria-hidden="true"
@@ -365,26 +406,34 @@ exports[`AuthFeatureComponent visual state Given forgot password modal open When
         />
         <div
           class="p-dialog-header"
-          style=""
+          data-pc-section="header"
         >
           <span
             class="p-dialog-title"
+            data-pc-section="title"
             id="pn_id_37_header"
           >
           </span>
           <div
             class="p-dialog-header-actions"
+            data-pc-section="headeractions"
           >
             <p-button
-              pc348=""
+              data-pc-group-section="headericon"
+              data-pc-section="host"
+              pc370=""
             >
               <button
                 autofocus="true"
                 class="p-ripple p-button p-button-icon-only p-button-rounded p-button-secondary p-button-text p-component p-dialog-close-button"
-                data-pc-name="button"
+                data-p="icon-only"
+                data-p-severity="secondary"
+                data-pc-extend="button"
+                data-pc-name="pcclosebutton"
                 data-pc-section="root"
-                pc349=""
-                pc350=""
+                pc370=""
+                pc371=""
+                pc372=""
                 pripple=""
                 type="button"
               >
@@ -393,7 +442,7 @@ exports[`AuthFeatureComponent visual state Given forgot password modal open When
                   data-p-icon="times"
                   fill="none"
                   height="14"
-                  pc351=""
+                  pc373=""
                   viewBox="0 0 14 14"
                   width="14"
                   xmlns="http://www.w3.org/2000/svg"
@@ -410,7 +459,6 @@ exports[`AuthFeatureComponent visual state Given forgot password modal open When
         <div
           class="p-dialog-content"
           data-pc-section="content"
-          style=""
         >
           <forgot-password>
             <div
@@ -431,8 +479,7 @@ exports[`AuthFeatureComponent visual state Given forgot password modal open When
                 </p>
               </div>
               <form
-                class="space-y-6 ng-untouched ng-pristine ng-invalid"
-                novalidate=""
+                class="space-y-6"
               >
                 <div
                   class="space-y-2"
@@ -445,37 +492,47 @@ exports[`AuthFeatureComponent visual state Given forgot password modal open When
                   </label>
                   <input
                     autofocus="true"
-                    class="w-full ng-untouched ng-pristine p-component p-inputtext"
-                    formcontrolname="email"
+                    class="w-full p-component p-inputtext"
+                    data-p=""
+                    data-pc-name="inputtext"
+                    data-pc-section="root"
                     id="reset-email"
-                    pc338=""
-                    pc339=""
+                    name="a.form18.email"
+                    pc358=""
+                    pc359=""
                     pinputtext=""
                     placeholder="votre@email.com"
+                    required=""
+                    type="email"
                   />
                 </div>
                 <div
                   class="flex gap-3 pt-4"
                 >
                   <p-button
+                    class="flex-1"
+                    data-pc-section="host"
                     label="Annuler"
-                    pc340=""
+                    pc360=""
                     severity="secondary"
-                    styleclass="flex-1"
                     type="button"
                   >
                     <button
                       autofocus="true"
-                      class="p-ripple flex-1 p-button p-button-outlined p-button-secondary p-component"
+                      class="p-ripple p-button p-button-outlined p-button-secondary p-component"
+                      data-p="outlined"
+                      data-p-severity="secondary"
                       data-pc-name="button"
                       data-pc-section="root"
-                      pc342=""
-                      pc343=""
+                      pc360=""
+                      pc362=""
+                      pc363=""
                       pripple=""
                       type="button"
                     >
                       <span
                         class="p-button-label"
+                        data-p=""
                         data-pc-section="label"
                       >
                         Annuler
@@ -483,23 +540,27 @@ exports[`AuthFeatureComponent visual state Given forgot password modal open When
                     </button>
                   </p-button>
                   <p-button
+                    class="flex-1"
+                    data-pc-section="host"
                     label="Envoyer"
-                    pc341=""
-                    styleclass="flex-1"
+                    pc361=""
                     type="submit"
                   >
                     <button
                       autofocus="true"
-                      class="p-ripple flex-1 p-button p-component"
+                      class="p-ripple p-button p-component"
+                      data-p=""
                       data-pc-name="button"
                       data-pc-section="root"
-                      pc344=""
-                      pc345=""
+                      pc361=""
+                      pc364=""
+                      pc365=""
                       pripple=""
                       type="submit"
                     >
                       <span
                         class="p-button-label"
+                        data-p=""
                         data-pc-section="label"
                       >
                         Envoyer
@@ -528,9 +589,12 @@ exports[`AuthFeatureComponent visual state Given forgot password modal open When
 
 exports[`AuthFeatureComponent visual state Given form with validation errors When rendering component Then should display error messages for invalid fields 1`] = `
 <web-auth-feature
-  loading="false"
+  error={[Function Function]}
+  loading={[Function Function]}
   loginForm={[Function FormGroup]}
   showForgotPasswordModal="false"
+  turnstileElementId={[Function String]}
+  turnstileToken="null"
 >
   <div
     class="login-container min-h-screen flex items-center justify-center p-4"
@@ -552,7 +616,7 @@ exports[`AuthFeatureComponent visual state Given form with validation errors Whe
           <p
             class="welcome-subtitle"
           >
-            Connectez-vous à votre compte
+             Connectez-vous à votre compte 
           </p>
         </div>
       </div>
@@ -592,10 +656,13 @@ exports[`AuthFeatureComponent visual state Given form with validation errors Whe
               </label>
               <input
                 class="w-full ng-invalid p-component p-inputtext ng-touched ng-pristine"
+                data-p=""
+                data-pc-name="inputtext"
+                data-pc-section="root"
                 formcontrolname="email"
                 id="email"
-                pc289=""
-                pc290=""
+                pc306=""
+                pc307=""
                 pinputtext=""
                 placeholder="votre@email.com"
               />
@@ -617,19 +684,22 @@ exports[`AuthFeatureComponent visual state Given form with validation errors Whe
               </label>
               <p-password
                 class="p-component p-inputwrapper p-password ng-touched ng-pristine ng-invalid"
+                data-p=""
                 data-pc-name="password"
                 data-pc-section="root"
                 formcontrolname="password"
                 inputstyleclass="w-full"
-                pc291=""
-                placeholder="Votre mot de passe"
+                pc308=""
                 style="position: relative;"
               >
                 <input
                   class="p-password-input w-full p-component p-inputtext p-invalid"
-                  data-pc-section="input"
-                  pc295=""
-                  pc296=""
+                  data-p="invalid"
+                  data-pc-extend="inputtext"
+                  data-pc-name="pcinputtext"
+                  data-pc-section="root"
+                  pc312=""
+                  pc313=""
                   pinputtext=""
                   placeholder="Votre mot de passe"
                   type="password"
@@ -637,10 +707,10 @@ exports[`AuthFeatureComponent visual state Given form with validation errors Whe
                 <svg
                   class="p-password-toggle-mask-icon p-password-unmask-icon p-icon"
                   data-p-icon="eye"
-                  data-pc-section="showIcon"
+                  data-pc-section="unmaskicon"
                   fill="none"
                   height="14"
-                  pc307=""
+                  pc325=""
                   viewBox="0 0 14 14"
                   width="14"
                   xmlns="http://www.w3.org/2000/svg"
@@ -652,6 +722,11 @@ exports[`AuthFeatureComponent visual state Given form with validation errors Whe
                     fill-rule="evenodd"
                   />
                 </svg>
+                <p-overlay
+                  data-pc-section="host"
+                  pc314=""
+                >
+                </p-overlay>
               </p-password>
               <small
                 class="p-error"
@@ -662,6 +737,13 @@ exports[`AuthFeatureComponent visual state Given form with validation errors Whe
               </small>
             </div>
             <div
+              class="field mb-4"
+            >
+              <div
+                id="turnstile-widget"
+              />
+            </div>
+            <div
               class="flex justify-between items-center mb-6"
             >
               <div
@@ -669,20 +751,26 @@ exports[`AuthFeatureComponent visual state Given form with validation errors Whe
               >
                 <p-checkbox
                   class="p-checkbox p-component ng-untouched ng-pristine ng-valid"
+                  data-p=""
                   data-p-checked="false"
                   data-p-disabled="false"
                   data-p-highlight="false"
+                  data-pc-name="checkbox"
+                  data-pc-section="root"
                   formcontrolname="rememberMe"
                   inputid="rememberMe"
-                  pc292=""
+                  pc309=""
                 >
                   <input
                     class="p-checkbox-input"
+                    data-pc-section="input"
                     id="rememberMe"
                     type="checkbox"
                   />
                   <div
                     class="p-checkbox-box"
+                    data-p=""
+                    data-pc-section="box"
                   >
                   </div>
                 </p-checkbox>
@@ -702,24 +790,28 @@ exports[`AuthFeatureComponent visual state Given form with validation errors Whe
               </a>
             </div>
             <p-button
-              label="Se connecter"
-              pc293=""
-              styleclass="w-full login-button"
+              class="w-full login-button"
+              data-pc-section="host"
+              pc310=""
               type="submit"
             >
               <button
                 autofocus="true"
-                class="p-ripple login-button p-button p-component w-full"
+                class="p-ripple p-button p-component"
+                data-p=""
+                data-p-disabled="true"
                 data-pc-name="button"
                 data-pc-section="root"
                 disabled=""
-                pc297=""
-                pc298=""
+                pc310=""
+                pc315=""
+                pc316=""
                 pripple=""
                 type="submit"
               >
                 <span
                   class="p-button-label"
+                  data-p=""
                   data-pc-section="label"
                 >
                   Se connecter
@@ -731,9 +823,10 @@ exports[`AuthFeatureComponent visual state Given form with validation errors Whe
       </div>
     </div>
   </div><p-dialog
+    class="forgot-password-dialog"
+    data-pc-section="host"
     header=""
-    pc294=""
-    styleclass="forgot-password-dialog"
+    pc311=""
   >
   </p-dialog>
 </web-auth-feature>
@@ -741,9 +834,12 @@ exports[`AuthFeatureComponent visual state Given form with validation errors Whe
 
 exports[`AuthFeatureComponent visual state Given loading state When rendering component Then should display loading button and disabled form 1`] = `
 <web-auth-feature
-  loading={[Function Boolean]}
+  error={[Function Function]}
+  loading={[Function Function]}
   loginForm={[Function FormGroup]}
   showForgotPasswordModal="false"
+  turnstileElementId={[Function String]}
+  turnstileToken="null"
 >
   <div
     class="login-container min-h-screen flex items-center justify-center p-4"
@@ -765,7 +861,7 @@ exports[`AuthFeatureComponent visual state Given loading state When rendering co
           <p
             class="welcome-subtitle"
           >
-            Connectez-vous à votre compte
+             Connectez-vous à votre compte 
           </p>
         </div>
       </div>
@@ -805,10 +901,13 @@ exports[`AuthFeatureComponent visual state Given loading state When rendering co
               </label>
               <input
                 class="w-full p-component p-inputtext ng-untouched ng-pristine"
+                data-p=""
+                data-pc-name="inputtext"
+                data-pc-section="root"
                 formcontrolname="email"
                 id="email"
-                pc308=""
-                pc309=""
+                pc326=""
+                pc327=""
                 pinputtext=""
                 placeholder="votre@email.com"
               />
@@ -823,19 +922,22 @@ exports[`AuthFeatureComponent visual state Given loading state When rendering co
               </label>
               <p-password
                 class="p-component p-inputwrapper p-password ng-untouched ng-pristine ng-invalid"
+                data-p=""
                 data-pc-name="password"
                 data-pc-section="root"
                 formcontrolname="password"
                 inputstyleclass="w-full"
-                pc310=""
-                placeholder="Votre mot de passe"
+                pc328=""
                 style="position: relative;"
               >
                 <input
                   class="p-password-input w-full p-component p-inputtext"
-                  data-pc-section="input"
-                  pc314=""
-                  pc315=""
+                  data-p=""
+                  data-pc-extend="inputtext"
+                  data-pc-name="pcinputtext"
+                  data-pc-section="root"
+                  pc332=""
+                  pc333=""
                   pinputtext=""
                   placeholder="Votre mot de passe"
                   type="password"
@@ -843,10 +945,10 @@ exports[`AuthFeatureComponent visual state Given loading state When rendering co
                 <svg
                   class="p-password-toggle-mask-icon p-password-unmask-icon p-icon"
                   data-p-icon="eye"
-                  data-pc-section="showIcon"
+                  data-pc-section="unmaskicon"
                   fill="none"
                   height="14"
-                  pc326=""
+                  pc345=""
                   viewBox="0 0 14 14"
                   width="14"
                   xmlns="http://www.w3.org/2000/svg"
@@ -858,7 +960,19 @@ exports[`AuthFeatureComponent visual state Given loading state When rendering co
                     fill-rule="evenodd"
                   />
                 </svg>
+                <p-overlay
+                  data-pc-section="host"
+                  pc334=""
+                >
+                </p-overlay>
               </p-password>
+            </div>
+            <div
+              class="field mb-4"
+            >
+              <div
+                id="turnstile-widget"
+              />
             </div>
             <div
               class="flex justify-between items-center mb-6"
@@ -868,20 +982,26 @@ exports[`AuthFeatureComponent visual state Given loading state When rendering co
               >
                 <p-checkbox
                   class="p-checkbox p-component ng-untouched ng-pristine ng-valid"
+                  data-p=""
                   data-p-checked="false"
                   data-p-disabled="false"
                   data-p-highlight="false"
+                  data-pc-name="checkbox"
+                  data-pc-section="root"
                   formcontrolname="rememberMe"
                   inputid="rememberMe"
-                  pc311=""
+                  pc329=""
                 >
                   <input
                     class="p-checkbox-input"
+                    data-pc-section="input"
                     id="rememberMe"
                     type="checkbox"
                   />
                   <div
                     class="p-checkbox-box"
+                    data-p=""
+                    data-pc-section="box"
                   >
                   </div>
                 </p-checkbox>
@@ -901,30 +1021,33 @@ exports[`AuthFeatureComponent visual state Given loading state When rendering co
               </a>
             </div>
             <p-button
-              label="Se connecter"
-              pc312=""
-              styleclass="w-full login-button"
+              class="w-full login-button"
+              data-pc-section="host"
+              pc330=""
               type="submit"
             >
               <button
                 autofocus="true"
-                class="p-ripple login-button p-button p-button-loading p-component w-full"
+                class="p-ripple p-button p-button-loading p-component"
+                data-p="loading"
+                data-p-disabled="true"
                 data-pc-name="button"
                 data-pc-section="root"
                 disabled=""
-                pc316=""
-                pc317=""
+                pc330=""
+                pc335=""
+                pc336=""
                 pripple=""
                 type="submit"
               >
                 <svg
                   aria-hidden="true"
-                  class="p-button-icon p-button-icon-left p-button-loading-icon pi-spin p-icon p-icon-spin"
+                  class="0 1 10 11 12 13 14 15 16 17 18 19 2 20 21 22 23 24 25 26 27 28 29 3 30 31 4 5 6 7 8 9 p-button-loading-icon p-icon p-icon-spin"
                   data-p-icon="spinner"
                   data-pc-section="loadingicon"
                   fill="none"
                   height="14"
-                  pc327=""
+                  pc346=""
                   viewBox="0 0 14 14"
                   width="14"
                   xmlns="http://www.w3.org/2000/svg"
@@ -951,6 +1074,7 @@ exports[`AuthFeatureComponent visual state Given loading state When rendering co
                 </svg>
                 <span
                   class="p-button-label"
+                  data-p=""
                   data-pc-section="label"
                 >
                   Se connecter
@@ -962,9 +1086,10 @@ exports[`AuthFeatureComponent visual state Given loading state When rendering co
       </div>
     </div>
   </div><p-dialog
+    class="forgot-password-dialog"
+    data-pc-section="host"
     header=""
-    pc313=""
-    styleclass="forgot-password-dialog"
+    pc331=""
   >
   </p-dialog>
 </web-auth-feature>
@@ -972,9 +1097,12 @@ exports[`AuthFeatureComponent visual state Given loading state When rendering co
 
 exports[`AuthFeatureComponent visual state Given valid form data When rendering component Then should display enabled submit button with valid form inputs 1`] = `
 <web-auth-feature
-  loading="false"
+  error={[Function Function]}
+  loading={[Function Function]}
   loginForm={[Function FormGroup]}
   showForgotPasswordModal="false"
+  turnstileElementId={[Function String]}
+  turnstileToken="null"
 >
   <div
     class="login-container min-h-screen flex items-center justify-center p-4"
@@ -996,7 +1124,7 @@ exports[`AuthFeatureComponent visual state Given valid form data When rendering 
           <p
             class="welcome-subtitle"
           >
-            Connectez-vous à votre compte
+             Connectez-vous à votre compte 
           </p>
         </div>
       </div>
@@ -1036,10 +1164,13 @@ exports[`AuthFeatureComponent visual state Given valid form data When rendering 
               </label>
               <input
                 class="w-full p-component p-filled p-inputtext ng-untouched ng-pristine ng-valid"
+                data-p=""
+                data-pc-name="inputtext"
+                data-pc-section="root"
                 formcontrolname="email"
                 id="email"
-                pc352=""
-                pc353=""
+                pc374=""
+                pc375=""
                 pinputtext=""
                 placeholder="votre@email.com"
               />
@@ -1054,19 +1185,22 @@ exports[`AuthFeatureComponent visual state Given valid form data When rendering 
               </label>
               <p-password
                 class="p-component p-inputwrapper p-inputwrapper-filled p-password ng-untouched ng-pristine ng-valid"
+                data-p=""
                 data-pc-name="password"
                 data-pc-section="root"
                 formcontrolname="password"
                 inputstyleclass="w-full"
-                pc354=""
-                placeholder="Votre mot de passe"
+                pc376=""
                 style="position: relative;"
               >
                 <input
                   class="p-password-input w-full p-component p-filled p-inputtext"
-                  data-pc-section="input"
-                  pc358=""
-                  pc359=""
+                  data-p=""
+                  data-pc-extend="inputtext"
+                  data-pc-name="pcinputtext"
+                  data-pc-section="root"
+                  pc380=""
+                  pc381=""
                   pinputtext=""
                   placeholder="Votre mot de passe"
                   type="password"
@@ -1074,10 +1208,10 @@ exports[`AuthFeatureComponent visual state Given valid form data When rendering 
                 <svg
                   class="p-password-toggle-mask-icon p-password-unmask-icon p-icon"
                   data-p-icon="eye"
-                  data-pc-section="showIcon"
+                  data-pc-section="unmaskicon"
                   fill="none"
                   height="14"
-                  pc370=""
+                  pc393=""
                   viewBox="0 0 14 14"
                   width="14"
                   xmlns="http://www.w3.org/2000/svg"
@@ -1089,7 +1223,19 @@ exports[`AuthFeatureComponent visual state Given valid form data When rendering 
                     fill-rule="evenodd"
                   />
                 </svg>
+                <p-overlay
+                  data-pc-section="host"
+                  pc382=""
+                >
+                </p-overlay>
               </p-password>
+            </div>
+            <div
+              class="field mb-4"
+            >
+              <div
+                id="turnstile-widget"
+              />
             </div>
             <div
               class="flex justify-between items-center mb-6"
@@ -1099,28 +1245,35 @@ exports[`AuthFeatureComponent visual state Given valid form data When rendering 
               >
                 <p-checkbox
                   class="p-checkbox p-checkbox-checked p-component p-highlight ng-untouched ng-pristine ng-valid"
+                  data-p="checked"
                   data-p-checked="true"
                   data-p-disabled="false"
                   data-p-highlight="true"
+                  data-pc-name="checkbox"
+                  data-pc-section="root"
                   formcontrolname="rememberMe"
                   inputid="rememberMe"
-                  pc355=""
+                  pc377=""
                 >
                   <input
                     class="p-checkbox-input"
+                    data-pc-section="input"
                     id="rememberMe"
                     type="checkbox"
                   />
                   <div
                     class="p-checkbox-box"
+                    data-p="checked"
+                    data-pc-section="box"
                   >
                     <svg
                       class="p-checkbox-icon p-icon"
+                      data-p="checked"
                       data-p-icon="check"
                       data-pc-section="icon"
                       fill="none"
                       height="14"
-                      pc371=""
+                      pc394=""
                       viewBox="0 0 14 14"
                       width="14"
                       xmlns="http://www.w3.org/2000/svg"
@@ -1148,23 +1301,28 @@ exports[`AuthFeatureComponent visual state Given valid form data When rendering 
               </a>
             </div>
             <p-button
-              label="Se connecter"
-              pc356=""
-              styleclass="w-full login-button"
+              class="w-full login-button"
+              data-pc-section="host"
+              pc378=""
               type="submit"
             >
               <button
                 autofocus="true"
-                class="p-ripple login-button p-button p-component w-full"
+                class="p-ripple p-button p-component"
+                data-p=""
+                data-p-disabled="true"
                 data-pc-name="button"
                 data-pc-section="root"
-                pc360=""
-                pc361=""
+                disabled=""
+                pc378=""
+                pc383=""
+                pc384=""
                 pripple=""
                 type="submit"
               >
                 <span
                   class="p-button-label"
+                  data-p=""
                   data-pc-section="label"
                 >
                   Se connecter
@@ -1176,9 +1334,10 @@ exports[`AuthFeatureComponent visual state Given valid form data When rendering 
       </div>
     </div>
   </div><p-dialog
+    class="forgot-password-dialog"
+    data-pc-section="host"
     header=""
-    pc357=""
-    styleclass="forgot-password-dialog"
+    pc379=""
   >
   </p-dialog>
 </web-auth-feature>

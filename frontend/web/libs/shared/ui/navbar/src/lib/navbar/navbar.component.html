@@ -1,0 +1,181 @@
+<!-- Navbar moderne -->
+<nav class="bg-white shadow-sm border-b border-gray-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <!-- Brand / Logo -->
+      @if (showBrand()) {
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 flex items-center justify-center">
+          @if (brandLogo()) {
+          <img [src]="brandLogo()" [alt]="brandName()" class="w-full h-full" />
+          } @else {
+          <i class="pi pi-mountain text-white text-xl"></i>
+          }
+        </div>
+        <span class="text-xl font-bold text-gray-900">{{ brandName() }}</span>
+      </div>
+      }
+
+      <!-- Menu items (desktop) -->
+      <div class="hidden md:flex items-center space-x-1">
+        @for (item of menuItems(); track item.label) { @if (!item.items) {
+        <!-- Simple menu item -->
+        <a
+          [routerLink]="'./' + item.routerLink"
+          [queryParams]="item.queryParams"
+          [fragment]="item.fragment"
+          [preserveFragment]="item.preserveFragment"
+          [skipLocationChange]="item.skipLocationChange"
+          [replaceUrl]="item.replaceUrl"
+          [state]="item.state"
+          [href]="item.url || undefined"
+          [target]="item.target || undefined"
+          (click)="onItemClick(item)"
+          class="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors cursor-pointer font-medium"
+          routerLinkActive="bg-green-50 text-green-600"
+        >
+          @if (item.icon) {
+          <i [ngClass]="['pi', item.icon]"></i>
+          }
+          <span>{{ item.label }}</span>
+        </a>
+        } @else {
+        <!-- Menu item with submenu -->
+        <div class="relative group">
+          @if (item.routerLink) {
+          <!-- Item with link and submenu -->
+          <a
+            [routerLink]="'./' + item.routerLink"
+            (click)="onItemClick(item)"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors cursor-pointer font-medium"
+            routerLinkActive="bg-green-50 text-green-600"
+          >
+            @if (item.icon) {
+            <i [ngClass]="['pi', item.icon]"></i>
+            }
+            <span>{{ item.label }}</span>
+            <i class="pi pi-angle-down text-xs"></i>
+          </a>
+          } @else {
+          <!-- Item with only submenu (no direct link) -->
+          <button
+            class="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors cursor-pointer font-medium"
+          >
+            @if (item.icon) {
+            <i [ngClass]="['pi', item.icon]"></i>
+            }
+            <span>{{ item.label }}</span>
+            <i class="pi pi-angle-down text-xs"></i>
+          </button>
+          }
+          <!-- Submenu dropdown -->
+          <div
+            class="hidden group-hover:block absolute left-0 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
+          >
+            @for (subItem of item.items; track subItem.label) {
+            <a
+              [routerLink]="'./' + subItem.routerLink"
+              [queryParams]="subItem.queryParams"
+              [href]="subItem.url || undefined"
+              [target]="subItem.target || undefined"
+              (click)="onItemClick(subItem)"
+              class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors cursor-pointer"
+            >
+              @if (subItem.icon) {
+              <i [ngClass]="['pi', subItem.icon, 'text-sm']"></i>
+              }
+              <span class="text-sm">{{ subItem.label }}</span>
+            </a>
+            }
+          </div>
+        </div>
+        } }
+      </div>
+
+      <!-- User menu -->
+      <div class="flex items-center gap-3">
+        <!-- Mobile menu button -->
+        <button
+          class="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          #mobileMenuButton
+          (click)="mobileMenu.toggle($event)"
+        >
+          <i class="pi pi-bars text-gray-700 text-xl"></i>
+        </button>
+
+        <!-- User profile -->
+        <div
+          class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+          #userButton
+          tabindex="0"
+          (click)="userMenu.toggle($event)"
+          (keydown.enter)="userMenu.toggle($event)"
+        >
+          @if (userAvatar()) {
+          <img
+            [src]="userAvatar()"
+            [alt]="userName()"
+            class="w-8 h-8 rounded-full border-2 border-green-500 object-cover"
+          />
+          } @else {
+          <div
+            class="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md"
+          >
+            {{ userName().charAt(0).toUpperCase() }}
+          </div>
+          }
+          <span class="text-sm font-medium text-gray-700 hidden sm:block">{{
+            userName()
+          }}</span>
+          <i class="pi pi-angle-down text-xs text-gray-500"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile menu (PrimeNG Menu) -->
+<p-menu
+  #mobileMenu
+  [model]="menuItems()"
+  [popup]="true"
+  class="md:hidden mt-2 w-64"
+>
+  <ng-template pTemplate="item" let-item>
+    <a
+      [routerLink]="'./' + item.routerLink"
+      [queryParams]="item.queryParams"
+      [href]="item.url || null"
+      (click)="onItemClick(item)"
+      class="flex items-center gap-3 p-3 text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors cursor-pointer"
+    >
+      @if (item.icon) {
+      <i [ngClass]="['pi', item.icon]"></i>
+      }
+      <span class="font-medium">{{ item.label }}</span>
+    </a>
+  </ng-template>
+</p-menu>
+
+<!-- User menu dropdown -->
+@if (userName() && userMenuItems().length > 0) {
+<p-menu #userMenu [model]="userMenuItems()" [popup]="true" class="mt-2 w-56">
+  <ng-template pTemplate="item" let-item>
+    <a
+      [routerLink]="'./' + item.routerLink"
+      [href]="item.url || null"
+      (click)="onItemClick(item)"
+      class="flex items-center gap-3 p-3 text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors cursor-pointer"
+      [ngClass]="{
+        'text-red-600 hover:bg-red-50 hover:text-red-700':
+          item.label === 'Déconnexion' || item.label === 'Logout'
+      }"
+    >
+      @if (item.icon) {
+      <i [ngClass]="['pi', item.icon]"></i>
+      }
+      <span class="font-medium">{{ item.label }}</span>
+    </a>
+  </ng-template>
+</p-menu>
+}

@@ -13,7 +13,7 @@
         "outputPath": "dist/apps/landing-page",
         "index": "apps/landing-page/src/index.html",
         "browser": "apps/landing-page/src/main.ts",
-        "polyfills": ["zone.js"],
+        "polyfills": [],
         "tsConfig": "apps/landing-page/tsconfig.app.json",
         "assets": [
           {
@@ -27,7 +27,8 @@
           }
         ],
         "styles": ["apps/landing-page/src/styles.scss"],
-        "scripts": []
+        "scripts": [],
+        "allowedCommonJsDependencies": ["wkx-ts", "buffer", "mapbox-gl"]
       },
       "configurations": {
         "production": {
@@ -85,7 +86,8 @@
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "apps/landing-page/jest.config.ts"
+        "jestConfig": "apps/landing-page/jest.config.ts",
+        "tsConfig": "apps/landing-page/tsconfig.spec.json"
       }
     },
     "serve-static": {

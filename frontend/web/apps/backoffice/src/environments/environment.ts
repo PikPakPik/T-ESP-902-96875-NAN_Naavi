@@ -1,12 +1,10 @@
 // This file can be replaced during build by using the `fileReplacements` array.
-// `ng build --prod` replaces `environment.ts` with `environment.prod.ts`.
-// The list of file replacements can be found in `angular.json`.
-
-import { getBaseUrl } from '@web/shared/util';
+// `ng build` replaces `environment.ts` with `environment.dev.ts` or `environment.prod.ts`.
+// The list of file replacements can be found in `project.json`.
 
 export const environment = {
   production: false,
-  api_url: `${getBaseUrl()}/api`,
+  api_url: 'https://localhost/api/v1/',
   mock: false,
 };
 

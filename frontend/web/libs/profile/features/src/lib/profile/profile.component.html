@@ -1,0 +1,408 @@
+<!-- Container principal -->
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+  <!-- En-tête -->
+  <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+    <div class="flex items-center gap-4">
+      <div
+        class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+      >
+        <i class="pi pi-user text-white text-2xl"></i>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">
+          {{ 'PROFILE.TITLE' | translate }}
+        </h1>
+        <p class="text-sm text-gray-500">
+          {{ 'PROFILE.SUBTITLE' | translate }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenu en grille -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Informations personnelles -->
+    <div class="space-y-6">
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <i class="pi pi-user text-purple-600"></i>
+            {{ 'PROFILE.PERSONAL_INFO' | translate }}
+          </h2>
+          @if (!isEditingInfo()) {
+          <p-button
+            [label]="'COMMON.EDIT' | translate"
+            icon="pi pi-pencil"
+            size="small"
+            [outlined]="true"
+            (click)="toggleEditInfo()"
+          />
+          }
+        </div>
+
+        <form (ngSubmit)="saveInfo()">
+          <div class="space-y-4">
+            <!-- Prénom -->
+            <div>
+              <label
+                for="firstname"
+                class="block font-semibold mb-2 text-gray-700"
+              >
+                {{ 'COMMON.FIRSTNAME' | translate }}
+              </label>
+              @if (isEditingInfo()) {
+              <input
+                pInputText
+                id="firstname"
+                type="text"
+                [field]="profileInfoForm.firstname"
+                [placeholder]="'COMMON.FIRSTNAME' | translate"
+                class="w-full"
+                [class.ng-invalid]="profileInfoForm.firstname().invalid() && (profileInfoForm.firstname().touched() || submittedInfo())"
+              />
+              @if (profileInfoForm.firstname().invalid() && (profileInfoForm.firstname().touched() || submittedInfo())) {
+              <small class="text-red-500 mt-1 block">
+                @for (error of profileInfoForm.firstname().errors(); track error) {
+                <span>{{ error.message }}</span>
+                }
+              </small>
+              } } @else {
+              <p class="text-gray-900 py-2">{{ profileInfoModel().firstname }}</p>
+              }
+            </div>
+
+            <!-- Nom -->
+            <div>
+              <label
+                for="lastname"
+                class="block font-semibold mb-2 text-gray-700"
+              >
+                {{ 'COMMON.LASTNAME' | translate }}
+              </label>
+              @if (isEditingInfo()) {
+              <input
+                pInputText
+                id="lastname"
+                type="text"
+                [field]="profileInfoForm.lastname"
+                [placeholder]="'COMMON.LASTNAME' | translate"
+                class="w-full"
+                [class.ng-invalid]="profileInfoForm.lastname().invalid() && (profileInfoForm.lastname().touched() || submittedInfo())"
+              />
+              @if (profileInfoForm.lastname().invalid() && (profileInfoForm.lastname().touched() || submittedInfo())) {
+              <small class="text-red-500 mt-1 block">
+                @for (error of profileInfoForm.lastname().errors(); track error) {
+                <span>{{ error.message }}</span>
+                }
+              </small>
+              } } @else {
+              <p class="text-gray-900 py-2">{{ profileInfoModel().lastname }}</p>
+              }
+            </div>
+
+            <!-- Email -->
+            <div>
+              <label for="email" class="block font-semibold mb-2 text-gray-700">
+                {{ 'COMMON.EMAIL' | translate }}
+              </label>
+              @if (isEditingInfo()) {
+              <input
+                pInputText
+                id="email"
+                type="email"
+                [field]="profileInfoForm.email"
+                placeholder="votre@email.com"
+                class="w-full"
+                [class.ng-invalid]="profileInfoForm.email().invalid() && (profileInfoForm.email().touched() || submittedInfo())"
+              />
+              @if (profileInfoForm.email().invalid() && (profileInfoForm.email().touched() || submittedInfo())) {
+              <small class="text-red-500 mt-1 block">
+                @for (error of profileInfoForm.email().errors(); track error) {
+                <span>{{ error.message }}</span>
+                }
+              </small>
+              } } @else {
+              <p class="text-gray-900 py-2 flex items-center gap-2">
+                <i class="pi pi-envelope text-gray-400 text-sm"></i>
+                {{ profileInfoModel().email }}
+              </p>
+              }
+            </div>
+
+            <!-- Boutons d'action en mode édition -->
+            @if (isEditingInfo()) {
+            <div class="flex gap-3 pt-4">
+              <p-button
+                [label]="'COMMON.CANCEL' | translate"
+                icon="pi pi-times"
+                severity="secondary"
+                [outlined]="true"
+                (click)="toggleEditInfo()"
+                type="button"
+              />
+              <p-button
+                [label]="'COMMON.SAVE' | translate"
+                icon="pi pi-check"
+                type="submit"
+                class="bg-purple-600 hover:bg-purple-700 border-purple-600"
+              />
+            </div>
+            }
+          </div>
+        </form>
+      </div>
+
+      <!-- Changement de mot de passe -->
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <i class="pi pi-lock text-purple-600"></i>
+            {{ 'PROFILE.SECURITY' | translate }}
+          </h2>
+          @if (!isChangingPassword()) {
+          <p-button
+            [label]="'PROFILE.CHANGE_PASSWORD' | translate"
+            icon="pi pi-key"
+            size="small"
+            severity="warn"
+            [outlined]="true"
+            (click)="togglePasswordChange()"
+          />
+          }
+        </div>
+
+        @if (!isChangingPassword()) {
+        <div class="bg-purple-50 rounded-lg p-4">
+          <p class="text-sm text-purple-800 flex items-center gap-2">
+            <i class="pi pi-info-circle"></i>
+            {{ 'PROFILE.PASSWORD_SECURE' | translate }}
+          </p>
+        </div>
+        } @else {
+        <form (ngSubmit)="changePassword()">
+          <div class="space-y-4">
+            <!-- Mot de passe actuel -->
+            <div>
+              <label
+                for="currentPassword"
+                class="block font-semibold mb-2 text-gray-700"
+              >
+                {{ 'COMMON.CURRENT_PASSWORD' | translate }}
+              </label>
+              <input
+                pInputText
+                id="currentPassword"
+                type="password"
+                [field]="passwordChangeForm.currentPassword"
+                [placeholder]="'COMMON.CURRENT_PASSWORD' | translate"
+                class="w-full"
+                [class.ng-invalid]="passwordChangeForm.currentPassword().invalid() && (passwordChangeForm.currentPassword().touched() || submittedPassword())"
+              />
+              @if (passwordChangeForm.currentPassword().invalid() && (passwordChangeForm.currentPassword().touched() || submittedPassword())) {
+              <small class="text-red-500 mt-1 block">
+                @for (error of passwordChangeForm.currentPassword().errors(); track error) {
+                <span>{{ error.message }}</span>
+                }
+              </small>
+              }
+            </div>
+
+            <!-- Nouveau mot de passe -->
+            <div>
+              <label
+                for="newPassword"
+                class="block font-semibold mb-2 text-gray-700"
+              >
+                {{ 'COMMON.NEW_PASSWORD' | translate }}
+              </label>
+              <input
+                pInputText
+                id="newPassword"
+                type="password"
+                [field]="passwordChangeForm.newPassword"
+                [placeholder]="'COMMON.NEW_PASSWORD' | translate"
+                class="w-full"
+                [class.ng-invalid]="passwordChangeForm.newPassword().invalid() && (passwordChangeForm.newPassword().touched() || submittedPassword())"
+              />
+              @if (passwordChangeForm.newPassword().invalid() && (passwordChangeForm.newPassword().touched() || submittedPassword())) {
+              <small class="text-red-500 mt-1 block">
+                @for (error of passwordChangeForm.newPassword().errors(); track error) {
+                <span>{{ error.message }}</span>
+                }
+              </small>
+              }
+              <small class="text-gray-500 mt-1 block">
+                <i class="pi pi-info-circle text-xs"></i>
+                {{ 'PROFILE.PASSWORD_MIN_LENGTH' | translate }}
+              </small>
+            </div>
+
+            <!-- Confirmer le mot de passe -->
+            <div>
+              <label
+                for="confirmPassword"
+                class="block font-semibold mb-2 text-gray-700"
+              >
+                {{ 'COMMON.CONFIRM_PASSWORD' | translate }}
+              </label>
+              <input
+                pInputText
+                id="confirmPassword"
+                type="password"
+                [field]="passwordChangeForm.confirmPassword"
+                [placeholder]="'COMMON.CONFIRM_PASSWORD' | translate"
+                class="w-full"
+                [class.ng-invalid]="passwordChangeForm.confirmPassword().invalid() && (passwordChangeForm.confirmPassword().touched() || submittedPassword())"
+              />
+              @if (passwordChangeForm.confirmPassword().invalid() && (passwordChangeForm.confirmPassword().touched() || submittedPassword())) {
+              <small class="text-red-500 mt-1 block">
+                @for (error of passwordChangeForm.confirmPassword().errors(); track error) {
+                <span>{{ error.message }}</span>
+                }
+              </small>
+              }
+            </div>
+
+            <!-- Boutons d'action -->
+            <div class="flex gap-3 pt-4">
+              <p-button
+                [label]="'COMMON.CANCEL' | translate"
+                icon="pi pi-times"
+                severity="secondary"
+                [outlined]="true"
+                (click)="togglePasswordChange()"
+                type="button"
+              />
+              <p-button
+                [label]="'COMMON.EDIT' | translate"
+                icon="pi pi-check"
+                type="submit"
+                severity="warn"
+                class="bg-yellow-600 hover:bg-yellow-700 border-yellow-600"
+              />
+            </div>
+          </div>
+        </form>
+        }
+      </div>
+    </div>
+
+    <!-- Informations du compte -->
+    <div class="space-y-6">
+      <!-- Statut et rôles -->
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2
+          class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"
+        >
+          <i class="pi pi-shield text-purple-600"></i>
+          {{ 'PROFILE.ACCOUNT_PERMISSIONS' | translate }}
+        </h2>
+
+        <div class="space-y-4">
+          <!-- Statut -->
+          <div
+            class="flex items-center justify-between py-3 border-b border-gray-100"
+          >
+            <span class="text-sm font-medium text-gray-600">{{
+              'COMMON.STATUS' | translate
+            }}</span>
+            <span
+              class="px-3 py-1 rounded-full text-xs font-semibold"
+              [ngClass]="{
+                'bg-green-100 text-green-800': status() === 'VERIFIED',
+                'bg-orange-100 text-orange-800': status() === 'UNVERIFIED',
+                'bg-red-100 text-red-800': status() === 'DELETED'
+              }"
+            >
+              {{ 'PROFILE.STATUS.' + status() | translate }}
+            </span>
+          </div>
+
+          <!-- Rôles -->
+          <div class="py-3">
+            <span class="text-sm font-medium text-gray-600 block mb-2">{{
+              'COMMON.ROLES' | translate
+            }}</span>
+            <div class="flex flex-wrap gap-2">
+              @for (role of roles(); track role) {
+              <span
+                class="px-3 py-1 rounded-full text-xs font-semibold"
+                [ngClass]="{
+                  'bg-red-100 text-red-800': role === 'ROLE_ADMIN',
+                  'bg-yellow-100 text-yellow-800': role === 'ROLE_MODERATOR',
+                  'bg-blue-100 text-blue-800': role === 'ROLE_USER'
+                }"
+              >
+                {{ 'PROFILE.ROLE.' + role.replace('ROLE_', '') | translate }}
+              </span>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Langue -->
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2
+          class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"
+        >
+          <i class="pi pi-globe text-purple-600"></i>
+          {{ 'COMMON.LANGUAGE' | translate }}
+        </h2>
+        <div class="space-y-4">
+          <div>
+            <label
+              for="language"
+              class="block font-semibold mb-2 text-gray-700"
+            >
+              {{ 'COMMON.LANGUAGE' | translate }}
+            </label>
+            <p-select
+              id="language"
+              [(ngModel)]="selectedLanguage.code"
+              [options]="availableLanguages"
+              optionLabel="label"
+              optionValue="code"
+              class="w-full"
+              (onChange)="onLanguageChange()"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations supplémentaires -->
+      <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2
+          class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"
+        >
+          <i class="pi pi-info-circle text-purple-600"></i>
+          {{ 'PROFILE.ABOUT' | translate }}
+        </h2>
+
+        <div class="space-y-4">
+          <div class="bg-purple-50 rounded-lg p-4">
+            <p class="text-sm text-purple-800 mb-2 font-medium">
+              <i class="pi pi-question-circle"></i>
+              {{ 'PROFILE.HELP_TITLE' | translate }}
+            </p>
+            <p class="text-xs text-purple-700">
+              {{ 'PROFILE.HELP_DESCRIPTION' | translate }}
+            </p>
+          </div>
+
+          <div class="bg-blue-50 rounded-lg p-4">
+            <p class="text-sm text-blue-800 mb-2 font-medium">
+              <i class="pi pi-shield"></i>
+              {{ 'PROFILE.SECURITY_TITLE' | translate }}
+            </p>
+            <p class="text-xs text-blue-700">
+              {{ 'PROFILE.SECURITY_DESCRIPTION' | translate }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p-toast />

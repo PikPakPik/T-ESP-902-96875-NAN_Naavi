@@ -1,20 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { FormGroup } from '@angular/forms';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ForgotPasswordComponent } from './forgot-password.component';
 import { AuthStore } from '@web/auth/data-access';
-import { NotificationService } from '@web/ui/notification';
+import { NotificationService } from '@web/shared/ui/notification';
 import { LocalStorageService } from '@web/shared/util';
 import { API_URL } from '@web/shared/http-client';
 
 describe('ForgotPasswordComponent', () => {
   let component: ForgotPasswordComponent;
   let fixture: ComponentFixture<ForgotPasswordComponent>;
-  let mockAuthStore: any;
+  let mockAuthStore: Record<string, jest.Mock | ReturnType<typeof signal>>;
 
   beforeEach(async () => {
     mockAuthStore = {
@@ -33,7 +31,6 @@ describe('ForgotPasswordComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideNoopAnimations(),
         { provide: AuthStore, useValue: mockAuthStore },
         {
           provide: NotificationService,
@@ -67,62 +64,70 @@ describe('ForgotPasswordComponent', () => {
     });
 
     it('should initialize form with email field', () => {
-      expect(component.forgotPasswordForm).toBeInstanceOf(FormGroup);
-      expect(component.forgotPasswordForm.get('email')).toBeTruthy();
-      expect(component.email?.value).toBe('');
+      expect(component.forgotPasswordForm).toBeTruthy();
+      expect(component.forgotPasswordForm.email).toBeTruthy();
+      expect(component.forgotPasswordModel().email).toBe('');
     });
 
     it('should set default values', () => {
-      expect(component.loading).toBe(false);
-      expect(component.submitted).toBe(false);
+      expect(component.loading()).toBe(false);
+      expect(component.submitted()).toBe(false);
     });
   });
 
   describe('form validation', () => {
     it('should require email field', () => {
-      const emailControl = component.email;
+      const emailField = component.forgotPasswordForm.email();
+      
+      component.forgotPasswordModel.set({ email: '' });
+      emailField.value.set('');
+      // Trigger validation by accessing the field state
+      fixture.detectChanges();
 
-      emailControl?.setValue('');
-      emailControl?.markAsTouched();
-
-      expect(emailControl?.invalid).toBe(true);
-      expect(emailControl?.errors?.['required']).toBe(true);
+      expect(emailField.valid()).toBe(false);
+      const errors = emailField.errors();
+      expect(errors.some(e => e.message === "L'email est requis")).toBe(true);
     });
 
     it('should validate email format', () => {
-      const emailControl = component.email;
+      const emailField = component.forgotPasswordForm.email();
+      
+      component.forgotPasswordModel.set({ email: 'invalid-email' });
+      emailField.value.set('invalid-email');
+      fixture.detectChanges();
 
-      emailControl?.setValue('invalid-email');
-      emailControl?.markAsTouched();
-
-      expect(emailControl?.invalid).toBe(true);
-      expect(emailControl?.errors?.['email']).toBe(true);
+      expect(emailField.valid()).toBe(false);
+      const errors = emailField.errors();
+      expect(errors.some(e => e.message === 'Format d\'email invalide')).toBe(true);
     });
 
     it('should accept valid email', () => {
-      const emailControl = component.email;
+      const emailField = component.forgotPasswordForm.email();
+      
+      component.forgotPasswordModel.set({ email: 'test@example.com' });
+      emailField.value.set('test@example.com');
+      fixture.detectChanges();
 
-      emailControl?.setValue('test@example.com');
-      emailControl?.markAsTouched();
-
-      expect(emailControl?.valid).toBe(true);
+      expect(emailField.valid()).toBe(true);
     });
   });
 
   describe('form submission', () => {
     it('should call forgotPassword with valid email', async () => {
-      component.forgotPasswordForm.patchValue({ email: 'test@example.com' });
+      component.forgotPasswordModel.set({ email: 'test@example.com' });
+      fixture.detectChanges();
 
       await component.onSubmit();
 
-      expect(mockAuthStore.forgotPassword).toHaveBeenCalledWith(
+      expect(mockAuthStore['forgotPassword']).toHaveBeenCalledWith(
         'test@example.com'
       );
     });
 
     it('should emit closeModal on successful submission', async () => {
       jest.spyOn(component.closeModal, 'emit');
-      component.forgotPasswordForm.patchValue({ email: 'test@example.com' });
+      component.forgotPasswordModel.set({ email: 'test@example.com' });
+      fixture.detectChanges();
 
       await component.onSubmit();
 
@@ -130,22 +135,24 @@ describe('ForgotPasswordComponent', () => {
     });
 
     it('should not submit with invalid form', async () => {
-      component.forgotPasswordForm.patchValue({ email: '' });
+      component.forgotPasswordModel.set({ email: '' });
+      fixture.detectChanges();
 
       await component.onSubmit();
 
-      expect(mockAuthStore.forgotPassword).not.toHaveBeenCalled();
-      expect(component.submitted).toBe(true);
+      expect(mockAuthStore['forgotPassword']).not.toHaveBeenCalled();
+      expect(component.submitted()).toBe(true);
     });
 
     it('should handle loading state', async () => {
-      component.forgotPasswordForm.patchValue({ email: 'test@example.com' });
+      component.forgotPasswordModel.set({ email: 'test@example.com' });
+      fixture.detectChanges();
 
       const submitPromise = component.onSubmit();
-      expect(component.loading).toBe(true);
+      expect(component.loading()).toBe(true);
 
       await submitPromise;
-      expect(component.loading).toBe(false);
+      expect(component.loading()).toBe(false);
     });
   });
 
@@ -159,10 +166,11 @@ describe('ForgotPasswordComponent', () => {
     });
   });
 
-  describe('form getters', () => {
-    it('should return email form control', () => {
-      const emailControl = component.email;
-      expect(emailControl).toBe(component.forgotPasswordForm.get('email'));
+  describe('form access', () => {
+    it('should return email field from form', () => {
+      const emailField = component.forgotPasswordForm.email();
+      expect(emailField).toBeTruthy();
+      expect(emailField.value).toBeTruthy();
     });
   });
 });

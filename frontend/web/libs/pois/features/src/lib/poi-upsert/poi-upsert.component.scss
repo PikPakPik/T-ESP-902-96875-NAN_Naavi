@@ -1,0 +1,17 @@
+:host {
+  display: block;
+}
+
+.map-container {
+  min-height: 300px;
+}
+
+::ng-deep {
+  .p-inputtextarea,
+  .p-inputnumber,
+  .p-multiselect,
+  .p-select,
+  .p-chips {
+    width: 100%;
+  }
+}

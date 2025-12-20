@@ -2,19 +2,18 @@
   "name": "backoffice",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "prefix": "app",
+  "prefix": "",
   "sourceRoot": "apps/backoffice/src",
-  "tags": [],
+  "tags": ["type:app", "scope:backoffice"],
   "targets": {
     "build": {
-      "executor": "@angular-devkit/build-angular:application",
-      "outputs": ["{options.outputPath}"],
+      "executor": "@nx/angular:application",
       "options": {
+        "tsConfig": "apps/backoffice/tsconfig.app.json",
         "outputPath": "dist/apps/backoffice",
         "index": "apps/backoffice/src/index.html",
         "browser": "apps/backoffice/src/main.ts",
-        "polyfills": ["zone.js"],
-        "tsConfig": "apps/backoffice/tsconfig.app.json",
+        "inlineStyleLanguage": "scss",
         "assets": [
           {
             "glob": "**/*",
@@ -36,63 +35,59 @@
           "node_modules/primeicons/primeicons.css"
         ],
         "scripts": [],
-        "server": "apps/backoffice/src/main.server.ts",
-        "ssr": {
-          "entry": "apps/backoffice/src/server.ts"
-        },
-        "prerender": true
+        "allowedCommonJsDependencies": ["wkx-ts", "buffer"]
       },
       "configurations": {
         "production": {
-          "budgets": [
+          "outputHashing": "all",
+          "fileReplacements": [
             {
-              "maximumError": "5mb",
-              "maximumWarning": "2mb",
-              "type": "initial"
-            },
-            {
-              "maximumError": "70kb",
-              "maximumWarning": "6kb",
-              "type": "anyComponentStyle"
+              "replace": "apps/backoffice/src/environments/environment.ts",
+              "with": "apps/backoffice/src/environments/environment.prod.ts"
             }
-          ],
-          "outputHashing": "all"
+          ]
+        },
+        "develop": {
+          "outputHashing": "all",
+          "fileReplacements": [
+            {
+              "replace": "apps/backoffice/src/environments/environment.ts",
+              "with": "apps/backoffice/src/environments/environment.dev.ts"
+            }
+          ]
         },
         "development": {
-          "optimization": false,
-          "extractLicenses": false,
           "sourceMap": true
         }
       },
       "defaultConfiguration": "production"
     },
     "serve": {
-      "continuous": true,
-      "executor": "@angular-devkit/build-angular:dev-server",
-      "configurations": {
-        "production": {
-          "buildTarget": "backoffice:build:production"
-        },
-        "development": {
-          "buildTarget": "backoffice:build:development"
-        }
-      },
-      "defaultConfiguration": "development"
+      "executor": "@nx/angular:dev-server",
+      "options": {
+        "buildTarget": "backoffice:build:development",
+        "open": false,
+        "host": "0.0.0.0"
+      }
     },
     "extract-i18n": {
-      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "executor": "@nx/angular:extract-i18n",
       "options": {
         "buildTarget": "backoffice:build"
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "executor": "@nx/eslint:lint",
+      "options": {
+        "lintFilePatterns": ["{projectRoot}/**/*.{ts,html}"]
+      }
     },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "jestConfig": "apps/backoffice/jest.config.ts"
+        "jestConfig": "apps/backoffice/jest.config.ts",
+        "tsConfig": "apps/backoffice/tsconfig.spec.json"
       }
     },
     "docker": {
@@ -106,16 +101,6 @@
           "tags": ["type=sha,prefix=", "type=raw,linux-${TAG}"],
           "platforms": ["linux/amd64", "linux/arm64"]
         }
-      }
-    },
-    "serve-static": {
-      "continuous": true,
-      "executor": "@nx/backoffice:file-server",
-      "options": {
-        "buildTarget": "backoffice:build",
-        "port": 4200,
-        "staticFilePath": "dist/apps/backoffice/browser",
-        "spa": true
       }
     }
   }

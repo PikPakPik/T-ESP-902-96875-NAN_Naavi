@@ -1,0 +1,14 @@
+:host {
+  display: block;
+}
+
+// Custom styles pour le password input
+::ng-deep {
+  .p-password {
+    width: 100%;
+
+    input {
+      width: 100%;
+    }
+  }
+}

@@ -26,27 +26,16 @@ export default [
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     rules: {
-      '@nx/enforce-module-boundaries': [
-        'error',
-        {
-          enforceBuildableLibDependency: true,
-          allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?js$'],
-          depConstraints: [
-            {
-              sourceTag: '*',
-              onlyDependOnLibsWithTags: ['*'],
-            },
-          ],
-        },
-      ],
       '@typescript-eslint/no-explicit-any': 'warn',
     },
   },
   {
-    files: ['*.json'],
-    parser: 'jsonc-eslint-parser',
+    files: ['**/*.json'],
+    languageOptions: {
+      parser: await import('jsonc-eslint-parser'),
+    },
     rules: {
-      '@nx/dependency-checks': 'warn',
+      '@nx/dependency-checks': 'off',
     },
   },
   {

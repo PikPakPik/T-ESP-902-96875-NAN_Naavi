@@ -1,0 +1,411 @@
+<!-- Container principal -->
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+  <!-- En-tête avec fond blanc -->
+  <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+    <div class="flex items-center justify-between flex-wrap gap-4">
+      <div class="flex items-center gap-4">
+        <div
+          class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg"
+        >
+          <i class="pi pi-users text-white text-2xl"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">
+            {{ 'USER.TITLE' | translate }}
+          </h1>
+          <p class="text-sm text-gray-500">
+            {{ 'USER.SUBTITLE' | translate }}
+          </p>
+        </div>
+      </div>
+      <p-button
+        [label]="'USER.NEW' | translate"
+        icon="pi pi-plus"
+        (click)="openNew()"
+      />
+    </div>
+
+    <!-- Barre de recherche -->
+    <div class="mt-6 flex flex-wrap items-center gap-3">
+      <div class="flex-1 min-w-[300px]">
+        <p-iconfield iconPosition="left" class="w-full">
+          <p-inputicon>
+            <i class="pi pi-search"></i>
+          </p-inputicon>
+          <input
+            pInputText
+            type="text"
+            (input)="onSearchChange($event)"
+            [placeholder]="'USER.SEARCH_PLACEHOLDER' | translate"
+            class="w-full"
+          />
+        </p-iconfield>
+      </div>
+      <p-button
+        icon="pi pi-filter-slash"
+        [outlined]="true"
+        severity="secondary"
+        (click)="clear(dt)"
+        [pTooltip]="'COMMON.RESET' | translate"
+      />
+      @if (selectedUsers && selectedUsers.length > 0) {
+      <div class="flex items-center gap-2 bg-red-50 px-4 py-2 rounded-lg">
+        <span class="text-sm font-medium text-red-700">
+          {{ selectedUsers.length }} {{ 'COMMON.SELECTED' | translate }}
+        </span>
+        <p-button
+          severity="danger"
+          icon="pi pi-trash"
+          size="small"
+          [outlined]="true"
+          (click)="deleteSelectedUsersConfirm()"
+          [pTooltip]="'COMMON.DELETE' | translate"
+        />
+      </div>
+      }
+    </div>
+  </div>
+
+  <!-- Tableau -->
+  <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+    <p-table
+      #dt
+      dataKey="id"
+      [currentPageReportTemplate]="'HIKE.PAGE_REPORT' | translate"
+      [value]="rows()"
+      [(selection)]="selectedUsers"
+      [rowHover]="true"
+      [rows]="rowsPerPage()"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [loading]="loading()"
+      [paginator]="true"
+      [lazy]="true"
+      [globalFilterFields]="['firstname', 'lastname', 'email']"
+      [first]="(currentPage() - 1) * rowsPerPage()"
+      [totalRecords]="totalRecords()"
+      (onPage)="onPageChange($event)"
+    >
+      <ng-template #header>
+        <tr>
+          <th style="width: 3rem">
+            <p-tableHeaderCheckbox />
+          </th>
+          <th pSortableColumn="id" style="min-width: 6rem">
+            <div class="flex items-center gap-2">
+              {{ 'USER.ID' | translate }}
+              <p-sortIcon field="id" />
+            </div>
+          </th>
+          <th pSortableColumn="firstname" style="min-width: 12rem">
+            <div class="flex items-center gap-2">
+              {{ 'COMMON.FIRSTNAME' | translate }}
+              <p-sortIcon field="firstname" />
+            </div>
+          </th>
+          <th pSortableColumn="lastname" style="min-width: 12rem">
+            <div class="flex items-center gap-2">
+              {{ 'COMMON.LASTNAME' | translate }}
+              <p-sortIcon field="lastname" />
+            </div>
+          </th>
+          <th pSortableColumn="email" style="min-width: 16rem">
+            <div class="flex items-center gap-2">
+              {{ 'COMMON.EMAIL' | translate }}
+              <p-sortIcon field="email" />
+            </div>
+          </th>
+          <th pSortableColumn="status" style="min-width: 10rem">
+            <div class="flex items-center gap-2">
+              {{ 'COMMON.STATUS' | translate }}
+              <p-sortIcon field="status" />
+            </div>
+          </th>
+          <th pSortableColumn="roles" style="min-width: 12rem">
+            <div class="flex items-center gap-2">
+              {{ 'COMMON.ROLES' | translate }}
+              <p-sortIcon field="roles" />
+            </div>
+          </th>
+          <th style="width: 8rem; text-align: center">
+            {{ 'HIKE.ACTIONS' | translate }}
+          </th>
+          <th style="width: 9rem; text-align: center">
+            {{ 'COMMON.SETTINGS' | translate }}
+          </th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-user>
+        <tr class="p-selectable-row">
+          <td>
+            <p-tableCheckbox [value]="user" />
+          </td>
+          <td>
+            <span class="text-gray-600 font-mono text-sm">#{{ user.id }}</span>
+          </td>
+          <td>
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-bold text-sm shadow-md"
+              >
+                {{ user.firstname.charAt(0).toUpperCase()
+                }}{{ user.lastname.charAt(0).toUpperCase() }}
+              </div>
+              <span class="text-gray-900 font-medium">{{
+                user.firstname
+              }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="text-gray-900 font-medium">{{ user.lastname }}</span>
+          </td>
+          <td>
+            <div class="flex items-center gap-2">
+              <i class="pi pi-envelope text-gray-400 text-xs"></i>
+              <span class="text-gray-900">{{ user.email }}</span>
+            </div>
+          </td>
+          <td>
+            <p-tag
+              [value]="'PROFILE.STATUS.' + user.status | translate"
+              [severity]="getSeverity(user.status)"
+              [rounded]="true"
+            />
+          </td>
+          <td>
+            <div class="flex flex-wrap gap-1">
+              @for (role of user.roles; track role) { @if (role && role !==
+              'ROLE_USER') {
+              <p-tag
+                [value]="
+                  'PROFILE.ROLE.' + role.replace('ROLE_', '') | translate
+                "
+                severity="info"
+                [rounded]="true"
+              />
+              }}
+            </div>
+          </td>
+          <td style="text-align: center">
+            <div class="flex gap-1 justify-center">
+              <p-button
+                icon="pi pi-history"
+                severity="info"
+                size="small"
+                [text]="true"
+                [rounded]="true"
+                (click)="viewUserDetails(user)"
+                [pTooltip]="'HIKE.HISTORY.TITLE' | translate"
+              />
+              <p-button
+                icon="pi pi-key"
+                severity="danger"
+                size="small"
+                [text]="true"
+                [rounded]="true"
+                (click)="resetPasswordConfirm(user)"
+                pTooltip="Réinitialiser mot de passe"
+              />
+            </div>
+          </td>
+          <td style="text-align: center">
+            <div class="flex gap-1 justify-center">
+              <p-button
+                icon="pi pi-pencil"
+                severity="secondary"
+                size="small"
+                [text]="true"
+                [rounded]="true"
+                (click)="editUserDialog(user)"
+                [pTooltip]="'COMMON.EDIT' | translate"
+              />
+              <p-button
+                icon="pi pi-trash"
+                severity="danger"
+                size="small"
+                [text]="true"
+                [rounded]="true"
+                (click)="deleteUserConfirm(user)"
+                [pTooltip]="'COMMON.DELETE' | translate"
+              />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="9">
+            <div class="py-20 text-center">
+              <div
+                class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-green-50 to-green-100 mb-6"
+              >
+                <i class="pi pi-users text-4xl text-green-600"></i>
+              </div>
+              <h3 class="text-xl font-bold text-gray-900 mb-2">
+                {{ 'USER.EMPTY_TITLE' | translate }}
+              </h3>
+              <p class="text-gray-500 mb-8 max-w-md mx-auto">
+                {{ 'USER.EMPTY_DESCRIPTION' | translate }}
+              </p>
+              <p-button
+                [label]="'USER.EMPTY_CREATE' | translate"
+                icon="pi pi-plus"
+                (click)="openNew()"
+              />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<p-dialog
+  [(visible)]="userDialog"
+  [style]="{ width: '500px' }"
+  [header]="'USER.DETAILS_TITLE' | translate"
+  [modal]="true"
+  class="rounded-2xl"
+>
+  <ng-template #content>
+    <div class="flex flex-col gap-6">
+      <div>
+        <label for="status" class="block font-bold mb-3 text-gray-700">{{
+          'COMMON.STATUS' | translate
+        }}</label>
+        <p-select
+          [(ngModel)]="user().status"
+          inputId="status"
+          [options]="statuses()"
+          optionLabel="label"
+          optionValue="value"
+          [placeholder]="'USER.STATUS_PLACEHOLDER' | translate"
+          fluid
+          [appendTo]="'body'"
+        >
+          <ng-template let-status pTemplate="item">
+            {{ status.label | translate }}
+          </ng-template>
+          <ng-template let-status pTemplate="selectedItem">
+            {{ status.label | translate }}
+          </ng-template>
+        </p-select>
+      </div>
+
+      <div>
+        <label for="roles" class="block font-bold mb-3 text-gray-700">{{
+          'COMMON.ROLES' | translate
+        }}</label>
+        <p-multiselect
+          [ngModel]="user().roles"
+          (ngModelChange)="onRolesChange($event)"
+          inputId="roles"
+          [options]="roles()"
+          optionLabel="label"
+          optionValue="value"
+          [placeholder]="'USER.ROLES_PLACEHOLDER' | translate"
+          fluid
+          [appendTo]="'body'"
+        >
+          <ng-template let-role pTemplate="item">
+            {{ role.label | translate }}
+          </ng-template>
+          <ng-template let-role pTemplate="selectedItem">
+            {{ role.label | translate }}
+          </ng-template>
+          <ng-template pTemplate="selectedItems">
+            @for (roleValue of user().roles; track roleValue; let i = $index) {
+            @if (i > 0) {
+            <span>, </span>
+            }
+            <span>{{
+              'PROFILE.ROLE.' + roleValue.replace('ROLE_', '') | translate
+            }}</span>
+            }
+          </ng-template>
+        </p-multiselect>
+        <small class="text-gray-500 mt-2 block">
+          {{ 'USER.ROLES_NOTE' | translate }}
+        </small>
+      </div>
+
+      <div>
+        <label for="firstName" class="block font-bold mb-3 text-gray-700"
+          >{{ 'COMMON.FIRSTNAME' | translate }} *</label
+        >
+        <input
+          type="text"
+          pInputText
+          id="firstName"
+          [(ngModel)]="user().firstname"
+          required
+          fluid
+          [placeholder]="'USER.FIRSTNAME_PLACEHOLDER' | translate"
+        />
+        @if (submitted() && !user().firstname) {
+        <small class="text-red-500 mt-1 block"
+          >{{ 'PROFILE.FIRSTNAME_REQUIRED' | translate }}.</small
+        >
+        }
+      </div>
+
+      <div>
+        <label for="lastName" class="block font-bold mb-3 text-gray-700"
+          >{{ 'COMMON.LASTNAME' | translate }} *</label
+        >
+        <input
+          type="text"
+          pInputText
+          id="lastName"
+          [(ngModel)]="user().lastname"
+          required
+          fluid
+          [placeholder]="'USER.LASTNAME_PLACEHOLDER' | translate"
+        />
+        @if (submitted() && !user().lastname) {
+        <small class="text-red-500 mt-1 block"
+          >{{ 'PROFILE.LASTNAME_REQUIRED' | translate }}.</small
+        >
+        }
+      </div>
+
+      <div>
+        <label for="email" class="block font-bold mb-3 text-gray-700"
+          >{{ 'COMMON.EMAIL' | translate }} *</label
+        >
+        <input
+          type="email"
+          pInputText
+          id="email"
+          [(ngModel)]="user().email"
+          required
+          fluid
+          [placeholder]="'USER.EMAIL_PLACEHOLDER' | translate"
+        />
+        @if (submitted() && !user().email) {
+        <small class="text-red-500 mt-1 block">{{
+          'USER.EMAIL_REQUIRED' | translate
+        }}</small>
+        }
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template #footer>
+    <div class="flex gap-2 justify-end">
+      <p-button
+        [label]="'COMMON.CANCEL' | translate"
+        icon="pi pi-times"
+        [outlined]="true"
+        severity="secondary"
+        (click)="hideDialog()"
+      />
+      <p-button
+        [label]="'COMMON.SAVE' | translate"
+        icon="pi pi-check"
+        (click)="saveUserDialog()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<p-confirmDialog [style]="{ width: '450px' }" />

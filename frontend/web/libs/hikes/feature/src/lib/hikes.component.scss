@@ -1,0 +1,61 @@
+.map-preview {
+  h4 {
+    color: #2563eb;
+    font-weight: 600;
+  }
+
+  .map-container {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    iframe {
+      border: none;
+    }
+  }
+}
+
+.map-popover-container {
+  padding: 0;
+  min-width: 400px;
+  max-width: 600px;
+
+  .map-title {
+    padding: 0.75rem 1rem;
+    margin: 0;
+    border-bottom: 1px solid #e5e7eb;
+    color: #1f2937;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .map-popover-image {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .map-popover-map {
+    width: 100%;
+    height: 300px;
+  }
+
+  ::ng-deep mgl-map {
+    width: 100%;
+    height: 100%;
+  }
+
+  .map-description {
+    padding: 0.75rem 1rem;
+    margin: 0;
+  }
+}
+
+.card {
+  .p-datatable {
+    .p-datatable-tbody > tr > td {
+      white-space: nowrap;
+    }
+  }
+}

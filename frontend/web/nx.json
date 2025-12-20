@@ -39,7 +39,14 @@
         "passWithNoTests": true,
         "coverageDirectory": "{workspaceRoot}/coverage/{projectRoot}",
         "codeCoverage": true,
-        "coverageReporters": ["lcov"]
+        "coverageReporters": [
+          "text",
+          "text-summary",
+          "html",
+          "lcov",
+          "cobertura",
+          "json-summary"
+        ]
       },
       "configurations": {
         "ci": {
@@ -49,7 +56,7 @@
       }
     },
     "@nx/angular:ng-packagr-lite": {
-      "cache": true,
+      "cache": false,
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
     },
@@ -74,7 +81,7 @@
       "inputs": ["default", "^production"],
       "cache": true
     },
-    "@nx/angular:package": {
+    "@nx/angular:ng-packagr-lite": {
       "cache": true,
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
@@ -98,7 +105,8 @@
       "options": {
         "defaultEngine": "docker",
         "defaultRegistry": "docker.io"
-      }
+      },
+      "exclude": ["**/*-e2e/**/*.json", "**/e2e/**/*.json"]
     }
   ],
   "generators": {

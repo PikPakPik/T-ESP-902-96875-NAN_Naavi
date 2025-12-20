@@ -1,0 +1,16 @@
+{
+  "name": "@web/pois/data-access",
+  "version": "0.0.1",
+  "peerDependencies": {
+    "@angular-architects/ngrx-toolkit": "^20.0.1",
+    "@angular/common": "^20.1.0",
+    "@angular/core": "^20.1.0",
+    "@ngrx/signals": "^20.0.0",
+    "@web/shared/http-client": "*",
+    "@web/shared/models": "*",
+    "@web/shared/util/signal-stores": "*",
+    "primeng": "^20.0.0",
+    "rxjs": "~7.8.0"
+  },
+  "sideEffects": false
+}

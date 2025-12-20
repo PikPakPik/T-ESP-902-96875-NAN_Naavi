@@ -3,8 +3,10 @@
     <!-- Section gauche avec l'image -->
     <div class="image-section">
       <div class="image-overlay">
-        <h1 class="welcome-title">Bienvenue</h1>
-        <p class="welcome-subtitle">Connectez-vous à votre compte</p>
+        <h1 class="welcome-title">{{ 'AUTH.WELCOME.TITLE' | translate }}</h1>
+        <p class="welcome-subtitle">
+          {{ 'AUTH.WELCOME.SUBTITLE' | translate }}
+        </p>
       </div>
     </div>
 
@@ -16,8 +18,8 @@
             class="pi pi-mountain"
             style="font-size: 3rem; color: var(--primary-color)"
           ></i>
-          <h2>Connexion</h2>
-          <p class="subtitle">Accédez à votre espace personnel</p>
+          <h2>{{ 'AUTH.LOGIN.TITLE' | translate }}</h2>
+          <p class="subtitle">{{ 'AUTH.LOGIN.SUBTITLE' | translate }}</p>
         </div>
 
         <form
@@ -27,12 +29,14 @@
         >
           <!-- Champ Email -->
           <div class="field">
-            <label for="email">Adresse email</label>
+            <label for="email">{{
+              'AUTH.LOGIN.EMAIL_LABEL' | translate
+            }}</label>
             <input
               pInputText
               id="email"
               formControlName="email"
-              placeholder="votre@email.com"
+              [placeholder]="'AUTH.LOGIN.EMAIL_PLACEHOLDER' | translate"
               [class.ng-invalid]="email?.invalid && email?.touched"
               class="w-full"
               [pAutoFocus]="false"
@@ -40,9 +44,13 @@
             @if (email?.invalid && email?.touched) {
             <small class="p-error">
               @if (email?.errors?.['required']) {
-              <span>L'email est requis</span>
+              <span>{{ 'AUTH.LOGIN.EMAIL_REQUIRED' | translate }}</span>
               } @if (email?.errors?.['email']) {
-              <span>Format d'email invalide</span>
+              <span>{{ 'AUTH.LOGIN.EMAIL_INVALID' | translate }}</span>
+              } @if (email?.errors?.['serverError']) {
+              <span>{{
+                'AUTH.LOGIN.ERROR.INVALID_CREDENTIALS' | translate
+              }}</span>
               }
             </small>
             }
@@ -50,10 +58,12 @@
 
           <!-- Champ Mot de passe -->
           <div class="field">
-            <label for="password">Mot de passe</label>
+            <label for="password">{{
+              'AUTH.LOGIN.PASSWORD_LABEL' | translate
+            }}</label>
             <p-password
               formControlName="password"
-              placeholder="Votre mot de passe"
+              [placeholder]="'AUTH.LOGIN.PASSWORD_PLACEHOLDER' | translate"
               [toggleMask]="true"
               [feedback]="false"
               inputStyleClass="w-full"
@@ -63,10 +73,19 @@
             @if (password?.invalid && password?.touched) {
             <small class="p-error">
               @if (password?.errors?.['required']) {
-              <span>Le mot de passe est requis</span>
+              <span>{{ 'AUTH.LOGIN.PASSWORD_REQUIRED' | translate }}</span>
+              } @if (password?.errors?.['serverError']) {
+              <span>{{
+                'AUTH.LOGIN.ERROR.INVALID_CREDENTIALS' | translate
+              }}</span>
               }
             </small>
             }
+          </div>
+
+          <!-- Turnstile Widget -->
+          <div class="field mb-4">
+            <div id="turnstile-widget"></div>
           </div>
 
           <!-- Options -->
@@ -78,7 +97,7 @@
                 inputId="rememberMe"
               ></p-checkbox>
               <label for="rememberMe" class="ml-2 text-sm">
-                Se souvenir de moi
+                {{ 'AUTH.LOGIN.REMEMBER_ME' | translate }}
               </label>
             </div>
             <a
@@ -88,17 +107,26 @@
               tabindex="0"
               (keydown.enter)="openForgotPasswordModal()"
             >
-              Mot de passe oublié ?
+              {{ 'AUTH.LOGIN.FORGOT_PASSWORD' | translate }}
             </a>
           </div>
+
+          <!-- Message d'erreur général -->
+          @if (error() && !loading()) {
+          <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+            <small class="p-error">
+              <span>{{ error() }}</span>
+            </small>
+          </div>
+          }
 
           <!-- Bouton de connexion -->
           <p-button
             type="submit"
-            label="Se connecter"
-            [loading]="loading"
-            styleClass="w-full login-button"
-            [disabled]="loginForm.invalid"
+            [label]="'AUTH.LOGIN.BUTTON' | translate"
+            [loading]="loading()"
+            class="w-full login-button"
+            [disabled]="loginForm.invalid || !turnstileToken"
           ></p-button>
         </form>
       </div>
@@ -114,7 +142,7 @@
   [closable]="true"
   [draggable]="false"
   [resizable]="false"
-  styleClass="forgot-password-dialog"
+  class="forgot-password-dialog"
   [dismissableMask]="true"
 >
   <forgot-password (closeModal)="closeForgotPasswordModal()"></forgot-password>

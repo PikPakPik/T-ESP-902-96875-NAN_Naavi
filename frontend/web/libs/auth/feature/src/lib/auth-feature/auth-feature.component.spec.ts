@@ -2,18 +2,56 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { AuthFeatureComponent } from './auth-feature.component';
 import { AuthStore } from '@web/auth/data-access';
+import { Router } from '@angular/router';
+import {
+  TranslateService,
+  TranslateModule,
+  TranslateLoader,
+} from '@ngx-translate/core';
+import { of, Observable, firstValueFrom } from 'rxjs';
+import { TURNSTILE_SITE_KEY } from '@web/shared/util';
 
 describe('AuthFeatureComponent', () => {
   let fixture: ComponentFixture<AuthFeatureComponent>;
   let mockAuthStore: any;
+  let mockRouter: { navigate: jest.Mock; url: string };
+  let translateService: TranslateService;
 
   // Global mock objects
   const mockLoginResponse = { user: { id: '1', email: 'test@example.com' } };
 
+  // Mock loader that returns key as translation for all keys
+  class MockTranslateLoader implements TranslateLoader {
+    getTranslation(lang: string): Observable<any> {
+      // Return a function that returns the key itself
+      return of({
+        'AUTH.WELCOME.TITLE': 'Bienvenue',
+        'AUTH.WELCOME.SUBTITLE': 'Connectez-vous à votre compte',
+        'AUTH.LOGIN.TITLE': 'Connexion',
+        'AUTH.LOGIN.SUBTITLE': 'Accédez à votre espace personnel',
+        'AUTH.LOGIN.EMAIL_LABEL': 'Adresse email',
+        'AUTH.LOGIN.EMAIL_PLACEHOLDER': 'votre@email.com',
+        'AUTH.LOGIN.EMAIL_REQUIRED': "L'email est requis",
+        'AUTH.LOGIN.EMAIL_INVALID': "Format d'email invalide",
+        'AUTH.LOGIN.PASSWORD_LABEL': 'Mot de passe',
+        'AUTH.LOGIN.PASSWORD_PLACEHOLDER': 'Votre mot de passe',
+        'AUTH.LOGIN.PASSWORD_REQUIRED': 'Le mot de passe est requis',
+        'AUTH.LOGIN.REMEMBER_ME': 'Se souvenir de moi',
+        'AUTH.LOGIN.FORGOT_PASSWORD': 'Mot de passe oublié ?',
+        'AUTH.LOGIN.BUTTON': 'Se connecter',
+        'AUTH.LOGIN.ERROR.INVALID_CREDENTIALS': 'Identifiants incorrects',
+      });
+    }
+  }
+
   beforeEach(async () => {
+    mockRouter = {
+      navigate: jest.fn(),
+      url: '/auth/login',
+    };
+
     mockAuthStore = {
       login: jest.fn().mockResolvedValue(undefined),
       getUser: jest.fn().mockResolvedValue(undefined),
@@ -27,15 +65,25 @@ describe('AuthFeatureComponent', () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [AuthFeatureComponent],
+      imports: [
+        AuthFeatureComponent,
+        TranslateModule.forRoot({
+          loader: { provide: TranslateLoader, useClass: MockTranslateLoader },
+          fallbackLang: 'fr',
+        }),
+      ],
       providers: [
         { provide: AuthStore, useValue: mockAuthStore },
-        provideNoopAnimations(),
+        { provide: Router, useValue: mockRouter },
+        { provide: TURNSTILE_SITE_KEY, useValue: 'test-site-key' },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AuthFeatureComponent);
+    translateService = TestBed.inject(TranslateService);
+    translateService.setFallbackLang('fr');
+    await firstValueFrom(translateService.use('fr'));
   });
 
   afterEach(() => {
@@ -55,7 +103,7 @@ describe('AuthFeatureComponent', () => {
       expect(component.loginForm.get('email')?.value).toBe('');
       expect(component.loginForm.get('password')?.value).toBe('');
       expect(component.loginForm.get('rememberMe')?.value).toBe(false);
-      expect(component.loading).toBe(false);
+      expect(component.loading()).toBe(false);
       expect(component.showForgotPasswordModal).toBe(false);
     });
 
@@ -172,13 +220,20 @@ describe('AuthFeatureComponent', () => {
         rememberMe: true,
       });
 
+      // Set turnstile token to allow login
+      component.turnstileToken = 'test-token';
+
       // WHEN
       await component.onSubmit();
 
       // THEN
       expect(mockAuthStore.login).toHaveBeenCalledTimes(1);
-      expect(mockAuthStore.login).toHaveBeenCalledWith(testEmail, testPassword);
-      expect(component.loading).toBe(false);
+      expect(mockAuthStore.login).toHaveBeenCalledWith(
+        testEmail,
+        testPassword,
+        'test-token'
+      );
+      expect(component.loading()).toBe(false);
     });
 
     it('Given invalid form When submitting login form Then should mark all fields as touched and not call store login', async () => {
@@ -208,13 +263,19 @@ describe('AuthFeatureComponent', () => {
       const testEmail = 'test@example.com';
       const testPassword = 'password123';
 
-      // Mock login to return a pending promise to test loading state
+      // Mock login to simulate async behavior with loading state
       let resolveLogin: (() => void) | undefined;
       const loginPromise = new Promise<void>((resolve) => {
         resolveLogin = resolve;
       });
 
-      mockAuthStore.login.mockReturnValue(loginPromise);
+      mockAuthStore.login.mockImplementation(async () => {
+        // Simulate store setting isPending to true when login starts
+        mockAuthStore.isPending.set(true);
+        await loginPromise;
+        // Simulate store setting isPending to false when login completes
+        mockAuthStore.isPending.set(false);
+      });
 
       const component = fixture.componentInstance;
 
@@ -223,19 +284,24 @@ describe('AuthFeatureComponent', () => {
         password: testPassword,
       });
 
-      // WHEN
-      const submitPromise = component.onSubmit();
+      // Set turnstile token to allow login
+      component.turnstileToken = 'test-token';
 
-      // THEN
-      expect(component.loading).toBe(true);
+      // WHEN - Start the submission
+      const onSubmitPromise = component.onSubmit();
+
+      // THEN - Check that loading is true during submission
+      expect(component.loading()).toBe(true);
 
       // Resolve the login and wait for completion
       if (resolveLogin) {
         resolveLogin();
       }
-      await submitPromise;
+      await onSubmitPromise;
+      fixture.detectChanges();
 
-      expect(component.loading).toBe(false);
+      // Verify loading is false after completion
+      expect(component.loading()).toBe(false);
     });
   });
 
@@ -341,7 +407,7 @@ describe('AuthFeatureComponent', () => {
       const component = fixture.componentInstance;
 
       // WHEN
-      component.loading = true;
+      mockAuthStore.isPending.set(true);
       fixture.detectChanges();
 
       // THEN
@@ -374,6 +440,268 @@ describe('AuthFeatureComponent', () => {
 
       // THEN
       expect(fixture).toMatchSnapshot();
+    });
+  });
+
+  describe('setFormError', () => {
+    it('Given form controls without existing errors When setting form error Then should add serverError to both email and password controls', () => {
+      // GIVEN
+      const component = fixture.componentInstance;
+      component.loginForm.patchValue({
+        email: 'test@example.com',
+        password: 'password123',
+      });
+
+      // WHEN
+      (component as unknown as { setFormError(): void }).setFormError();
+
+      // THEN
+      const emailControl = component.loginForm.get('email');
+      const passwordControl = component.loginForm.get('password');
+
+      expect(emailControl?.errors?.['serverError']).toBe(true);
+      expect(passwordControl?.errors?.['serverError']).toBe(true);
+      expect(emailControl?.touched).toBe(true);
+      expect(passwordControl?.touched).toBe(true);
+    });
+
+    it('Given form controls with existing validation errors When setting form error Then should add serverError while keeping existing errors', () => {
+      // GIVEN
+      const component = fixture.componentInstance;
+      component.loginForm.patchValue({
+        email: 'invalid-email',
+        password: '',
+      });
+
+      // Manually set errors to simulate existing validation errors
+      const emailControl = component.loginForm.get('email');
+      const passwordControl = component.loginForm.get('password');
+      emailControl?.setErrors({ email: true });
+      passwordControl?.setErrors({ required: true });
+
+      // WHEN
+      (component as unknown as { setFormError(): void }).setFormError();
+
+      // THEN
+      expect(emailControl?.errors?.['serverError']).toBe(true);
+      expect(emailControl?.errors?.['email']).toBe(true);
+      expect(passwordControl?.errors?.['serverError']).toBe(true);
+      expect(passwordControl?.errors?.['required']).toBe(true);
+    });
+  });
+
+  describe('clearFormErrors', () => {
+    it('Given email with only serverError When clearing form errors Then should remove all errors from email', () => {
+      // GIVEN
+      const component = fixture.componentInstance;
+      const emailControl = component.loginForm.get('email');
+      emailControl?.setErrors({ serverError: true });
+
+      // WHEN
+      (component as unknown as { clearFormErrors(): void }).clearFormErrors();
+
+      // THEN
+      expect(emailControl?.errors).toBeNull();
+    });
+
+    it('Given password with only serverError When clearing form errors Then should remove all errors from password', () => {
+      // GIVEN
+      const component = fixture.componentInstance;
+      const passwordControl = component.loginForm.get('password');
+      passwordControl?.setErrors({ serverError: true });
+
+      // WHEN
+      (component as unknown as { clearFormErrors(): void }).clearFormErrors();
+
+      // THEN
+      expect(passwordControl?.errors).toBeNull();
+    });
+
+    it('Given email with serverError and other validation errors When clearing form errors Then should keep other validation errors', () => {
+      // GIVEN
+      const component = fixture.componentInstance;
+      const emailControl = component.loginForm.get('email');
+      emailControl?.setErrors({ serverError: true, email: true });
+
+      // WHEN
+      (component as unknown as { clearFormErrors(): void }).clearFormErrors();
+
+      // THEN
+      expect(emailControl?.errors?.['serverError']).toBeUndefined();
+      expect(emailControl?.errors?.['email']).toBe(true);
+    });
+
+    it('Given password with serverError and other validation errors When clearing form errors Then should keep other validation errors', () => {
+      // GIVEN
+      const component = fixture.componentInstance;
+      const passwordControl = component.loginForm.get('password');
+      passwordControl?.setErrors({ serverError: true, required: true });
+
+      // WHEN
+      (component as unknown as { clearFormErrors(): void }).clearFormErrors();
+
+      // THEN
+      expect(passwordControl?.errors?.['serverError']).toBeUndefined();
+      expect(passwordControl?.errors?.['required']).toBe(true);
+    });
+
+    it('Given controls without serverError When clearing form errors Then should not modify controls', () => {
+      // GIVEN
+      const component = fixture.componentInstance;
+      const emailControl = component.loginForm.get('email');
+      const passwordControl = component.loginForm.get('password');
+      emailControl?.setErrors({ email: true });
+      passwordControl?.setErrors({ required: true });
+
+      // WHEN
+      (component as unknown as { clearFormErrors(): void }).clearFormErrors();
+
+      // THEN
+      expect(emailControl?.errors?.['email']).toBe(true);
+      expect(passwordControl?.errors?.['required']).toBe(true);
+    });
+  });
+
+  describe('form error clearing on value changes', () => {
+    it('Given email field with serverError When email value changes Then should clear form errors', (done) => {
+      // GIVEN
+      const component = fixture.componentInstance;
+      const emailControl = component.loginForm.get('email');
+      emailControl?.setErrors({ serverError: true, email: true });
+
+      // WHEN
+      emailControl?.setValue('new@example.com');
+
+      // THEN
+      setTimeout(() => {
+        expect(emailControl?.errors?.['serverError']).toBeUndefined();
+        expect(emailControl?.errors?.['email']).toBeUndefined();
+        done();
+      }, 10);
+    });
+
+    it('Given password field with serverError When password value changes Then should clear form errors', (done) => {
+      // GIVEN
+      const component = fixture.componentInstance;
+      const passwordControl = component.loginForm.get('password');
+      passwordControl?.setErrors({ serverError: true });
+
+      // WHEN
+      passwordControl?.setValue('newPassword');
+
+      // THEN
+      setTimeout(() => {
+        expect(passwordControl?.errors?.['serverError']).toBeUndefined();
+        done();
+      }, 10);
+    });
+  });
+
+  describe('login with error handling', () => {
+    it('Given valid form When login fails with error Then should set form errors', async () => {
+      // GIVEN
+      const testEmail = 'test@example.com';
+      const testPassword = 'wrongPassword';
+
+      mockAuthStore.login.mockResolvedValue(undefined);
+      mockAuthStore.error.set('Invalid credentials');
+
+      const component = fixture.componentInstance;
+      component.loginForm.patchValue({
+        email: testEmail,
+        password: testPassword,
+      });
+
+      // Set turnstile token to allow login
+      component.turnstileToken = 'test-token';
+
+      // WHEN
+      await component.onSubmit();
+
+      // THEN
+      const emailControl = component.loginForm.get('email');
+      const passwordControl = component.loginForm.get('password');
+
+      expect(emailControl?.errors?.['serverError']).toBe(true);
+      expect(passwordControl?.errors?.['serverError']).toBe(true);
+      expect(emailControl?.touched).toBe(true);
+      expect(passwordControl?.touched).toBe(true);
+    });
+  });
+
+  describe('user navigation effect', () => {
+    it('Given user is logged in and on auth page When component initializes Then should navigate to home', async () => {
+      // GIVEN
+      mockRouter.url = '/auth/login';
+      const mockUser = { id: '1', email: 'test@example.com' };
+      const userSignal = signal(mockUser);
+      mockAuthStore.user = userSignal;
+
+      // WHEN
+      fixture = TestBed.createComponent(AuthFeatureComponent);
+      await fixture.whenStable();
+
+      // THEN
+      // Effect should execute after component creation
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/']);
+    });
+
+    it('Given user is logged in and on backoffice page When component initializes Then should not navigate', async () => {
+      // GIVEN
+      mockRouter.url = '/backoffice/users';
+      const mockUser = { id: '1', email: 'test@example.com' };
+      const userSignal = signal(mockUser);
+      mockAuthStore.user = userSignal;
+
+      // WHEN
+      fixture = TestBed.createComponent(AuthFeatureComponent);
+      await fixture.whenStable();
+
+      // THEN
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    });
+
+    it('Given user is logged in and on dashboard page When component initializes Then should not navigate', async () => {
+      // GIVEN
+      mockRouter.url = '/dashboard/stats';
+      const mockUser = { id: '1', email: 'test@example.com' };
+      const userSignal = signal(mockUser);
+      mockAuthStore.user = userSignal;
+
+      // WHEN
+      fixture = TestBed.createComponent(AuthFeatureComponent);
+      await fixture.whenStable();
+
+      // THEN
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    });
+
+    it('Given user is not logged in When component initializes Then should not navigate', async () => {
+      // GIVEN
+      mockRouter.url = '/auth/login';
+      mockAuthStore.user = signal(null);
+
+      // WHEN
+      fixture = TestBed.createComponent(AuthFeatureComponent);
+      await fixture.whenStable();
+
+      // THEN
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    });
+
+    it('Given user is logged in with empty id When component initializes Then should not navigate', async () => {
+      // GIVEN
+      mockRouter.url = '/auth/login';
+      const mockUser = { id: '', email: 'test@example.com' };
+      const userSignal = signal(mockUser);
+      mockAuthStore.user = userSignal;
+
+      // WHEN
+      fixture = TestBed.createComponent(AuthFeatureComponent);
+      await fixture.whenStable();
+
+      // THEN
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
     });
   });
 });

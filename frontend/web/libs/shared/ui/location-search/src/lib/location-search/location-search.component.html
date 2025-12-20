@@ -1,0 +1,234 @@
+<p-dialog
+  [visible]="visible()"
+  (visibleChange)="visible.set($event)"
+  [modal]="true"
+  [style]="{ width: '90vw', maxWidth: '1000px' }"
+  [draggable]="false"
+  [resizable]="false"
+  class="location-search-dialog"
+>
+  <ng-template pTemplate="header">
+    <div class="flex items-center gap-3">
+      <i class="pi pi-map-marker text-green-600 text-2xl"></i>
+      <div>
+        <h2 class="text-xl font-bold text-gray-900 m-0">
+          Recherche par localisation
+        </h2>
+        <p class="text-sm text-gray-500 m-0">
+          Cliquez sur la carte ou déplacez le marqueur
+        </p>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Contenu -->
+  <div class="space-y-4">
+    <!-- Carte -->
+    <div
+      class="relative rounded-xl overflow-hidden border-2 border-gray-200 map-wrapper"
+    >
+      <mgl-map
+        #map
+        [style]="mapStyle"
+        [zoom]="mapZoom()"
+        [center]="mapCenter()"
+        [attributionControl]="false"
+        class="map-container"
+        (mapClick)="onMapClick($event)"
+      >
+        <!-- Marker déplaçable -->
+        <mgl-marker
+          #marker
+          [lngLat]="markerLngLat()"
+          [draggable]="true"
+          (markerDragEnd)="
+            marker.markerInstance && onMarkerDragEnd(marker.markerInstance)
+          "
+        >
+          <div
+            class="custom-marker"
+            style="
+              width: 40px;
+              height: 40px;
+              background: #16a34a;
+              border: 3px solid white;
+              border-radius: 50%;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+              cursor: move;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <i
+              class="pi pi-map-marker"
+              style="color: white; font-size: 20px"
+            ></i>
+          </div>
+        </mgl-marker>
+
+        <!-- Cercle pour visualiser le rayon -->
+        <mgl-geojson-source id="search-radius" [data]="circleGeoJSON()">
+        </mgl-geojson-source>
+        <mgl-layer
+          id="search-radius-fill"
+          type="fill"
+          source="search-radius"
+          [paint]="{
+            'fill-color': '#16a34a',
+            'fill-opacity': 0.2
+          }"
+        >
+        </mgl-layer>
+        <mgl-layer
+          id="search-radius-outline"
+          type="line"
+          source="search-radius"
+          [paint]="{
+            'line-color': '#16a34a',
+            'line-width': 2,
+            'line-dasharray': [2, 2]
+          }"
+        >
+        </mgl-layer>
+      </mgl-map>
+    </div>
+
+    <!-- Paramètres -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Coordonnées -->
+      <div class="bg-gray-50 rounded-xl p-4">
+        <h3
+          class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2"
+        >
+          <i class="pi pi-map text-green-600"></i>
+          Coordonnées
+        </h3>
+        <div class="space-y-3">
+          <div>
+            <label for="latitude" class="block text-xs text-gray-600 mb-1"
+              >Latitude</label
+            >
+            <p-inputNumber
+              inputId="latitude"
+              [(ngModel)]="latitude"
+              [minFractionDigits]="4"
+              [maxFractionDigits]="6"
+              class="w-full"
+              [min]="-90"
+              [max]="90"
+              (ngModelChange)="updateMapCenter()"
+            />
+          </div>
+          <div>
+            <label for="longitude" class="block text-xs text-gray-600 mb-1"
+              >Longitude</label
+            >
+            <p-inputNumber
+              inputId="longitude"
+              [(ngModel)]="longitude"
+              [minFractionDigits]="4"
+              [maxFractionDigits]="6"
+              class="w-full"
+              [min]="-180"
+              [max]="180"
+              (ngModelChange)="updateMapCenter()"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Rayon -->
+      <div class="bg-gray-50 rounded-xl p-4">
+        <h3
+          class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2"
+        >
+          <i class="pi pi-circle text-green-600"></i>
+          Rayon de recherche
+        </h3>
+        <div class="space-y-3">
+          <div>
+            <label for="radius" class="block text-xs text-gray-600 mb-2"
+              >{{ radius() }} km</label
+            >
+            <p-slider
+              inputId="radius"
+              [(ngModel)]="radius"
+              [min]="1"
+              [max]="100"
+              [step]="1"
+              class="w-full"
+            />
+          </div>
+          <div class="flex gap-2">
+            <p-button
+              label="5 km"
+              [outlined]="true"
+              size="small"
+              class="flex-1"
+              (click)="radius.set(5)"
+            />
+            <p-button
+              label="25 km"
+              [outlined]="true"
+              size="small"
+              class="flex-1"
+              (click)="radius.set(25)"
+            />
+            <p-button
+              label="50 km"
+              [outlined]="true"
+              size="small"
+              class="flex-1"
+              (click)="radius.set(50)"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div class="bg-blue-50 rounded-xl p-3 flex items-start gap-2">
+      <i class="pi pi-info-circle text-blue-600 text-sm mt-0.5"></i>
+      <div class="text-xs text-blue-800">
+        <p class="font-semibold mb-1">Astuce</p>
+        <ul class="list-disc list-inside space-y-1">
+          <li>Cliquez sur la carte pour déplacer le point de recherche</li>
+          <li>Glissez-déposez le marqueur pour ajuster la position</li>
+          <li>
+            Utilisez le bouton "Ma position" pour vous géolocaliser
+            automatiquement
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <ng-template pTemplate="footer">
+    <div class="flex justify-between items-center gap-3">
+      <p-button
+        label="Ma position"
+        icon="pi pi-compass"
+        [outlined]="true"
+        severity="secondary"
+        (click)="resetToCurrentLocation()"
+      />
+      <div class="flex gap-2">
+        <p-button
+          label="Réinitialiser"
+          icon="pi pi-times"
+          [outlined]="true"
+          severity="secondary"
+          (click)="clearSearch()"
+        />
+        <p-button
+          label="Rechercher"
+          icon="pi pi-search"
+          severity="success"
+          (click)="applySearch()"
+        />
+      </div>
+    </div>
+  </ng-template>
+</p-dialog>

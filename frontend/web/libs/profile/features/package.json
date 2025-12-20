@@ -1,0 +1,17 @@
+{
+  "name": "@web/profile/features",
+  "version": "0.0.1",
+  "peerDependencies": {
+    "@angular/common": "^20.1.0",
+    "@angular/core": "^20.1.0",
+    "@angular/forms": "^20.1.0",
+    "@ngx-translate/core": "*",
+    "@web/auth/data-access": "*",
+    "@web/shared/models": "*",
+    "@web/shared/util": "*",
+    "@web/users/data-access": "*",
+    "primeng": "^20.0.0",
+    "rxjs": "^7.8.0"
+  },
+  "sideEffects": false
+}

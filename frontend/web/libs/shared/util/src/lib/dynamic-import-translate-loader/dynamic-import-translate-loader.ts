@@ -1,6 +1,4 @@
 import { HttpBackend, HttpClient } from '@angular/common/http';
-import { isPlatformServer } from '@angular/common';
-import { inject, PLATFORM_ID } from '@angular/core';
 import { TranslationObject, TranslateLoader } from '@ngx-translate/core';
 import { deepmerge } from 'deepmerge-ts';
 import { forkJoin, Observable, of } from 'rxjs';
@@ -52,17 +50,5 @@ export class MultiTranslateHttpLoader implements TranslateLoader {
 }
 
 export function HttpLoaderFactory(_httpBackend: HttpBackend) {
-  const platformId = inject(PLATFORM_ID);
-
-  // Si on est côté serveur, on retourne des traductions vides pour éviter l'erreur HTTP
-  if (isPlatformServer(platformId)) {
-    return {
-      getTranslation: (lang: string): Observable<TranslationObject> => {
-        // Retourner un objet vide pour le serveur, les traductions se chargeront côté client
-        return of({});
-      },
-    } as TranslateLoader;
-  }
-
   return new MultiTranslateHttpLoader(_httpBackend, ['/assets/i18n/']);
 }

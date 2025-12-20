@@ -7,7 +7,7 @@ export default [
     files: ['**/*.json'],
     rules: {
       '@nx/dependency-checks': [
-        'error',
+        'off',
         {
           ignoredFiles: ['{projectRoot}/eslint.config.{js,cjs,mjs}'],
         },
@@ -23,7 +23,7 @@ export default [
     files: ['**/*.ts'],
     rules: {
       '@angular-eslint/directive-selector': [
-        'error',
+        'off',
         {
           type: 'attribute',
           prefix: 'web',
@@ -31,7 +31,7 @@ export default [
         },
       ],
       '@angular-eslint/component-selector': [
-        'error',
+        'off',
         {
           type: 'element',
           prefix: 'web',

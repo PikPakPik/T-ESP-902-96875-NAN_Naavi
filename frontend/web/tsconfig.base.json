@@ -13,7 +13,6 @@
     "module": "esnext",
     "typeRoots": ["node_modules/@types"],
     "lib": ["es2020", "dom"],
-    "types": ["reflect-metadata"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
@@ -21,7 +20,12 @@
     "paths": {
       "@web/auth/data-access": ["libs/auth/data-access/src/index.ts"],
       "@web/auth/feature": ["libs/auth/feature/src/index.ts"],
+      "@web/hikes/data-access": ["libs/hikes/data-access/src/index.ts"],
+      "@web/hikes/feature": ["libs/hikes/feature/src/index.ts"],
       "@web/home": ["libs/home/src/index.ts"],
+      "@web/pois/data-access": ["libs/pois/data-access/src/index.ts"],
+      "@web/pois/features": ["libs/pois/features/src/index.ts"],
+      "@web/profile/features": ["libs/profile/features/src/index.ts"],
       "@web/shared/data-access": ["libs/shared/data-access/src/index.ts"],
       "@web/shared/data-access/logger": [
         "libs/shared/data-access/logger/src/index.ts"
@@ -50,8 +54,15 @@
       "@web/shared/util/signal-stores/selected-entity": [
         "libs/shared/util-signal-stores/selected-entity/src/index.ts"
       ],
-      "@web/ui": ["libs/shared/ui/src/index.ts"],
-      "@web/ui/notification": ["libs/shared/ui/notification/src/index.ts"]
+      "@web/shared/ui/location-search": [
+        "libs/shared/ui/location-search/src/index.ts"
+      ],
+      "@web/shared/ui/navbar": ["libs/shared/ui/navbar/src/index.ts"],
+      "@web/shared/ui/notification": [
+        "libs/shared/ui/notification/src/index.ts"
+      ],
+      "@web/users/data-access": ["libs/users/data-access/src/index.ts"],
+      "@web/users/feature": ["libs/users/feature/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

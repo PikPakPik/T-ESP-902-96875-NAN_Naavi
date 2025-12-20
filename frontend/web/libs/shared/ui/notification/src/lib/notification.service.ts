@@ -38,19 +38,19 @@ export interface NotificationMessage {
   providedIn: 'root',
 })
 export class NotificationService {
-  private readonly messageService = inject(MessageService);
-  private readonly _notifications = signal<NotificationMessage[]>([]);
-  private _idCounter = 0;
+  readonly #messageService = inject(MessageService);
+  readonly #_notifications = signal<NotificationMessage[]>([]);
+  #_idCounter = 0;
 
   // Signal en lecture seule pour exposer les notifications
-  readonly notifications = this._notifications.asReadonly();
+  readonly notifications = this.#_notifications.asReadonly();
 
   // Computed pour obtenir le nombre de notifications
-  readonly notificationCount = computed(() => this._notifications().length);
+  readonly notificationCount = computed(() => this.#_notifications().length);
 
   // Computed pour filtrer les notifications par sévérité
   readonly notificationsBySeverity = computed(() => {
-    const notifications = this._notifications();
+    const notifications = this.#_notifications();
     const grouped: Record<NotificationSeverity, NotificationMessage[]> = {
       success: [],
       info: [],
@@ -70,22 +70,22 @@ export class NotificationService {
   /**
    * Génère un ID unique pour la notification
    */
-  private generateId(): string {
-    return `notification_${++this._idCounter}_${Date.now()}`;
+  #generateId(): string {
+    return `notification_${++this.#_idCounter}_${Date.now()}`;
   }
 
   /**
    * Ajoute une notification au signal et à PrimeNG
    */
-  private addNotification(notification: NotificationMessage): void {
+  #addNotification(notification: NotificationMessage): void {
     // Ajouter au signal pour la réactivité
-    this._notifications.update((notifications) => [
+    this.#_notifications.update((notifications) => [
       ...notifications,
       notification,
     ]);
 
     // Ajouter à PrimeNG MessageService pour l'affichage
-    this.messageService.add({
+    this.#messageService.add({
       id: notification.id,
       severity: notification.severity,
       summary: notification.summary,
@@ -101,7 +101,7 @@ export class NotificationService {
     if (!notification.options?.sticky) {
       const duration = notification.options?.duration || 3000;
       setTimeout(() => {
-        this.removeFromSignal(notification.id);
+        this.#removeFromSignal(notification.id);
       }, duration);
     }
   }
@@ -109,8 +109,8 @@ export class NotificationService {
   /**
    * Supprime une notification du signal seulement
    */
-  private removeFromSignal(id: string): void {
-    this._notifications.update((notifications) =>
+  #removeFromSignal(id: string): void {
+    this.#_notifications.update((notifications) =>
       notifications.filter((notification) => notification.id !== id)
     );
   }
@@ -128,7 +128,7 @@ export class NotificationService {
     severity: NotificationSeverity = 'info',
     options?: NotificationOptions
   ): string {
-    const id = options?.id || this.generateId();
+    const id = options?.id || this.#generateId();
     const notification: NotificationMessage = {
       id,
       severity,
@@ -138,7 +138,7 @@ export class NotificationService {
       timestamp: Date.now(),
     };
 
-    this.addNotification(notification);
+    this.#addNotification(notification);
     return id;
   }
 
@@ -229,9 +229,9 @@ export class NotificationService {
    */
   remove(id: string): void {
     // Supprimer de PrimeNG
-    this.messageService.clear(id);
+    this.#messageService.clear(id);
     // Supprimer du signal
-    this.removeFromSignal(id);
+    this.#removeFromSignal(id);
   }
 
   /**
@@ -239,17 +239,17 @@ export class NotificationService {
    */
   clear(key?: string): void {
     // Nettoyer PrimeNG
-    this.messageService.clear(key);
+    this.#messageService.clear(key);
 
     // Nettoyer le signal
     if (key) {
-      this._notifications.update((notifications) =>
+      this.#_notifications.update((notifications) =>
         notifications.filter(
           (notification) => notification.options?.key !== key
         )
       );
     } else {
-      this._notifications.set([]);
+      this.#_notifications.set([]);
     }
   }
 
@@ -257,7 +257,7 @@ export class NotificationService {
    * Obtient les notifications actives
    */
   getActiveNotifications(): NotificationMessage[] {
-    return this._notifications();
+    return this.#_notifications();
   }
 
   /**

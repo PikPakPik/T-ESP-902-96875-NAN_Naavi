@@ -1,0 +1,40 @@
+/* Minimal CSS - PrimeNG Menubar handles most styling */
+/* Custom styles only if needed for specific overrides */
+
+/* Styles pour l'avatar utilisateur */
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--p-surface-border);
+}
+
+.user-avatar-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--p-primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+}
+
+/* Amélioration du template utilisateur */
+:host ::ng-deep .p-menubar-item-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  color: var(--p-text-color);
+  border-radius: var(--p-border-radius);
+  transition: all 0.2s ease;
+}
+
+:host ::ng-deep .p-menubar-item-link:hover {
+  background: var(--p-surface-hover);
+  color: var(--p-primary-color);
+}

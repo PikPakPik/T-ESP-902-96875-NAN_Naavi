@@ -23,12 +23,18 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'pnpm exec nx run backoffice:serve',
-    url: 'http://localhost:4200',
-    reuseExistingServer: true,
-    cwd: workspaceRoot,
-  },
+  // Only start webServer if BASE_URL is not explicitly set (to use deployed app)
+  ...(!process.env['BASE_URL'] && {
+    webServer: {
+      command: 'pnpm exec nx run backoffice:serve',
+      url: 'http://localhost:4200',
+      reuseExistingServer: !process.env['CI'],
+      cwd: workspaceRoot,
+      timeout: 120000, // 2 minutes timeout for server startup
+      stdout: 'pipe',
+      stderr: 'pipe',
+    },
+  }),
   projects: [
     {
       name: 'chromium',

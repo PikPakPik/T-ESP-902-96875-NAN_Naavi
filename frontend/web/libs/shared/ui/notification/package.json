@@ -1,5 +1,5 @@
 {
-  "name": "@web/ui/notification",
+  "name": "@web/shared/ui/notification",
   "version": "0.0.1",
   "peerDependencies": {
     "@angular/common": "*",

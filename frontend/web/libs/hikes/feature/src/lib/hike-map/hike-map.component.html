@@ -1,0 +1,79 @@
+@if (coordinates().length > 0) {
+<mgl-map
+  #map
+  [style]="'mapbox://styles/mapbox/outdoors-v12'"
+  [center]="getMapCenter(coordinates())"
+  [zoom]="coordinates().length === 1 ? 12 : undefined"
+  [bounds]="getMapBounds(coordinates())"
+  [fitBoundsOptions]="{ padding: 40 }"
+  (mapLoad)="onMapLoad($event)"
+  class="w-full h-full"
+>
+  <mgl-geojson-source
+    [id]="'source-' + hikeId()"
+    [data]="coordinatesToGeoJSON(coordinates())"
+  >
+  </mgl-geojson-source>
+
+  @if (coordinates().length === 1) {
+  <!-- Point unique -->
+  <mgl-layer
+    [id]="'point-' + hikeId()"
+    type="circle"
+    [source]="'source-' + hikeId()"
+    [paint]="{ 'circle-radius': 8, 'circle-color': '#16a34a' }"
+  />
+  } @else {
+  <!-- Ligne de base -->
+  <mgl-layer
+    [id]="'line-' + hikeId()"
+    type="line"
+    [source]="'source-' + hikeId()"
+    [layout]="{ 'line-join': 'round', 'line-cap': 'round' }"
+    [paint]="{
+      'line-color': '#16a34a',
+      'line-width': [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        8,
+        3,
+        12,
+        5,
+        16,
+        10,
+        20,
+        20
+      ],
+      'line-opacity': 1
+    }"
+  />
+
+  @if (showAnimation()) {
+  <!-- Ligne animée avec pointillés pour indiquer le sens (boucle fluide) -->
+  <mgl-layer
+    [id]="'line-animated-' + hikeId()"
+    type="line"
+    [source]="'source-' + hikeId()"
+    [layout]="{ 'line-join': 'round', 'line-cap': 'round' }"
+    [paint]="{
+      'line-color': '#ffffff',
+      'line-width': [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        8,
+        1.5,
+        12,
+        2,
+        16,
+        3.5,
+        20,
+        6
+      ],
+      'line-dasharray': [0, 0, 0.8, 6]
+    }"
+  />
+  } }
+</mgl-map>
+}

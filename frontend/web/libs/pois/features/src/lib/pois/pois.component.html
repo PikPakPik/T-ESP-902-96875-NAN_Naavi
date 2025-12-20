@@ -1,0 +1,315 @@
+<!-- Container principal -->
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+  <!-- En-tête avec fond blanc -->
+  <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+    <div class="flex items-center justify-between flex-wrap gap-4">
+      <div class="flex items-center gap-4">
+        <div
+          class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg"
+        >
+          <i class="pi pi-map-marker text-white text-2xl"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">
+            {{ 'POI.TITLE' | translate }}
+          </h1>
+          <p class="text-sm text-gray-500">
+            {{ 'POI.SUBTITLE' | translate }}
+          </p>
+        </div>
+      </div>
+      <p-button
+        [label]="'POI.NEW' | translate"
+        icon="pi pi-plus"
+        (click)="openNew()"
+      />
+    </div>
+
+    <!-- Barre de recherche -->
+    <div class="mt-6 flex flex-wrap items-center gap-3">
+      <div class="flex-1 min-w-[300px]">
+        <p-iconfield iconPosition="left" class="w-full">
+          <p-inputicon>
+            <i class="pi pi-search"></i>
+          </p-inputicon>
+          <input
+            pInputText
+            type="text"
+            (input)="onSearchChange($event)"
+            [placeholder]="'POI.SEARCH_PLACEHOLDER' | translate"
+            class="w-full"
+          />
+        </p-iconfield>
+      </div>
+      <p-button
+        icon="pi pi-map-marker"
+        [outlined]="true"
+        severity="success"
+        (click)="locationSearch.emit()"
+        [pTooltip]="'POI.LOCATION_TOOLTIP' | translate"
+        [label]="'POI.LOCATION' | translate"
+      />
+      <p-button
+        icon="pi pi-filter-slash"
+        [outlined]="true"
+        severity="secondary"
+        (click)="clear(dt)"
+        [pTooltip]="'COMMON.RESET' | translate"
+      />
+      @if (selectedPOIs && selectedPOIs.length > 0) {
+      <div class="flex items-center gap-2 bg-red-50 px-4 py-2 rounded-lg">
+        <span class="text-sm font-medium text-red-700">
+          {{ selectedPOIs.length }} {{ 'COMMON.SELECTED' | translate }}
+        </span>
+        <p-button
+          severity="danger"
+          icon="pi pi-trash"
+          size="small"
+          [outlined]="true"
+          (click)="deleteSelectedPOIsConfirm()"
+          [pTooltip]="'COMMON.DELETE' | translate"
+        />
+      </div>
+      }
+    </div>
+  </div>
+
+  <!-- Message de localisation requis -->
+  @if (needsLocation()) {
+  <div
+    class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-sm p-6 mb-6 border-2 border-blue-200"
+  >
+    <div class="flex items-start gap-4">
+      <div class="flex-shrink-0">
+        <div
+          class="w-12 h-12 rounded-xl flex items-center justify-center"
+        >
+          <i class="pi pi-map-marker text-white text-2xl"></i>
+        </div>
+      </div>
+      <div class="flex-1">
+        <h3 class="text-lg font-bold text-gray-900 mb-2">
+          {{ 'POI.LOCATION_REQUIRED_TITLE' | translate }}
+        </h3>
+        <p class="text-gray-700 mb-4">
+          {{ 'POI.LOCATION_REQUIRED_DESCRIPTION' | translate }}
+        </p>
+        <div class="flex flex-wrap gap-3">
+          <p-button
+            [label]="'POI.SET_PARIS' | translate"
+            icon="pi pi-map"
+            severity="info"
+            (click)="setParisLocation()"
+          />
+          <p-button
+            [label]="'POI.CHOOSE_LOCATION' | translate"
+            icon="pi pi-map-marker"
+            [outlined]="true"
+            severity="success"
+            (click)="locationSearch.emit()"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- Tableau -->
+  <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+    <p-table
+      #dt
+      dataKey="id"
+      [currentPageReportTemplate]="'HIKE.PAGE_REPORT' | translate"
+      [value]="rows()"
+      [filters]="tableFilters"
+      [(selection)]="selectedPOIs"
+      [rowHover]="true"
+      [rows]="rowsPerPage()"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [loading]="loading()"
+      [paginator]="true"
+      [lazy]="true"
+      [globalFilterFields]="['name', 'description', 'types']"
+      [first]="(currentPage() - 1) * rowsPerPage()"
+      [totalRecords]="totalRecords()"
+      (onPage)="onPageChange($event)"
+    >
+      <ng-template #header>
+        <tr>
+          <th style="width: 3rem">
+            <p-tableHeaderCheckbox />
+          </th>
+          <th pSortableColumn="name" style="min-width: 15rem">
+            <div class="flex items-center gap-2">
+              {{ 'COMMON.NAME' | translate }}
+              <p-sortIcon field="name" />
+            </div>
+          </th>
+          <th pSortableColumn="types" style="min-width: 12rem">
+            <div class="flex items-center gap-2">
+              {{ 'POI.TYPES' | translate }}
+              <p-sortIcon field="types" />
+            </div>
+          </th>
+          <th style="min-width: 20rem">{{ 'POI.DESCRIPTION' | translate }}</th>
+          <th style="min-width: 10rem">{{ 'POI.LOCATION' | translate }}</th>
+          <th pSortableColumn="status" style="min-width: 8rem">
+            <div class="flex items-center gap-2">
+              {{ 'COMMON.STATUS' | translate }}
+              <p-sortIcon field="status" />
+            </div>
+          </th>
+          <th style="width: 6rem; text-align: center">
+            {{ 'HIKE.MAP' | translate }}
+          </th>
+          <th style="width: 10rem; text-align: center">
+            {{ 'HIKE.ACTIONS' | translate }}
+          </th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-poi>
+        <tr class="p-selectable-row">
+          <td>
+            <p-tableCheckbox [value]="poi" />
+          </td>
+          <td>
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold shadow-md"
+              >
+                <i class="pi pi-map-marker"></i>
+              </div>
+              <div>
+                <div class="font-semibold text-gray-900">{{ poi.name }}</div>
+                @if (poi.photos && poi.photos.length > 0) {
+                <div class="text-xs text-gray-500 flex items-center gap-1">
+                  <i class="pi pi-image text-xs"></i>
+                  {{ poi.photos.length }} {{ 'POI.PHOTOS' | translate }}
+                </div>
+                }
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="flex flex-wrap gap-1">
+              @for (type of poi.types.slice(0, 2); track type) {
+              <p-tag
+                [value]="getCategoryTranslationKey(type) | translate"
+                severity="info"
+                [rounded]="true"
+              />
+              } @if (poi.types.length > 2) {
+              <p-tag
+                [value]="'+' + (poi.types.length - 2)"
+                severity="secondary"
+                [rounded]="true"
+              />
+              }
+            </div>
+          </td>
+          <td>
+            <div class="text-sm text-gray-700 line-clamp-2">
+              {{ poi.description }}
+            </div>
+          </td>
+          <td>
+            <div class="text-xs font-mono text-gray-600">
+              <div>{{ poi.latitude.toFixed(5) }}</div>
+              <div>{{ poi.longitude.toFixed(5) }}</div>
+            </div>
+          </td>
+          <td>
+            <p-tag
+              [value]="'POI.STATUS.' + poi.status | translate"
+              [severity]="getSeverity(poi.status)"
+              [rounded]="true"
+            />
+          </td>
+          <td style="text-align: center">
+            @if (poi.latitude && poi.longitude) {
+            <p-button
+              (onClick)="displayPOIMap($event, poi)"
+              icon="pi pi-map"
+              severity="info"
+              size="small"
+              [text]="true"
+              [rounded]="true"
+              [pTooltip]="'POI.VIEW_MAP' | translate"
+            />
+            } @else {
+            <span class="text-gray-300">-</span>
+            }
+          </td>
+          <td style="text-align: center">
+            <div class="flex gap-1 justify-center">
+              <p-button
+                icon="pi pi-pencil"
+                severity="secondary"
+                size="small"
+                [text]="true"
+                [rounded]="true"
+                (click)="editPOIAction(poi)"
+                [pTooltip]="'COMMON.EDIT' | translate"
+              />
+              <p-button
+                icon="pi pi-trash"
+                severity="danger"
+                size="small"
+                [text]="true"
+                [rounded]="true"
+                (click)="deletePOIConfirm(poi)"
+                [pTooltip]="'COMMON.DELETE' | translate"
+              />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="8">
+            <div class="py-20 text-center">
+              <div
+                class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-orange-50 to-orange-100 mb-6"
+              >
+                <i class="pi pi-map-marker text-4xl text-orange-600"></i>
+              </div>
+              <h3 class="text-xl font-bold text-gray-900 mb-2">
+                {{ 'POI.EMPTY_TITLE' | translate }}
+              </h3>
+              <p class="text-gray-500 mb-8 max-w-md mx-auto">
+                {{ 'POI.EMPTY_DESCRIPTION' | translate }}
+              </p>
+              <p-button
+                [label]="'POI.EMPTY_CREATE' | translate"
+                icon="pi pi-plus"
+                (click)="openNew()"
+              />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<p-confirmDialog [style]="{ width: '450px' }" />
+
+<!-- Popover pour afficher la carte Mapbox -->
+<p-popover #mapPopover (onHide)="currentPOIForMap.set(null)">
+  <ng-template #content>
+    @if (currentPOIForMap(); as poi) {
+    <div class="map-popover-container">
+      <h5 class="map-title">{{ poi.name }}</h5>
+      @if (mapKey()) {
+      <div class="map-popover-map">
+        <poi-map
+          [latitude]="poi.latitude"
+          [longitude]="poi.longitude"
+          [poiId]="poi.id"
+        />
+      </div>
+      }
+    </div>
+    }
+  </ng-template>
+</p-popover>

@@ -1,0 +1,262 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+  <!-- Header avec bouton retour -->
+  <div class="mb-6">
+    <p-button
+      icon="pi pi-arrow-left"
+      [label]="'HIKE.DETAIL.BACK' | translate"
+      (onClick)="goBack()"
+      severity="secondary"
+      [outlined]="true"
+    />
+  </div>
+
+  @if (loading()) {
+  <div class="flex items-center justify-center py-20">
+    <i class="pi pi-spin pi-spinner text-4xl text-green-600"></i>
+  </div>
+  } @else if (hike()) {
+  <!-- Hero Section avec image -->
+  <div class="relative mb-6 rounded-2xl overflow-hidden shadow-2xl">
+    <div class="relative h-[500px]">
+      <img
+        src="https://via.placeholder.com/1200x500?text={{ hike()?.name ?? '' }}"
+        alt="{{ hike()?.name ?? '' }}"
+        class="w-full h-full object-cover"
+      />
+      <div
+        class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"
+      ></div>
+      <div class="absolute bottom-0 left-0 right-0 p-8 lg:p-12">
+        <div class="flex flex-wrap items-center gap-3 mb-4">
+          <p-tag
+            [value]="
+              'HIKE.DIFFICULTY.' + (hike()?.difficulty ?? '') | translate
+            "
+            [severity]="getSeverity(hike()?.difficulty ?? '')"
+            [rounded]="true"
+            class="text-sm font-semibold shadow-lg"
+          />
+          <p-tag
+            [value]="'HIKE.STATUS.' + (hike()?.status ?? '') | translate"
+            severity="info"
+            [rounded]="true"
+            class="text-sm shadow-lg"
+          />
+        </div>
+        <h1
+          class="text-4xl lg:text-5xl font-bold text-white mb-3 drop-shadow-lg"
+        >
+          {{ hike()?.name ?? '' }}
+        </h1>
+        <div class="flex items-center gap-2 text-white/95 text-lg">
+          <i class="pi pi-map-marker text-xl"></i>
+          <span class="font-medium">{{ hike()?.location ?? '' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Colonne principale -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- Cartes d'information -->
+      <p-card class="shadow-lg">
+        <ng-template pTemplate="header">
+          <div
+            class="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-200"
+          >
+            <h2
+              class="text-2xl font-bold text-gray-900 flex items-center gap-3"
+            >
+              <div
+                class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg"
+              >
+                <i class="pi pi-info-circle text-white text-xl"></i>
+              </div>
+              {{ 'HIKE.DETAIL.CHARACTERISTICS' | translate }}
+            </h2>
+          </div>
+        </ng-template>
+        <div class="p-6">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- Durée -->
+            <div
+              class="text-center p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+            >
+              <div
+                class="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg"
+              >
+                <i class="pi pi-clock text-white text-xl"></i>
+              </div>
+              <div class="text-sm font-medium text-gray-600 mb-2">
+                {{ 'HIKE.DURATION' | translate }}
+              </div>
+              <div class="text-2xl font-bold text-gray-900">
+                {{ hike()?.getFormattedDuration() ?? '0min' }}
+              </div>
+            </div>
+
+            <!-- Distance -->
+            <div
+              class="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 rounded-xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+            >
+              <div
+                class="w-14 h-14 bg-green-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg"
+              >
+                <i class="pi pi-map-marker text-white text-xl"></i>
+              </div>
+              <div class="text-sm font-medium text-gray-600 mb-2">
+                {{ 'HIKE.DISTANCE' | translate }}
+              </div>
+              <div class="text-2xl font-bold text-gray-900">
+                {{ hike()?.distance }}
+                <span class="text-base font-normal text-gray-600">
+                  {{ 'COMMON.KM' | translate }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Dénivelé -->
+            <div
+              class="text-center p-6 bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-200 rounded-xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+            >
+              <div
+                class="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg"
+              >
+                <i class="pi pi-arrow-up text-white text-xl"></i>
+              </div>
+              <div class="text-sm font-medium text-gray-600 mb-2">
+                {{ 'HIKE.ELEVATION' | translate }}
+              </div>
+              <div class="text-lg font-bold text-gray-900">
+                <div>
+                  {{ hike()?.elevationGain }}
+                  <span class="text-xs font-normal text-gray-600">
+                    {{ 'COMMON.M' | translate }} ↗
+                  </span>
+                </div>
+                <div class="text-base text-gray-700">
+                  {{ hike()?.elevationLoss }}
+                  <span class="text-xs font-normal text-gray-600">
+                    {{ 'COMMON.M' | translate }} ↘
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Date de création -->
+            <div
+              class="text-center p-6 bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200 rounded-xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+            >
+              <div
+                class="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg"
+              >
+                <i class="pi pi-calendar text-white text-xl"></i>
+              </div>
+              <div class="text-sm font-medium text-gray-600 mb-2">
+                {{ 'HIKE.DETAIL.CREATED_AT' | translate }}
+              </div>
+              <div class="text-lg font-bold text-gray-900">
+                {{ hike()?.createdAt | date : 'dd/MM/yyyy' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </p-card>
+    </div>
+
+    <!-- Colonne latérale -->
+    <div class="lg:col-span-1 space-y-6">
+      <!-- Carte -->
+      @if (hike()!.coordinates && hike()!.coordinates.length > 0) {
+      <p-card class="shadow-lg overflow-hidden">
+        <ng-template pTemplate="header">
+          <div
+            class="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-200"
+          >
+            <h3 class="text-xl font-bold text-gray-900 flex items-center gap-3">
+              <div
+                class="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-lg"
+              >
+                <i class="pi pi-map text-white"></i>
+              </div>
+              {{ 'HIKE.DETAIL.MAP_TITLE' | translate }}
+            </h3>
+          </div>
+        </ng-template>
+        <div class="h-[400px] w-full">
+          <hike-map
+            [coordinates]="hike()!.coordinates"
+            [hikeId]="hike()!.id"
+            [showAnimation]="true"
+          />
+        </div>
+      </p-card>
+      }
+
+      <!-- Informations pratiques -->
+      <p-card class="shadow-lg">
+        <ng-template pTemplate="header">
+          <div
+            class="p-6 bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-gray-200"
+          >
+            <h3 class="text-xl font-bold text-gray-900 flex items-center gap-3">
+              <div
+                class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg"
+              >
+                <i class="pi pi-info-circle text-white"></i>
+              </div>
+              {{ 'HIKE.DETAIL.PRACTICAL_INFO' | translate }}
+            </h3>
+          </div>
+        </ng-template>
+        <div class="p-6">
+          <div class="space-y-4">
+            <div
+              class="flex items-center justify-between py-4 px-4 bg-gray-50 rounded-lg border border-gray-200"
+            >
+              <span class="text-sm font-semibold text-gray-700">
+                {{ 'HIKE.DIFFICULTY' | translate }}
+              </span>
+              <p-tag
+                [value]="
+                  'HIKE.DIFFICULTY.' + (hike()?.difficulty ?? '') | translate
+                "
+                [severity]="getSeverity(hike()?.difficulty ?? '')"
+                [rounded]="true"
+              />
+            </div>
+            <div
+              class="flex items-center justify-between py-4 px-4 bg-gray-50 rounded-lg border border-gray-200"
+            >
+              <span class="text-sm font-semibold text-gray-700">
+                {{ 'COMMON.STATUS' | translate }}
+              </span>
+              <p-tag
+                [value]="'HIKE.STATUS.' + (hike()?.status ?? '') | translate"
+                severity="info"
+                [rounded]="true"
+              />
+            </div>
+            @if (hike()!.coordinates && hike()!.coordinates.length > 0) {
+            <div
+              class="flex items-center justify-between py-4 px-4 bg-green-50 rounded-lg border border-green-200"
+            >
+              <span class="text-sm font-semibold text-gray-700">
+                {{ 'HIKE.DETAIL.WAYPOINTS' | translate }}
+              </span>
+              <p-tag
+                [value]="hike()!.coordinates.length.toString()"
+                severity="success"
+                [rounded]="true"
+              />
+            </div>
+            }
+          </div>
+        </div>
+      </p-card>
+    </div>
+  </div>
+  }
+</div>

@@ -2,12 +2,87 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>backoffice</title>
+    <title>Naavi | Backoffice</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <script
+      src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+      async
+      defer
+    ></script>
   </head>
   <body>
-    <app-root></app-root>
+    <naavi-root>
+      <style>
+        #loading-page-container {
+          width: 100vw;
+          height: 100dvh;
+          overflow: hidden;
+          position: relative;
+          transition: opacity 0.4s linear;
+        }
+        #loading-block {
+          position: absolute;
+          max-width: 100%;
+          width: 300px;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          text-align: center;
+        }
+        #loading-bro {
+          margin: 50px auto;
+          width: 150px;
+        }
+        #loading_error {
+          text-align: center;
+          color: red;
+        }
+        #load {
+          /* !important for overload reduced-motion if needed */
+          animation: loading 3s linear infinite !important;
+        }
+        #loading-inner {
+          stroke: var(#00811f, transparent);
+          fill: transparent;
+          stroke-dashoffset: 0;
+          stroke-dasharray: 300;
+          stroke-width: 10;
+          stroke-miterlimit: 10;
+          stroke-linecap: round;
+          /* !important for overload reduced-motion if needed */
+          animation: loading-circle 2s linear infinite !important;
+        }
+
+        @keyframes loading {
+          0% {
+            transform: rotate(0);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
+        }
+        @keyframes loading-circle {
+          0% {
+            stroke-dashoffset: 0;
+          }
+          100% {
+            stroke-dashoffset: -600;
+          }
+        }
+      </style>
+      <div id="loading-page-container">
+        <div id="loading-block">
+          <div id="loading-bro">
+            <svg id="load" x="0px" y="0px" viewBox="0 0 150 150">
+              <circle id="loading-inner" cx="75" cy="75" r="60"></circle>
+            </svg>
+          </div>
+          <div id="loading_error"></div>
+          <div id="errorMsg"></div>
+        </div>
+      </div>
+    </naavi-root>
   </body>
 </html>

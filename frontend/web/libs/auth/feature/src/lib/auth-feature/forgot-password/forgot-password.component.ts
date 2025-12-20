@@ -1,60 +1,57 @@
-import { Component, inject, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import {
-  FormBuilder,
-  ReactiveFormsModule,
-  Validators,
-  FormGroup,
-} from '@angular/forms';
+import { Component, inject, output, signal } from '@angular/core';
+
+import { form, Field, required, email } from '@angular/forms/signals';
 import { Button } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { AutoFocus } from 'primeng/autofocus';
 import { AuthStore } from '@web/auth/data-access';
 
+interface ForgotPasswordData {
+  email: string;
+}
+
 @Component({
   selector: 'forgot-password',
-  imports: [CommonModule, ReactiveFormsModule, Button, InputText, AutoFocus],
+  imports: [Field, Button, InputText, AutoFocus],
   templateUrl: './forgot-password.component.html',
   styleUrl: './forgot-password.component.scss',
 })
 export class ForgotPasswordComponent {
-  readonly #fb = inject(FormBuilder);
   readonly #store = inject(AuthStore);
   closeModal = output<void>();
 
-  forgotPasswordForm: FormGroup;
-  loading = false;
-  submitted = false;
+  forgotPasswordModel = signal<ForgotPasswordData>({
+    email: '',
+  });
 
-  constructor() {
-    this.forgotPasswordForm = this.#fb.group({
-      email: ['', [Validators.required, Validators.email]],
-    });
-  }
+  forgotPasswordForm = form(this.forgotPasswordModel, (schemaPath) => {
+    required(schemaPath.email, { message: "L'email est requis" });
+    email(schemaPath.email, { message: 'Format d\'email invalide' });
+  });
+
+  loading = signal(false);
+  submitted = signal(false);
 
   async onSubmit() {
-    this.submitted = true;
+    this.submitted.set(true);
 
-    if (this.forgotPasswordForm.valid) {
-      this.loading = true;
+    const emailField = this.forgotPasswordForm.email();
+    if (emailField.valid()) {
+      this.loading.set(true);
 
       try {
-        await this.#store.forgotPassword(this.forgotPasswordForm.value.email);
+        await this.#store.forgotPassword(this.forgotPasswordModel().email);
 
         this.closeModal.emit();
       } catch (error) {
         console.error("Erreur lors de l'envoi:", error);
       } finally {
-        this.loading = false;
+        this.loading.set(false);
       }
     }
   }
 
   onCancel() {
     this.closeModal.emit();
-  }
-
-  get email() {
-    return this.forgotPasswordForm.get('email');
   }
 }

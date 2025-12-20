@@ -1,1 +1,319 @@
-<p>Home works!</p>
+<!-- Container principal -->
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+  <!-- Bienvenue Hero Section -->
+  <div
+    class="bg-gradient-to-br from-green-600 to-green-700 rounded-2xl shadow-xl p-8 mb-6 text-white"
+  >
+    <div class="flex items-center justify-between flex-wrap gap-6">
+      <div>
+        <h1 class="text-3xl md:text-4xl font-bold mb-3">
+          {{ 'HOME.WELCOME' | translate }}
+        </h1>
+        <p class="text-green-50 text-lg max-w-2xl">
+          {{ 'HOME.WELCOME_DESCRIPTION' | translate }}
+        </p>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="w-16 h-16 rounded-2xl flex items-center justify-center">
+          <img src="/assets/img/logo.png" alt="Logo" class="w-full h-full" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistiques Grid -->
+  <div class="relative mb-6">
+    <!-- Overlay "Soon" -->
+    <div
+      class="absolute inset-0 flex items-center justify-center z-10 pointer-events-none"
+    >
+      <div
+        class="bg-gradient-to-br from-green-600 to-green-700 text-white px-12 py-6 rounded-3xl shadow-2xl transform rotate-[-5deg] pointer-events-auto"
+      >
+        <p class="text-5xl font-bold tracking-wider">
+          {{ 'HOME.SOON' | translate }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Grid avec blur -->
+    <div
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 blur-sm select-none"
+    >
+      <!-- Card Randonnées -->
+      <div
+        class="bg-white rounded-2xl shadow-sm p-6 hover:shadow-md transition-shadow"
+      >
+        <div class="flex items-center justify-between mb-4">
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center"
+          >
+            <i class="pi pi-compass text-white text-xl"></i>
+          </div>
+          <span class="text-xs font-medium text-gray-500 uppercase">{{
+            'HOME.STATS.TOTAL' | translate
+          }}</span>
+        </div>
+        <h3 class="text-3xl font-bold text-gray-900 mb-1">24</h3>
+        <p class="text-sm text-gray-600">
+          {{ 'HOME.STATS.HIKES' | translate }}
+        </p>
+      </div>
+
+      <!-- Card Distance -->
+      <div
+        class="bg-white rounded-2xl shadow-sm p-6 hover:shadow-md transition-shadow"
+      >
+        <div class="flex items-center justify-between mb-4">
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center"
+          >
+            <i class="pi pi-map-marker text-white text-xl"></i>
+          </div>
+          <span class="text-xs font-medium text-gray-500 uppercase">{{
+            'HOME.STATS.DISTANCE' | translate
+          }}</span>
+        </div>
+        <h3 class="text-3xl font-bold text-gray-900 mb-1">342.5</h3>
+        <p class="text-sm text-gray-600">
+          {{ 'HOME.STATS.KILOMETERS' | translate }}
+        </p>
+      </div>
+
+      <!-- Card Dénivelé -->
+      <div
+        class="bg-white rounded-2xl shadow-sm p-6 hover:shadow-md transition-shadow"
+      >
+        <div class="flex items-center justify-between mb-4">
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center"
+          >
+            <i class="pi pi-arrow-up text-white text-xl"></i>
+          </div>
+          <span class="text-xs font-medium text-gray-500 uppercase">{{
+            'HOME.STATS.ELEVATION' | translate
+          }}</span>
+        </div>
+        <h3 class="text-3xl font-bold text-gray-900 mb-1">12,400</h3>
+        <p class="text-sm text-gray-600">
+          {{ 'HOME.STATS.METERS' | translate }}
+        </p>
+      </div>
+
+      <!-- Card Utilisateurs -->
+      <div
+        class="bg-white rounded-2xl shadow-sm p-6 hover:shadow-md transition-shadow"
+      >
+        <div class="flex items-center justify-between mb-4">
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center"
+          >
+            <i class="pi pi-users text-white text-xl"></i>
+          </div>
+          <span class="text-xs font-medium text-gray-500 uppercase">{{
+            'HOME.STATS.ACTIVE' | translate
+          }}</span>
+        </div>
+        <h3 class="text-3xl font-bold text-gray-900 mb-1">1,247</h3>
+        <p class="text-sm text-gray-600">
+          {{ 'HOME.STATS.USERS' | translate }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions rapides et Activités récentes -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Actions rapides -->
+    <div class="relative">
+      <!-- Overlay "Soon" -->
+      <div
+        class="absolute inset-0 flex items-center justify-center z-10 pointer-events-none"
+      >
+        <div
+          class="bg-gradient-to-br from-blue-600 to-blue-700 text-white px-8 py-4 rounded-2xl shadow-2xl transform rotate-[3deg] pointer-events-auto"
+        >
+          <p class="text-3xl font-bold tracking-wider">
+            {{ 'HOME.SOON' | translate }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Contenu avec blur -->
+      <div class="bg-white rounded-2xl shadow-sm p-6 blur-sm select-none">
+        <h2
+          class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2"
+        >
+          <i class="pi pi-bolt text-green-600"></i>
+          {{ 'HOME.QUICK_ACTIONS' | translate }}
+        </h2>
+        <div class="space-y-3">
+          <button
+            class="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-gray-50 transition-colors text-left group"
+          >
+            <div
+              class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors"
+            >
+              <i class="pi pi-plus text-green-600"></i>
+            </div>
+            <div class="flex-1">
+              <p class="font-semibold text-gray-900">
+                {{ 'HOME.CREATE_HIKE_ACTION' | translate }}
+              </p>
+              <p class="text-xs text-gray-500">
+                {{ 'HOME.CREATE_HIKE_DESCRIPTION' | translate }}
+              </p>
+            </div>
+            <i class="pi pi-chevron-right text-gray-400"></i>
+          </button>
+
+          <button
+            class="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-gray-50 transition-colors text-left group"
+          >
+            <div
+              class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors"
+            >
+              <i class="pi pi-users text-blue-600"></i>
+            </div>
+            <div class="flex-1">
+              <p class="font-semibold text-gray-900">
+                {{ 'HOME.MANAGE_USERS_ACTION' | translate }}
+              </p>
+              <p class="text-xs text-gray-500">
+                {{ 'HOME.MANAGE_USERS_DESCRIPTION' | translate }}
+              </p>
+            </div>
+            <i class="pi pi-chevron-right text-gray-400"></i>
+          </button>
+
+          <button
+            class="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-gray-50 transition-colors text-left group"
+          >
+            <div
+              class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors"
+            >
+              <i class="pi pi-chart-bar text-purple-600"></i>
+            </div>
+            <div class="flex-1">
+              <p class="font-semibold text-gray-900">
+                {{ 'HOME.VIEW_STATS_ACTION' | translate }}
+              </p>
+              <p class="text-xs text-gray-500">
+                {{ 'HOME.VIEW_STATS_DESCRIPTION' | translate }}
+              </p>
+            </div>
+            <i class="pi pi-chevron-right text-gray-400"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activités récentes -->
+    <div class="relative lg:col-span-2">
+      <!-- Overlay "Soon" -->
+      <div
+        class="absolute inset-0 flex items-center justify-center z-10 pointer-events-none"
+      >
+        <div
+          class="bg-gradient-to-br from-purple-600 to-purple-700 text-white px-8 py-4 rounded-2xl shadow-2xl transform rotate-[-3deg] pointer-events-auto"
+        >
+          <p class="text-3xl font-bold tracking-wider">
+            {{ 'HOME.SOON' | translate }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Contenu avec blur -->
+      <div class="bg-white rounded-2xl shadow-sm p-6 blur-sm select-none">
+        <h2
+          class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2"
+        >
+          <i class="pi pi-history text-green-600"></i>
+          {{ 'HOME.RECENT_ACTIVITIES' | translate }}
+        </h2>
+        <div class="space-y-4">
+          <!-- Activité 1 -->
+          <div
+            class="flex items-start gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors"
+          >
+            <div
+              class="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0"
+            >
+              M
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between mb-1">
+                <p class="font-semibold text-gray-900">Mont Blanc ajouté</p>
+                <span class="text-xs text-gray-500">Il y a 2h</span>
+              </div>
+              <p class="text-sm text-gray-600">
+                Nouvelle randonnée créée par
+                <span class="font-medium">Admin</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Activité 2 -->
+          <div
+            class="flex items-start gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors"
+          >
+            <div
+              class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0"
+            >
+              T
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between mb-1">
+                <p class="font-semibold text-gray-900">Tour du lac modifié</p>
+                <span class="text-xs text-gray-500">Il y a 5h</span>
+              </div>
+              <p class="text-sm text-gray-600">
+                Parcours mis à jour par <span class="font-medium">Admin</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Activité 3 -->
+          <div
+            class="flex items-start gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors"
+          >
+            <div
+              class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0"
+            >
+              J
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between mb-1">
+                <p class="font-semibold text-gray-900">Nouvel utilisateur</p>
+                <span class="text-xs text-gray-500">Hier</span>
+              </div>
+              <p class="text-sm text-gray-600">
+                <span class="font-medium">Jean Dupont</span> s'est inscrit
+              </p>
+            </div>
+          </div>
+
+          <!-- Activité 4 -->
+          <div
+            class="flex items-start gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors"
+          >
+            <div
+              class="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0"
+            >
+              G
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between mb-1">
+                <p class="font-semibold text-gray-900">GR20 supprimé</p>
+                <span class="text-xs text-gray-500">Il y a 2 jours</span>
+              </div>
+              <p class="text-sm text-gray-600">
+                Randonnée retirée par <span class="font-medium">Admin</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

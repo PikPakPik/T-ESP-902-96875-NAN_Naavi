@@ -1,0 +1,11 @@
+:host {
+  display: block;
+}
+
+// Custom styles pour le file upload
+::ng-deep {
+  .p-fileupload-choose {
+    width: 100%;
+    justify-content: center;
+  }
+}

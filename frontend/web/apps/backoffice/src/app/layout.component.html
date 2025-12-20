@@ -1,0 +1,15 @@
+<navigation
+  brandName="Naavi - Backoffice"
+  [menuItems]="menuItems()"
+  [showBrand]="true"
+  [userName]="user().fullName"
+  [userAvatar]="user().status"
+  [userMenuItems]="userMenuItems()"
+  [brandLogo]="'/assets/img/logo.png'"
+></navigation>
+
+<div class="app-container">
+  <div class="inf-full-container">
+    <router-outlet></router-outlet>
+  </div>
+</div>

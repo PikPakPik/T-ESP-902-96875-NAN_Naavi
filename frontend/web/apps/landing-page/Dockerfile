@@ -1,7 +1,7 @@
 # Multi-stage build pour Angular static
 
 # Stage 1: Build
-FROM registry.gitlab.com/epitech-msc-2026/ci-factory/naavi-node22-pnpm-git-alpine:latest AS builder
+FROM registry.gitlab.com/epitech-msc-2026/ci-factory/naavi-node24-pnpm-git-alpine:latest AS builder
 
 WORKDIR /app
 
@@ -16,8 +16,8 @@ RUN pnpm install --frozen-lockfile
 # Copier le code source
 COPY . .
 
-# Builder l'application Angular statique
-RUN pnpm nx build landing-page --prod
+# Builder l'application Angular statique (skip cache to avoid outputCache bug)
+RUN pnpm nx build landing-page --prod --skip-nx-cache
 
 # Stage 2: Production runtime avec nginx
 FROM nginx:alpine AS runtime

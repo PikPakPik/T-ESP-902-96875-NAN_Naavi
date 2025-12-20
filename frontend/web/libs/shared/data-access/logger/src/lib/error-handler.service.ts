@@ -1,4 +1,4 @@
-import { NotificationService } from '@web/ui/notification';
+import { NotificationService } from '@web/shared/ui/notification';
 import { ErrorHandler, inject, Injectable, Injector } from '@angular/core';
 
 import { HttpErrorResponse } from '@angular/common/http';
@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 @Injectable()
 export class GlobalErrorHandler implements ErrorHandler {
-  private _httpErrorMessage: string | null = null;
+  #_httpErrorMessage: string | null = null;
   readonly #injector = inject(Injector);
   readonly #loggerService = inject(LoggerService);
   readonly #translateService = inject(TranslateService);
@@ -15,19 +15,19 @@ export class GlobalErrorHandler implements ErrorHandler {
   // Have to do this to avoid circular dependency with Notification Service
   // because of calls of ApplicationRef && RendererFactory2 in constructor
   // method to resolve founded in https://github.com/ngneat/hot-toast/issues/70
-  private get _notification(): NotificationService {
+  get #_notification(): NotificationService {
     return this.#injector.get(NotificationService);
   }
 
   constructor() {
-    this._httpErrorMessage = this.#translateService.instant(
+    this.#_httpErrorMessage = this.#translateService.instant(
       'ERROR_HANDLER.HTTP_ERROR.MESSAGE'
     );
   }
 
   handleError(error: Error | HttpErrorResponse) {
     if (error instanceof HttpErrorResponse) {
-      this._notification.open(this._httpErrorMessage || '', '', 'warn', {
+      this.#_notification.open(this.#_httpErrorMessage || '', '', 'warn', {
         duration: 5000,
       });
       this.#loggerService.log_error({

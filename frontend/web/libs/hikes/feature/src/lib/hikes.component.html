@@ -1,0 +1,453 @@
+<!-- Container principal -->
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+  <!-- En-tête avec fond blanc -->
+  <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+    <div class="flex items-center justify-between flex-wrap gap-4">
+      <div class="flex items-center gap-4">
+        <div
+          class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg"
+        >
+          <i class="pi pi-compass text-white text-2xl"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">
+            {{ 'HIKE.TITLE' | translate }}
+          </h1>
+          <p class="text-sm text-gray-500">{{ 'HIKE.SUBTITLE' | translate }}</p>
+        </div>
+      </div>
+      <p-button
+        [label]="'HIKE.NEW' | translate"
+        icon="pi pi-plus"
+        (click)="openNewDialog()"
+      />
+    </div>
+
+    <!-- Barre de recherche -->
+    <div class="mt-6 flex flex-wrap items-center gap-3">
+      <div class="flex-1 min-w-[300px]">
+        <p-iconfield iconPosition="left" class="w-full">
+          <p-inputicon>
+            <i class="pi pi-search"></i>
+          </p-inputicon>
+          <input
+            pInputText
+            type="text"
+            (input)="onSearchChange($event)"
+            [placeholder]="'HIKE.SEARCH_PLACEHOLDER' | translate"
+            class="w-full"
+          />
+        </p-iconfield>
+      </div>
+      <p-button
+        icon="pi pi-map-marker"
+        [outlined]="true"
+        severity="success"
+        (click)="locationSearch.emit()"
+        [pTooltip]="'HIKE.LOCATION_TOOLTIP' | translate"
+        [label]="'HIKE.LOCATION' | translate"
+      />
+      <p-button
+        icon="pi pi-filter-slash"
+        [outlined]="true"
+        severity="secondary"
+        (click)="clear(dt)"
+        [pTooltip]="'HIKE.RESET' | translate"
+      />
+      @if (selectedHikes && selectedHikes.length > 0) {
+      <div class="flex items-center gap-2 bg-red-50 px-4 py-2 rounded-lg">
+        <span class="text-sm font-medium text-red-700">
+          {{ selectedHikes.length }} {{ 'HIKE.SELECTED' | translate }}
+        </span>
+        <p-button
+          severity="danger"
+          icon="pi pi-trash"
+          size="small"
+          [outlined]="true"
+          (click)="deleteSelectedHikesConfirm()"
+          pTooltip="Supprimer"
+        />
+      </div>
+      }
+    </div>
+  </div>
+
+  <!-- Message de localisation requis -->
+  @if (needsLocation()) {
+  <div
+    class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-sm p-6 mb-6 border-2 border-blue-200"
+  >
+    <div class="flex items-start gap-4">
+      <div class="flex-shrink-0">
+        <div
+          class="w-12 h-12 rounded-xl flex items-center justify-center"
+        >
+          <i class="pi pi-map-marker text-white text-2xl"></i>
+        </div>
+      </div>
+      <div class="flex-1">
+        <h3 class="text-lg font-bold text-gray-900 mb-2">
+          {{ 'HIKE.LOCATION_REQUIRED_TITLE' | translate }}
+        </h3>
+        <p class="text-gray-700 mb-4">
+          {{ 'HIKE.LOCATION_REQUIRED_DESCRIPTION' | translate }}
+        </p>
+        <div class="flex flex-wrap gap-3">
+          <p-button
+            [label]="'HIKE.SET_PARIS' | translate"
+            icon="pi pi-map"
+            severity="info"
+            (click)="setParisLocation()"
+          />
+          <p-button
+            [label]="'HIKE.CHOOSE_LOCATION' | translate"
+            icon="pi pi-map-marker"
+            [outlined]="true"
+            severity="success"
+            (click)="locationSearch.emit()"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- Tableau -->
+  <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+    <p-table
+      #dt
+      dataKey="id"
+      [currentPageReportTemplate]="'HIKE.PAGE_REPORT' | translate"
+      [value]="rows()"
+      [filters]="tableFilters"
+      [(selection)]="selectedHikes"
+      [rowHover]="true"
+      [rows]="rowsPerPage()"
+      [rowsPerPageOptions]="[20, 50, 100]"
+      [loading]="loading()"
+      [paginator]="true"
+      [lazy]="true"
+      [globalFilterFields]="['name', 'description', 'difficulty']"
+      [first]="(currentPage() - 1) * rowsPerPage()"
+      [totalRecords]="totalRecords()"
+      (onPage)="onPageChange($event)"
+    >
+      <ng-template #header>
+        <tr>
+          <th style="width: 3rem">
+            <p-tableHeaderCheckbox />
+          </th>
+          <th pSortableColumn="name" style="min-width: 15rem">
+            <div class="flex items-center gap-2">
+              {{ 'HIKE.NAME' | translate }}
+              <p-sortIcon field="name" />
+            </div>
+          </th>
+          <th pSortableColumn="difficulty" style="min-width: 10rem">
+            <div class="flex items-center gap-2">
+              {{ 'HIKE.DIFFICULTY' | translate }}
+              <p-sortIcon field="difficulty" />
+            </div>
+          </th>
+          <th pSortableColumn="duration" style="min-width: 8rem">
+            <div class="flex items-center gap-2">
+              {{ 'HIKE.DURATION' | translate }}
+              <p-sortIcon field="duration" />
+            </div>
+          </th>
+          <th pSortableColumn="distance" style="min-width: 8rem">
+            <div class="flex items-center gap-2">
+              {{ 'HIKE.DISTANCE' | translate }}
+              <p-sortIcon field="distance" />
+            </div>
+          </th>
+          <th pSortableColumn="elevation" style="min-width: 8rem">
+            <div class="flex items-center gap-2">
+              {{ 'HIKE.ELEVATION' | translate }}
+              <p-sortIcon field="elevation" />
+            </div>
+          </th>
+          <th style="width: 6rem; text-align: center">
+            {{ 'HIKE.MAP' | translate }}
+          </th>
+          <th style="width: 9rem; text-align: center">
+            {{ 'HIKE.ACTIONS' | translate }}
+          </th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-hike>
+        <tr class="p-selectable-row">
+          <td>
+            <p-tableCheckbox [value]="hike" />
+          </td>
+          <td>
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-bold text-sm shadow-md"
+              >
+                {{ hike.name.charAt(0).toUpperCase() }}
+              </div>
+              <a
+                class="text-green-600 hover:text-green-800 hover:underline cursor-pointer font-semibold transition-colors"
+                (click)="viewDetailsClick(hike)"
+                (keyup.enter)="viewDetailsClick(hike)"
+                tabindex="0"
+              >
+                {{ hike.name }}
+              </a>
+            </div>
+          </td>
+          <td>
+            <p-tag
+              [value]="'HIKE.DIFFICULTY.' + hike.difficulty | translate"
+              [severity]="getSeverity(hike.difficulty)"
+              [rounded]="true"
+            />
+          </td>
+          <td>
+            <div class="flex items-center gap-2">
+              <i class="pi pi-clock text-gray-400 text-xs"></i>
+              <span class="text-gray-900 font-medium">{{
+                hike.getFormattedDuration()
+              }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="flex items-center gap-2">
+              <i class="pi pi-map-marker text-gray-400 text-xs"></i>
+              <span class="text-gray-900 font-medium">{{ hike.distance }}</span>
+              <span class="text-gray-500 text-sm">{{
+                'COMMON.KM' | translate
+              }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="flex items-center gap-2">
+              <i class="pi pi-arrow-up text-gray-400 text-xs"></i>
+              <span class="text-gray-900 font-medium">{{
+                getElevationGain(hike)
+              }}</span>
+              <span class="text-gray-500 text-sm">{{
+                'COMMON.M' | translate
+              }}</span>
+            </div>
+          </td>
+          <td style="text-align: center">
+            @if (hike.coordinates && hike.coordinates.length > 0) {
+            <p-button
+              (onClick)="displayHikeMap($event, hike)"
+              icon="pi pi-map"
+              severity="info"
+              size="small"
+              [text]="true"
+              [rounded]="true"
+              [pTooltip]="'HIKE.VIEW_MAP' | translate"
+            />
+            } @else {
+            <span class="text-gray-300">-</span>
+            }
+          </td>
+          <td style="text-align: center">
+            <div class="flex gap-1 justify-center">
+              <p-button
+                icon="pi pi-pencil"
+                severity="secondary"
+                size="small"
+                [text]="true"
+                [rounded]="true"
+                (click)="editHike.emit(hike)"
+                [pTooltip]="'HIKE.EDIT' | translate"
+              />
+              <p-button
+                icon="pi pi-trash"
+                severity="danger"
+                size="small"
+                [text]="true"
+                [rounded]="true"
+                (click)="deleteHikeConfirm(hike)"
+                [pTooltip]="'HIKE.DELETE' | translate"
+              />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="8">
+            <div class="py-20 text-center">
+              <div
+                class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-green-50 to-green-100 mb-6"
+              >
+                <i class="pi pi-compass text-4xl text-green-600"></i>
+              </div>
+              <h3 class="text-xl font-bold text-gray-900 mb-2">
+                {{ 'HIKE.EMPTY_TITLE' | translate }}
+              </h3>
+              <p class="text-gray-500 mb-8 max-w-md mx-auto">
+                {{ 'HIKE.EMPTY_DESCRIPTION' | translate }}
+              </p>
+              <p-button
+                [label]="'HIKE.EMPTY_CREATE' | translate"
+                icon="pi pi-plus"
+                (click)="openNewDialog()"
+              />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<p-dialog
+  [(visible)]="hikeDialog"
+  [style]="{ width: '600px' }"
+  [header]="'HIKE.DETAILS_TITLE' | translate"
+  [modal]="true"
+>
+  <ng-template #content>
+    <div class="flex flex-col gap-6">
+      <div>
+        <label for="name" class="block font-bold mb-3"
+          >{{ 'HIKE.NAME' | translate }} *</label
+        >
+        <input
+          type="text"
+          pInputText
+          id="name"
+          [(ngModel)]="hike().name"
+          required
+          fluid
+        />
+        @if (submitted() && !hike().name) {
+        <small class="text-red-500">{{
+          'HIKE.NAME_REQUIRED' | translate
+        }}</small>
+        }
+      </div>
+
+      <div>
+        <label for="description" class="block font-bold mb-3"
+          >{{ 'HIKE.LOCATION' | translate }} *</label
+        >
+        <textarea
+          pTextarea
+          id="description"
+          [(ngModel)]="hike().location"
+          rows="5"
+          required
+          [autoResize]="true"
+          class="w-full"
+        ></textarea>
+        @if (submitted() && !hike().location) {
+        <small class="text-red-500">{{
+          'HIKE.LOCATION_REQUIRED' | translate
+        }}</small>
+        }
+      </div>
+
+      <div class="grid grid-cols-3 gap-4">
+        <div>
+          <label for="difficulty" class="block font-bold mb-3"
+            >{{ 'HIKE.DIFFICULTY' | translate }} *</label
+          >
+          <select
+            pInputText
+            id="difficulty"
+            [(ngModel)]="hike().difficulty"
+            required
+            fluid
+          >
+            <option value="Facile">
+              {{ 'HIKE.DIFFICULTY.EASY' | translate }}
+            </option>
+            <option value="Modéré">
+              {{ 'HIKE.DIFFICULTY.MEDIUM' | translate }}
+            </option>
+            <option value="Difficile">
+              {{ 'HIKE.DIFFICULTY.HARD' | translate }}
+            </option>
+            <option value="Très difficile">
+              {{ 'HIKE.DIFFICULTY.HARD' | translate }}
+            </option>
+          </select>
+        </div>
+
+        <div>
+          <label for="duration" class="block font-bold mb-3">{{
+            'HIKE.DURATION_MIN' | translate
+          }}</label>
+          <input
+            type="number"
+            pInputText
+            id="duration"
+            [(ngModel)]="hike().estimatedDuration"
+            fluid
+          />
+        </div>
+
+        <div>
+          <label for="distance" class="block font-bold mb-3">{{
+            'HIKE.DISTANCE_KM' | translate
+          }}</label>
+          <input
+            type="number"
+            pInputText
+            id="distance"
+            [(ngModel)]="hike().distance"
+            fluid
+          />
+        </div>
+      </div>
+
+      <div>
+        <label for="elevation" class="block font-bold mb-3">{{
+          'HIKE.ELEVATION_M' | translate
+        }}</label>
+        <input
+          type="number"
+          pInputText
+          id="elevation"
+          [(ngModel)]="hike().elevationGain"
+          fluid
+        />
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template #footer>
+    <p-button
+      [label]="'COMMON.CANCEL' | translate"
+      icon="pi pi-times"
+      text
+      (click)="hideDialog()"
+    />
+    <p-button
+      [label]="'COMMON.SAVE' | translate"
+      icon="pi pi-check"
+      (click)="saveHikeDialog()"
+    />
+  </ng-template>
+</p-dialog>
+
+<p-confirmDialog [style]="{ width: '450px' }" />
+
+<!-- Popover pour afficher la carte Mapbox -->
+<p-popover #mapPopover (onHide)="currentHikeForMap.set(null)">
+  <ng-template #content>
+    @if (currentHikeForMap(); as hike) {
+    <div class="map-popover-container">
+      <h5 class="map-title">{{ hike.name }}</h5>
+      @if (mapKey()) {
+      <div class="map-popover-map">
+        <hike-map
+          [coordinates]="hike.coordinates"
+          [hikeId]="hike.id"
+          [showAnimation]="true"
+        />
+      </div>
+      }
+    </div>
+    }
+  </ng-template>
+</p-popover>

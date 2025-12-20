@@ -1,0 +1,336 @@
+<!-- Container principal -->
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+  <form (ngSubmit)="saveUser()">
+    <!-- En-tête -->
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+      <div class="flex items-center justify-between flex-wrap gap-4">
+        <div class="flex items-center gap-4">
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg"
+          >
+            <i class="pi pi-user text-white text-2xl"></i>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">
+              {{
+                isEditMode()
+                  ? ('USER.UPSERT.TITLE_EDIT' | translate)
+                  : ('USER.UPSERT.TITLE_NEW' | translate)
+              }}
+            </h1>
+            <p class="text-sm text-gray-500">
+              {{
+                isEditMode()
+                  ? ('USER.UPSERT.SUBTITLE_EDIT' | translate)
+                  : ('USER.UPSERT.SUBTITLE_NEW' | translate)
+              }}
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <p-button
+            [label]="'COMMON.CANCEL' | translate"
+            icon="pi pi-times"
+            severity="secondary"
+            [outlined]="true"
+            (click)="cancel()"
+          />
+          <p-button
+            [label]="'COMMON.SAVE' | translate"
+            icon="pi pi-save"
+            type="submit"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenu en grille -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Formulaire d'informations -->
+      <div class="space-y-6">
+        <!-- Informations personnelles -->
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+          <h2
+            class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2"
+          >
+            <i class="pi pi-user text-blue-600"></i>
+            {{ 'USER.UPSERT.PERSONAL_INFO' | translate }}
+          </h2>
+
+          <div class="space-y-4">
+            <!-- Prénom -->
+            <div>
+              <label
+                for="firstname"
+                class="block font-semibold mb-2 text-gray-700"
+                >{{ 'COMMON.FIRSTNAME' | translate }} *</label
+              >
+              <input
+                pInputText
+                id="firstname"
+                type="text"
+                [field]="userForm.firstname"
+                [placeholder]="'USER.UPSERT.FIRSTNAME_PLACEHOLDER' | translate"
+                class="w-full"
+                [class.ng-invalid]="userForm.firstname().invalid() && (userForm.firstname().touched() || submitted())"
+              />
+              @if (userForm.firstname().invalid() && (userForm.firstname().touched() || submitted())) {
+              <small class="text-red-500 mt-1 block">
+                @for (error of userForm.firstname().errors(); track error) {
+                <span>{{ error.message }}</span>
+                }
+              </small>
+              }
+            </div>
+
+            <!-- Nom -->
+            <div>
+              <label
+                for="lastname"
+                class="block font-semibold mb-2 text-gray-700"
+                >{{ 'COMMON.LASTNAME' | translate }} *</label
+              >
+              <input
+                pInputText
+                id="lastname"
+                type="text"
+                [field]="userForm.lastname"
+                [placeholder]="'USER.UPSERT.LASTNAME_PLACEHOLDER' | translate"
+                class="w-full"
+                [class.ng-invalid]="userForm.lastname().invalid() && (userForm.lastname().touched() || submitted())"
+              />
+              @if (userForm.lastname().invalid() && (userForm.lastname().touched() || submitted())) {
+              <small class="text-red-500 mt-1 block">
+                @for (error of userForm.lastname().errors(); track error) {
+                <span>{{ error.message }}</span>
+                }
+              </small>
+              }
+            </div>
+
+            <!-- Email -->
+            <div>
+              <label for="email" class="block font-semibold mb-2 text-gray-700"
+                >{{ 'COMMON.EMAIL' | translate }} *</label
+              >
+              <input
+                pInputText
+                id="email"
+                type="email"
+                [field]="userForm.email"
+                [placeholder]="'USER.UPSERT.EMAIL_PLACEHOLDER' | translate"
+                class="w-full"
+                [class.ng-invalid]="userForm.email().invalid() && (userForm.email().touched() || submitted())"
+              />
+              @if (userForm.email().invalid() && (userForm.email().touched() || submitted())) {
+              <small class="text-red-500 mt-1 block">
+                @for (error of userForm.email().errors(); track error) {
+                <span>{{ error.message }}</span>
+                }
+              </small>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Rôles et permissions -->
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+          <h2
+            class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2"
+          >
+            <i class="pi pi-shield text-blue-600"></i>
+            {{ 'USER.UPSERT.ROLES_PERMISSIONS' | translate }}
+          </h2>
+
+          <div class="space-y-4">
+            <!-- Rôles -->
+            <div>
+              <label for="roles" class="block font-semibold mb-2 text-gray-700">
+                {{ 'USER.UPSERT.ADDITIONAL_ROLES' | translate }}
+              </label>
+              <p-multiselect
+                id="roles"
+                [ngModel]="selectedRoles()"
+                (ngModelChange)="onRolesChange($event)"
+                [ngModelOptions]="{standalone: true}"
+                [options]="roleOptions()"
+                optionLabel="label"
+                optionValue="value"
+                [placeholder]="'USER.UPSERT.ROLES_PLACEHOLDER' | translate"
+                [showClear]="true"
+              >
+                <ng-template let-role pTemplate="item">
+                  {{ role.label | translate }}
+                </ng-template>
+                <ng-template let-role pTemplate="selectedItem">
+                  {{ role.label | translate }}
+                </ng-template>
+                <ng-template pTemplate="selectedItems">
+                  @for (roleValue of selectedRoles(); track roleValue; let i =
+                  $index) { @if (i > 0) {
+                  <span>, </span>
+                  }
+                  <span>{{
+                    'PROFILE.ROLE.' + roleValue.replace('ROLE_', '') | translate
+                  }}</span>
+                  }
+                </ng-template>
+              </p-multiselect>
+              <small class="text-gray-500 mt-1 block">
+                <i class="pi pi-info-circle text-xs"></i>
+                {{ 'USER.UPSERT.ROLES_INFO' | translate }}
+              </small>
+            </div>
+
+            <!-- Statut -->
+            <div>
+              <label
+                for="status"
+                class="block font-semibold mb-2 text-gray-700"
+              >
+                {{ 'COMMON.STATUS' | translate }} *
+              </label>
+              <p-select
+                id="status"
+                [ngModel]="status()"
+                (ngModelChange)="onStatusChange($event)"
+                [ngModelOptions]="{standalone: true}"
+                [options]="statusOptions()"
+                optionLabel="label"
+                optionValue="value"
+                [placeholder]="'USER.STATUS_PLACEHOLDER' | translate"
+                class="w-full"
+                required
+              >
+                <ng-template let-status pTemplate="item">
+                  {{ status.label | translate }}
+                </ng-template>
+                <ng-template let-status pTemplate="selectedItem">
+                  {{ status.label | translate }}
+                </ng-template>
+              </p-select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sécurité -->
+        @if (isEditMode()) {
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+          <h2
+            class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"
+          >
+            <i class="pi pi-lock text-blue-600"></i>
+            {{ 'USER.UPSERT.SECURITY' | translate }}
+          </h2>
+
+          <div class="bg-blue-50 rounded-lg p-4 mb-4">
+            <p class="text-sm text-blue-800 flex items-center gap-2 mb-3">
+              <i class="pi pi-info-circle"></i>
+              {{ 'USER.UPSERT.RESET_PASSWORD_INFO' | translate }}
+            </p>
+            <p-button
+              [label]="'USER.UPSERT.RESET_PASSWORD_BUTTON' | translate"
+              icon="pi pi-key"
+              severity="warn"
+              [outlined]="true"
+              class="w-full"
+              (click)="resetPassword()"
+            />
+          </div>
+        </div>
+        }
+      </div>
+
+      <!-- Colonne droite -->
+      <div class="space-y-6">
+        <!-- Informations complémentaires -->
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+          <h2
+            class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"
+          >
+            <i class="pi pi-info-circle text-blue-600"></i>
+            {{ 'USER.UPSERT.INFO' | translate }}
+          </h2>
+
+          <div class="space-y-3">
+            <!-- Nom complet -->
+            @if (firstname() || lastname()) {
+            <div
+              class="flex items-center justify-between py-2 border-b border-gray-100"
+            >
+              <span class="text-sm font-medium text-gray-600">{{
+                'USER.UPSERT.FULL_NAME' | translate
+              }}</span>
+              <span class="text-sm font-semibold text-gray-900">
+                {{ firstname() }} {{ lastname() }}
+              </span>
+            </div>
+            }
+
+            <!-- Email -->
+            @if (email()) {
+            <div
+              class="flex items-center justify-between py-2 border-b border-gray-100"
+            >
+              <span class="text-sm font-medium text-gray-600">{{
+                'COMMON.EMAIL' | translate
+              }}</span>
+              <span class="text-sm font-semibold text-gray-900">
+                {{ email() }}
+              </span>
+            </div>
+            }
+
+            <!-- Rôles -->
+            @if (selectedRoles().length > 0) {
+            <div class="py-2 border-b border-gray-100">
+              <span class="text-sm font-medium text-gray-600 block mb-2">{{
+                'COMMON.ROLES' | translate
+              }}</span>
+              <div class="flex flex-wrap gap-2">
+                @for (role of selectedRoles(); track role) {
+                <span
+                  class="px-3 py-1 rounded-full text-xs font-semibold"
+                  [ngClass]="{
+                    'bg-red-100 text-red-800': role === 'ROLE_ADMIN',
+                    'bg-yellow-100 text-yellow-800': role === 'ROLE_MODERATOR',
+                    'bg-blue-100 text-blue-800': role === 'ROLE_USER'
+                  }"
+                >
+                  @if (role === 'ROLE_ADMIN') {
+                  {{ 'PROFILE.ROLE.ADMIN' | translate }} } @else if (role ===
+                  'ROLE_MODERATOR') {
+                  {{ 'PROFILE.ROLE.MODERATOR' | translate }} } @else {
+                  {{ 'PROFILE.ROLE.USER' | translate }} }
+                </span>
+                }
+              </div>
+            </div>
+            }
+
+            <!-- Statut -->
+            <div class="flex items-center justify-between py-2">
+              <span class="text-sm font-medium text-gray-600">{{
+                'COMMON.STATUS' | translate
+              }}</span>
+              <span
+                class="px-3 py-1 rounded-full text-xs font-semibold"
+                [ngClass]="{
+                  'bg-green-100 text-green-800': status() === 'VERIFIED',
+                  'bg-orange-100 text-orange-800': status() === 'UNVERIFIED',
+                  'bg-red-100 text-red-800': status() === 'DELETED'
+                }"
+              >
+                @if (status() === 'VERIFIED') {
+                {{ 'PROFILE.STATUS.VERIFIED' | translate }} } @else if (status()
+                === 'UNVERIFIED') {
+                {{ 'PROFILE.STATUS.UNVERIFIED' | translate }} } @else {
+                {{ 'PROFILE.STATUS.DELETED' | translate }} }
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

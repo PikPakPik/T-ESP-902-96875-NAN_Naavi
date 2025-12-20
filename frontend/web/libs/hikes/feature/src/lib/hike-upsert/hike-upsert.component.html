@@ -1,0 +1,463 @@
+<!-- Container principal -->
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+  <form (ngSubmit)="saveHike()">
+    <!-- En-tête -->
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+      <div class="flex items-center justify-between flex-wrap gap-4">
+        <div class="flex items-center gap-4">
+          <div
+            class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg"
+          >
+            <i class="pi pi-compass text-white text-2xl"></i>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">
+              {{
+                isEditMode()
+                  ? ('HIKE.UPSERT.TITLE_EDIT' | translate)
+                  : ('HIKE.UPSERT.TITLE_NEW' | translate)
+              }}
+            </h1>
+            <p class="text-sm text-gray-500">
+              {{
+                isEditMode()
+                  ? ('HIKE.UPSERT.SUBTITLE_EDIT' | translate)
+                  : ('HIKE.UPSERT.SUBTITLE_NEW' | translate)
+              }}
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <p-button
+            [label]="'COMMON.CANCEL' | translate"
+            icon="pi pi-times"
+            severity="secondary"
+            [outlined]="true"
+            (click)="cancel()"
+          />
+          <p-button
+            [label]="'COMMON.SAVE' | translate"
+            icon="pi pi-save"
+            type="submit"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenu en grille -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Formulaire d'informations -->
+      <div class="space-y-6">
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+          <h2
+            class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2"
+          >
+            <i class="pi pi-info-circle text-green-600"></i>
+            {{ 'HIKE.UPSERT.GENERAL_INFO' | translate }}
+          </h2>
+
+          <div class="space-y-4">
+            <!-- Nom -->
+            <div>
+              <label for="name" class="block font-semibold mb-2 text-gray-700"
+                >{{ 'HIKE.NAME' | translate }} *</label
+              >
+              <input
+                pInputText
+                id="name"
+                name="name"
+                [(ngModel)]="name"
+                required
+                [placeholder]="'HIKE.UPSERT.NAME_PLACEHOLDER' | translate"
+                class="w-full"
+                [class.ng-invalid]="hikeForm.name().invalid() && (hikeForm.name().touched() || submitted())"
+              />
+              @if (hikeForm.name().invalid() && (hikeForm.name().touched() || submitted())) {
+              <small class="text-red-500 mt-1 block">
+                @for (error of hikeForm.name().errors(); track error) {
+                <span>{{ error.message }}</span>
+                }
+              </small>
+              }
+            </div>
+
+            <!-- Difficulté -->
+            <div>
+              <label
+                for="difficulty"
+                class="block font-semibold mb-2 text-gray-700"
+              >
+                {{ 'HIKE.DIFFICULTY' | translate }} *
+              </label>
+              <p-select
+                id="difficulty"
+                name="difficulty"
+                [(ngModel)]="difficulty"
+                [options]="difficulties()"
+                optionValue="value"
+                [placeholder]="'HIKE.UPSERT.DIFFICULTY_PLACEHOLDER' | translate"
+                class="w-full"
+                required
+                [invalid]="
+                  hikeForm.difficulty().invalid() && (hikeForm.difficulty().touched() || submitted())
+                "
+              >
+                <ng-template let-difficulty pTemplate="item">
+                  {{ difficulty.label | translate }}
+                </ng-template>
+                <ng-template let-difficulty pTemplate="selectedItem">
+                  {{ difficulty.label | translate }}
+                </ng-template>
+              </p-select>
+              @if (hikeForm.difficulty().invalid() && (hikeForm.difficulty().touched() || submitted())) {
+              <small class="text-red-500 mt-1 block">
+                @for (error of hikeForm.difficulty().errors(); track error) {
+                <span>{{ error.message }}</span>
+                }
+              </small>
+              }
+            </div>
+
+            <!-- Statut -->
+            <div>
+              <label
+                for="status"
+                class="block font-semibold mb-2 text-gray-700"
+              >
+                {{ 'COMMON.STATUS' | translate }} *
+              </label>
+              <p-select
+                id="status"
+                name="status"
+                [(ngModel)]="status"
+                [options]="statusOptions()"
+                optionValue="value"
+                [placeholder]="'HIKE.UPSERT.STATUS_PLACEHOLDER' | translate"
+                class="w-full"
+                required
+                [invalid]="
+                  hikeForm.status().invalid() && (hikeForm.status().touched() || submitted())
+                "
+              >
+                <ng-template let-status pTemplate="item">
+                  {{ status.label | translate }}
+                </ng-template>
+                <ng-template let-status pTemplate="selectedItem">
+                  {{ status.label | translate }}
+                </ng-template>
+              </p-select>
+              @if (hikeForm.status().invalid() && (hikeForm.status().touched() || submitted()))
+              {
+              <small class="text-red-500 mt-1 block">
+                @for (error of hikeForm.status().errors(); track error) {
+                <span>{{ error.message }}</span>
+                }
+              </small>
+              }
+            </div>
+
+            <!-- Source -->
+            <div>
+              <label
+                for="source"
+                class="block font-semibold mb-2 text-gray-700"
+              >
+                {{ 'HIKE.UPSERT.SOURCE' | translate }}
+              </label>
+              <p-select
+                id="source"
+                name="source"
+                [(ngModel)]="source"
+                [options]="sourceOptions()"
+                optionValue="value"
+                [placeholder]="'HIKE.UPSERT.SOURCE_PLACEHOLDER' | translate"
+                class="w-full"
+              >
+                <ng-template let-source pTemplate="item">
+                  {{ source.label | translate }}
+                </ng-template>
+                <ng-template let-source pTemplate="selectedItem">
+                  {{ source.label | translate }}
+                </ng-template>
+              </p-select>
+            </div>
+
+            <!-- Saisons -->
+            <div>
+              <label
+                for="seasons"
+                class="block font-semibold mb-2 text-gray-700"
+              >
+                {{ 'HIKE.UPSERT.SEASONS' | translate }}
+              </label>
+              <p-multiSelect
+                id="seasons"
+                name="seasons"
+                [(ngModel)]="seasons"
+                [options]="seasonOptions()"
+                optionLabel="label"
+                optionValue="value"
+                [placeholder]="'HIKE.UPSERT.SEASONS_PLACEHOLDER' | translate"
+                class="w-full"
+                [displaySelectedLabel]="true"
+                [maxSelectedLabels]="3"
+                [selectedItemsLabel]="
+                  'HIKE.UPSERT.SEASONS_SELECTED' | translate
+                "
+              >
+                <ng-template let-season pTemplate="item">
+                  {{ season.label | translate }}
+                </ng-template>
+                <ng-template pTemplate="selectedItems">
+                  @for (seasonValue of seasons(); track seasonValue; let i =
+                  $index) { @if (i > 0) {
+                  <span>, </span>
+                  }
+                  <span>{{
+                    getSeasonTranslationKey(seasonValue) | translate
+                  }}</span>
+                  }
+                </ng-template>
+              </p-multiSelect>
+            </div>
+
+            <!-- Distance -->
+            <div>
+              <label
+                for="distance"
+                class="block font-semibold mb-2 text-gray-700"
+              >
+                {{ 'HIKE.DISTANCE' | translate }} ({{
+                  'COMMON.KM' | translate
+                }})
+              </label>
+              <p-inputNumber
+                id="distance"
+                [ngModel]="distance()"
+                placeholder="10.5"
+                [min]="0.01"
+                [showButtons]="true"
+                class="w-full"
+                [disabled]="true"
+              />
+              <small class="text-gray-500 mt-1 block">
+                <i class="pi pi-info-circle text-xs"></i>
+                {{ 'HIKE.UPSERT.DISTANCE_AUTO' | translate }}
+              </small>
+            </div>
+
+            <div class="bg-blue-50 rounded-lg p-4">
+              <p class="text-sm text-blue-800 flex items-center gap-2">
+                <i class="pi pi-info-circle"></i>
+                {{ 'HIKE.UPSERT.AUTO_CALC_INFO' | translate }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Carte et GPS -->
+      <div class="space-y-6">
+        <!-- Carte -->
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+          <h2
+            class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"
+          >
+            <i class="pi pi-map text-green-600"></i>
+            {{ 'HIKE.UPSERT.GPS_TRACK' | translate }}
+          </h2>
+
+          <div
+            class="map-container rounded-xl overflow-hidden border-2 border-gray-200 mb-4"
+            style="height: 400px"
+          >
+            <mgl-map
+              [style]="mapStyle"
+              [center]="mapCenter()"
+              [zoom]="mapZoom"
+              (mapClick)="onMapClick($event)"
+              class="w-full h-full"
+            >
+              @if (coordinates().length > 0) {
+              <mgl-geojson-source
+                id="upsert-source"
+                [data]="coordinatesToGeoJSON()"
+              >
+              </mgl-geojson-source>
+              @if (coordinates().length === 1) {
+              <mgl-layer
+                id="upsert-point"
+                type="circle"
+                source="upsert-source"
+                [paint]="{ 'circle-radius': 10, 'circle-color': '#16a34a' }"
+              />
+              } @else {
+              <mgl-layer
+                id="upsert-line"
+                type="line"
+                source="upsert-source"
+                [layout]="{ 'line-join': 'round', 'line-cap': 'round' }"
+                [paint]="{ 'line-color': '#16a34a', 'line-width': 4 }"
+              />
+              } } @for (waypoint of waypoints(); track $index) {
+              <mgl-marker
+                #marker
+                [lngLat]="[waypoint.longitude, waypoint.latitude]"
+                [draggable]="true"
+                (markerDragEnd)="
+                  marker.markerInstance &&
+                    onMarkerDragEnd(marker.markerInstance, $index)
+                "
+              >
+                <div
+                  class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg border-2 border-white cursor-move"
+                >
+                  {{ $index + 1 }}
+                </div>
+              </mgl-marker>
+              }
+            </mgl-map>
+          </div>
+
+          <div class="bg-green-50 rounded-lg p-4 mb-4">
+            <p class="text-sm text-green-800 flex items-center gap-2">
+              <i class="pi pi-info-circle"></i>
+              {{
+                'HIKE.UPSERT.CLICK_TO_ADD'
+                  | translate : { maxPoints: MAX_WAYPOINTS }
+              }}
+            </p>
+          </div>
+
+          @if (coordinates().length > 0) {
+          <p-button
+            [label]="'HIKE.UPSERT.CLEAR_TRACK' | translate"
+            severity="danger"
+            [outlined]="true"
+            icon="pi pi-trash"
+            class="w-full"
+            (click)="clearCoordinates()"
+          />
+          }
+        </div>
+
+        <!-- Liste des waypoints -->
+        @if (waypoints().length > 0) {
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <i class="pi pi-map-marker text-green-600"></i>
+              {{ 'HIKE.UPSERT.WAYPOINTS' | translate }}
+            </h2>
+            <span
+              [class]="
+                waypoints().length >= MAX_WAYPOINTS
+                  ? 'text-sm font-medium text-red-700 bg-red-100 px-3 py-1 rounded-full'
+                  : waypoints().length >= MAX_WAYPOINTS - 5
+                  ? 'text-sm font-medium text-orange-700 bg-orange-100 px-3 py-1 rounded-full'
+                  : 'text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full'
+              "
+            >
+              {{ waypoints().length }} / {{ MAX_WAYPOINTS }}
+              @if (waypoints().length >= MAX_WAYPOINTS) {
+              <i class="pi pi-exclamation-triangle ml-1"></i>
+              }
+            </span>
+          </div>
+
+          <!-- Message d'avertissement limite -->
+          @if (waypoints().length >= MAX_WAYPOINTS) {
+          <div
+            class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2"
+          >
+            <i class="pi pi-exclamation-triangle text-red-600 mt-0.5"></i>
+            <div class="text-sm text-red-700">
+              <strong>{{
+                'HIKE.UPSERT.WAYPOINT_LIMIT'
+                  | translate : { maxPoints: MAX_WAYPOINTS }
+              }}</strong>
+            </div>
+          </div>
+          } @else if (waypoints().length >= MAX_WAYPOINTS - 5) {
+          <div
+            class="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg flex items-start gap-2"
+          >
+            <i class="pi pi-info-circle text-orange-600 mt-0.5"></i>
+            <div class="text-sm text-orange-700">
+              <strong>{{
+                'HIKE.UPSERT.WAYPOINT_WARNING'
+                  | translate : { maxPoints: MAX_WAYPOINTS }
+              }}</strong>
+            </div>
+          </div>
+          } @if (isLoadingRoute()) {
+          <div class="flex items-center justify-center py-8 text-green-600">
+            <i class="pi pi-spin pi-spinner text-2xl mr-3"></i>
+            <span class="font-medium">{{
+              'HIKE.UPSERT.ROUTE_CALCULATING' | translate
+            }}</span>
+          </div>
+          }
+
+          <div
+            cdkDropList
+            (cdkDropListDropped)="dropWaypoint($event)"
+            class="space-y-2"
+          >
+            @for (waypoint of waypoints(); track $index) {
+            <div
+              cdkDrag
+              class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200 cursor-move"
+            >
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <i class="pi pi-bars text-gray-400"></i>
+                <div
+                  class="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm"
+                >
+                  {{ $index + 1 }}
+                </div>
+              </div>
+              <div class="flex-1">
+                <p class="text-sm font-mono text-gray-700">
+                  {{ waypoint.latitude.toFixed(5) }},
+                  {{ waypoint.longitude.toFixed(5) }}
+                </p>
+              </div>
+              <p-button
+                icon="pi pi-times"
+                severity="danger"
+                [rounded]="true"
+                [text]="true"
+                size="small"
+                (click)="removeCoordinate($index); $event.stopPropagation()"
+                (mousedown)="$event.stopPropagation()"
+                [pTooltip]="'HIKE.UPSERT.DELETE_WAYPOINT' | translate"
+              />
+            </div>
+            }
+          </div>
+        </div>
+        } @else {
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+          <div class="text-center py-8">
+            <div
+              class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4"
+            >
+              <i class="pi pi-map-marker text-3xl text-gray-400"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">
+              {{ 'HIKE.UPSERT.NO_WAYPOINTS' | translate }}
+            </h3>
+            <p class="text-gray-500 text-sm">
+              {{
+                'HIKE.UPSERT.NO_WAYPOINTS_DESCRIPTION'
+                  | translate : { maxPoints: MAX_WAYPOINTS }
+              }}
+            </p>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+  </form>
+</div>
