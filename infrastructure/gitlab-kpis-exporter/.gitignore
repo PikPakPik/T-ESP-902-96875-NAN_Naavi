@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
+
+# Secrets - NEVER commit tokens!
+secret.yaml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
