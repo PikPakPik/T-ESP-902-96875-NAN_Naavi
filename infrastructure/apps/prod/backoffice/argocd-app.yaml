@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: backoffice-prod
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://gitlab.com/epitech-msc-2026/infra/argocd/apps.git
+    targetRevision: main
+    path: prod/backoffice
+    kustomize:
+      namePrefix: ""
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true 

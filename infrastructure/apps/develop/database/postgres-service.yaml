@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: pgdata
+  namespace: develop
+  labels:
+    app: pgdata
+spec:
+  selector:
+    app: pgdata
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+      nodePort: 31432
+  type: NodePort

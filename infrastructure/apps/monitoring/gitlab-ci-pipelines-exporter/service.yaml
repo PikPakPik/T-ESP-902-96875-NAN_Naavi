@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitlab-ci-pipelines-exporter
+  namespace: monitoring
+  labels:
+    app: gitlab-ci-pipelines-exporter
+spec:
+  selector:
+    app: gitlab-ci-pipelines-exporter
+  ports:
+    - name: metrics
+      protocol: TCP
+      port: 8080
+      targetPort: metrics
+    - name: monitoring
+      protocol: TCP
+      port: 9090
+      targetPort: monitoring
+  type: ClusterIP
+

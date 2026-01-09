@@ -1,0 +1,27 @@
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: develop-apps
+  namespace: argocd-image-updater-system
+spec:
+  namespace: argocd
+  commonUpdateSettings:
+    updateStrategy: digest
+    pullSecret: pullsecret:argocd-image-updater-system/gitlab-registry-secret
+  applicationRefs:
+    - namePattern: "identity-develop"
+      images:
+        - alias: identity
+          imageName: registry.gitlab.com/epitech-msc-2026/backend/identity:linux-develop
+    - namePattern: "backoffice-develop"
+      images:
+        - alias: backoffice
+          imageName: registry.gitlab.com/epitech-msc-2026/frontend/web/backoffice:linux-develop
+    - namePattern: "landing-page-develop"
+      images:
+        - alias: landing-page
+          imageName: registry.gitlab.com/epitech-msc-2026/frontend/web/landing-page:linux-develop
+    - namePattern: "hike-develop"
+      images:
+        - alias: hike
+          imageName: registry.gitlab.com/epitech-msc-2026/backend/hike:linux-develop

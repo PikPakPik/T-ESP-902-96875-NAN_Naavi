@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitlab-kpis-exporter
+  namespace: monitoring
+  labels:
+    app: gitlab-kpis-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitlab-kpis-exporter
+  template:
+    metadata:
+      labels:
+        app: gitlab-kpis-exporter
+    spec:
+      imagePullSecrets:
+        - name: gitlab-registry-secret
+      containers:
+        - name: gitlab-kpis-exporter
+          # TODO: Build and push this image to your registry
+          # For now, you need to build it locally:
+          # docker build -t YOUR_REGISTRY/gitlab-kpis-exporter:latest .
+          # docker push YOUR_REGISTRY/gitlab-kpis-exporter:latest
+          image: registry.gitlab.com/epitech-msc-2026/infra/gitlab-kpis-exporter:latest
+          imagePullPolicy: Always
+          ports:
+            - name: metrics
+              containerPort: 8080
+          env:
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gitlab-ci-pipelines-exporter-secret
+                  key: gitlab-token
+            - name: GITLAB_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: gitlab-kpis-exporter-config
+                  key: GITLAB_URL
+            - name: GITLAB_GROUP
+              valueFrom:
+                configMapKeyRef:
+                  name: gitlab-kpis-exporter-config
+                  key: GITLAB_GROUP
+            - name: INCLUDE_SUBGROUPS
+              valueFrom:
+                configMapKeyRef:
+                  name: gitlab-kpis-exporter-config
+                  key: INCLUDE_SUBGROUPS
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: gitlab-kpis-exporter-config
+                  key: PORT
+            - name: REFRESH_INTERVAL
+              valueFrom:
+                configMapKeyRef:
+                  name: gitlab-kpis-exporter-config
+                  key: REFRESH_INTERVAL
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "2000m"
+          # Probes désactivées car elles déclenchent une collecte complète à chaque appel
+          # L'exporter collecte les données uniquement quand Prometheus le scrape (toutes les 5 min)
+          # livenessProbe:
+          #   httpGet:
+          #     path: /metrics
+          #     port: metrics
+          #   initialDelaySeconds: 180
+          #   periodSeconds: 300
+          #   timeoutSeconds: 60
+          #   failureThreshold: 3
+          # readinessProbe:
+          #   httpGet:
+          #     path: /metrics
+          #     port: metrics
+          #   initialDelaySeconds: 120
+          #   periodSeconds: 300
+          #   timeoutSeconds: 60
+          #   failureThreshold: 3

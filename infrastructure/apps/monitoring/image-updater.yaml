@@ -1,0 +1,16 @@
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: monitoring-apps
+  namespace: argocd-image-updater-system
+spec:
+  namespace: argocd
+  commonUpdateSettings:
+    updateStrategy: digest
+    pullSecret: pullsecret:argocd-image-updater-system/gitlab-registry-secret
+  applicationRefs:
+    - namePattern: "monitoring"
+      images:
+        - alias: gitlab-kpis-exporter
+          imageName: registry.gitlab.com/epitech-msc-2026/infra/gitlab-kpis-exporter:latest
+

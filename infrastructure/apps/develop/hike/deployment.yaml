@@ -1,0 +1,125 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hike
+  namespace: develop
+  labels:
+    app: hike
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hike
+  template:
+    metadata:
+      labels:
+        app: hike
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-inject-address: "http://vault.vault:8200"
+        vault.hashicorp.com/role: "postgres-dev"
+        vault.hashicorp.com/agent-inject-secret-database: "kv-dev/data/database/config"
+        vault.hashicorp.com/agent-inject-template-database: |
+          {{- with secret "kv-dev/data/database/config" -}}
+          export SPRING_DATASOURCE_URL="jdbc:postgresql://pgdata:5432/{{ .Data.data.database }}"
+          export SPRING_DATASOURCE_USERNAME="{{ .Data.data.username }}"
+          export SPRING_DATASOURCE_PASSWORD="{{ .Data.data.password }}"
+          {{- end -}}
+        vault.hashicorp.com/agent-inject-secrets: "kv-dev/data/secrets"
+        vault.hashicorp.com/agent-inject-template-secrets: |
+          {{- with secret "kv-dev/data/secrets" -}}
+          export SPRING_NAAVI_INTERNAL_API_KEY="{{ .Data.data.internal_api_key }}"
+          export SPRING_MAIL_HOST="{{ .Data.data.smtp_host }}"
+          export SPRING_MAIL_PORT="587"
+          export SPRING_MAIL_USERNAME="{{ .Data.data.smtp_username }}"
+          export SPRING_MAIL_PASSWORD="{{ .Data.data.smtp_password }}"
+          export SPRING_MAIL_FROM="{{ .Data.data.smtp_from }}"
+          export SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH="true"
+          export SPRING_MAIL_PROPERTIES_MAIL_TRANSPORT_PROTOCOL="smtp"
+          export SPRING_MAIL_PROPERTIES_MAIL_SSL_ENABLE="false"
+          export SPRING_MAIL_PROPERTIES_MAIL_STARTTLS_ENABLE="true"
+          export SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_REQUIRED="true"
+          {{- end -}}
+        vault.hashicorp.com/agent-inject-secret-default-private: "kv-dev/data/certificates/default"
+        vault.hashicorp.com/agent-inject-template-default-private: |
+          {{- with secret "kv-dev/data/certificates/default" -}}
+          {{ .Data.data.private }}
+          {{- end -}}
+        vault.hashicorp.com/agent-inject-secret-default-public: "kv-dev/data/certificates/default"
+        vault.hashicorp.com/agent-inject-template-default-public: |
+          {{- with secret "kv-dev/data/certificates/default" -}}
+          {{ .Data.data.public }}
+          {{- end -}}
+        vault.hashicorp.com/agent-inject-secret-default-password: "kv-dev/data/certificates/default"
+        vault.hashicorp.com/agent-inject-template-default-password: |
+          {{- with secret "kv-dev/data/certificates/default" -}}
+          export JWT_DEFAULT_PASSWORD="{{ .Data.data.password }}"
+          {{- end -}}
+        vault.hashicorp.com/agent-inject-secret-auth-private: "kv-dev/data/certificates/auth"
+        vault.hashicorp.com/agent-inject-template-auth-private: |
+          {{- with secret "kv-dev/data/certificates/auth" -}}
+          {{ .Data.data.private }}
+          {{- end -}}
+        vault.hashicorp.com/agent-inject-secret-auth-public: "kv-dev/data/certificates/auth"
+        vault.hashicorp.com/agent-inject-template-auth-public: |
+          {{- with secret "kv-dev/data/certificates/auth" -}}
+          {{ .Data.data.public }}
+          {{- end -}}
+        vault.hashicorp.com/agent-inject-secret-auth-password: "kv-dev/data/certificates/auth"
+        vault.hashicorp.com/agent-inject-template-auth-password: |
+          {{- with secret "kv-dev/data/certificates/auth" -}}
+          export JWT_AUTH_PASSWORD="{{ .Data.data.password }}"
+          {{- end -}}
+        vault.hashicorp.com/agent-inject-secret-exchange-private: "kv-dev/data/certificates/exchange"
+        vault.hashicorp.com/agent-inject-template-exchange-private: |
+          {{- with secret "kv-dev/data/certificates/exchange" -}}
+          {{ .Data.data.private }}
+          {{- end -}}
+        vault.hashicorp.com/agent-inject-secret-exchange-public: "kv-dev/data/certificates/exchange"
+        vault.hashicorp.com/agent-inject-template-exchange-public: |
+          {{- with secret "kv-dev/data/certificates/exchange" -}}
+          {{ .Data.data.public }}
+          {{- end -}}
+        vault.hashicorp.com/agent-inject-secret-exchange-password: "kv-dev/data/certificates/exchange"
+        vault.hashicorp.com/agent-inject-template-exchange-password: |
+          {{- with secret "kv-dev/data/certificates/exchange" -}}
+          export JWT_EXCHANGE_PASSWORD="{{ .Data.data.password }}"
+          {{- end -}}
+    spec:
+      serviceAccountName: hike-vault
+      containers:
+        - name: hike
+          image: registry.gitlab.com/epitech-msc-2026/backend/hike:linux-develop
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          command: ["/bin/sh"]
+          args:
+            - -c
+            - |
+              source /vault/secrets/database
+              [ -f /vault/secrets/secrets ] && source /vault/secrets/secrets
+              [ -f /vault/secrets/default-password ] && source /vault/secrets/default-password
+              [ -f /vault/secrets/auth-password ] && source /vault/secrets/auth-password
+              [ -f /vault/secrets/exchange-password ] && source /vault/secrets/exchange-password
+              
+              export SPRING_JPA_HIBERNATE_DDL_AUTO=update
+              export SPRINGDOC_SWAGGER_UI_SERVER_URL='https://dev.naavi-trails.fr/api/v1/hike'
+              export SPRINGDOC_SWAGGER_UI_URL='https://dev.naavi-trails.fr/api/v1/hike/api-docs'
+              export SPRINGDOC_SWAGGER_UI_DISABLE_SWAGGER_DEFAULT_URL=true
+              export SPRINGDOC_API_DOCS_ENABLED=true
+              export JAVA_OPTS="-Xmx512m -Xms256m"
+              
+              cp /vault/secrets/default-private /usr/share/default.private.pem
+              cp /vault/secrets/default-public /usr/share/default.public.pem
+              cp /vault/secrets/auth-private /usr/share/auth.private.pem
+              cp /vault/secrets/auth-public /usr/share/auth.public.pem
+              cp /vault/secrets/exchange-private /usr/share/exchange.private.pem
+              cp /vault/secrets/exchange-public /usr/share/exchange.public.pem
+              
+              JAR_FILE=$(find / -name "*.jar" 2>/dev/null | grep -v "openjdk\|jrt-fs\|lib\|jre" | head -1)
+              [ -z "$JAR_FILE" ] && { echo "ERROR: No application JAR found!"; exit 1; }
+              
+              exec java $JAVA_OPTS -jar "$JAR_FILE"
+      imagePullSecrets:
+        - name: gitlab-registry-secret 

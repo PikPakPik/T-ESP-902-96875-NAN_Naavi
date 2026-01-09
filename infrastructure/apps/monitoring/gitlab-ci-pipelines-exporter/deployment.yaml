@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitlab-ci-pipelines-exporter
+  namespace: monitoring
+  labels:
+    app: gitlab-ci-pipelines-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitlab-ci-pipelines-exporter
+  template:
+    metadata:
+      labels:
+        app: gitlab-ci-pipelines-exporter
+    spec:
+      containers:
+        - name: gitlab-ci-pipelines-exporter
+          image: mvisonneau/gitlab-ci-pipelines-exporter:latest
+          imagePullPolicy: Always
+          ports:
+            - name: metrics
+              containerPort: 8080
+            - name: monitoring
+              containerPort: 9090
+          args:
+            - run
+            - --config
+            - /etc/gitlab-ci-pipelines-exporter/config.yaml
+          env:
+            - name: GCPE_GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gitlab-ci-pipelines-exporter-secret
+                  key: gitlab-token
+          volumeMounts:
+            - name: config
+              mountPath: /etc/gitlab-ci-pipelines-exporter
+              readOnly: true
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: config
+          configMap:
+            name: gitlab-ci-pipelines-exporter-config
+

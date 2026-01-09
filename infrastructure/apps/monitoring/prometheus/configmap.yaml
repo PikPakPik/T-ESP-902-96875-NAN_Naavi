@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: monitoring
+  labels:
+    app: prometheus
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      external_labels:
+        cluster: 'naavi'
+    
+    scrape_configs:
+      # GitLab CI Pipelines Exporter
+      - job_name: 'gitlab-ci-pipelines-exporter'
+        static_configs:
+          - targets: ['gitlab-ci-pipelines-exporter.monitoring.svc.cluster.local:8080']
+        metrics_path: /metrics
+        scrape_interval: 30s
+
+      # GitLab KPIs Exporter (issues, MRs, milestones, branches, tags, commits)
+      - job_name: 'gitlab-kpis-exporter'
+        static_configs:
+          - targets: ['gitlab-kpis-exporter.monitoring.svc.cluster.local:8080']
+        metrics_path: /metrics
+        scrape_interval: 5m
+        scrape_timeout: 60s
+

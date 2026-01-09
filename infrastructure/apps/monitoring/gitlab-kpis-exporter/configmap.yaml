@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitlab-kpis-exporter-config
+  namespace: monitoring
+  labels:
+    app: gitlab-kpis-exporter
+data:
+  GITLAB_URL: "https://gitlab.com"
+  GITLAB_GROUP: "epitech-msc-2026"
+  INCLUDE_SUBGROUPS: "true"
+  PORT: "8080"
+  # Refresh interval in seconds (default: 3600 = 1 hour)
+  # This is how often the collector will be called by Prometheus
+  REFRESH_INTERVAL: "3600"

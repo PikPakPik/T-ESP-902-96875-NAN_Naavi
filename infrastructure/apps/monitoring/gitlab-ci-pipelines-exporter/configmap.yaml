@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitlab-ci-pipelines-exporter-config
+  namespace: monitoring
+  labels:
+    app: gitlab-ci-pipelines-exporter
+data:
+  config.yaml: |
+    gitlab:
+      # URL de votre instance GitLab (à adapter selon votre configuration)
+      # Si vous utilisez GitLab.com, laissez https://gitlab.com
+      # Si vous utilisez une instance self-hosted, remplacez par votre URL
+      url: https://gitlab.com
+      # Le token sera fourni via la variable d'environnement GCPE_GITLAB_TOKEN depuis le secret
+    
+    # Configuration du serveur de métriques
+    server:
+      listen_address: "0.0.0.0:8080"
+      # Endpoint pour les métriques Prometheus
+      metrics_path: /metrics
+    
+    # Configuration du monitoring interne (optionnel)
+    internal_monitoring:
+      listen_address: "0.0.0.0:9090"
+    
+    # Configuration par défaut pour tous les projets
+    default_project_settings:
+      pull:
+        refs:
+          regexp: "^main$|^master$|^develop$"
+        # Polling interval (en secondes)
+        # Par défaut: 3600 (1 heure)
+        interval: 3600
+        # Nombre de pipelines à récupérer par ref
+        depth: 10
+    
+    # Liste des projets à surveiller
+    # Format: "group/project" ou juste "project" pour les projets à la racine
+    # Exemple pour un projet spécifique:
+    # projects:
+    #   - name: mygroup/myproject
+    #     pull:
+    #       refs:
+    #         regexp: "^main$|^develop$"
+    #       interval: 1800
+    #       depth: 20
+    
+    # Pour surveiller tous les projets d'un groupe (wildcard):
+    wildcards:
+      - owner:
+          kind: group
+          name: "epitech-msc-2026"
+          include_subgroups: true  # Inclure les sous-groupes
+        pull:
+          refs:
+            regexp: "^main$|^master$|^develop$"
+          interval: 3600
+    
+    # Liste des projets spécifiques (si besoin, décommentez et ajoutez vos projets):
+    # projects: []
+    
+    # Exporter les environnements (déploiements)
+    # environments:
+    #   enabled: true
+    
+    # Exporter les runners
+    # runners:
+    #   enabled: true
+

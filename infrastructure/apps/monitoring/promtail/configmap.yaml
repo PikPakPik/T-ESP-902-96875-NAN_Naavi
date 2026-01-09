@@ -1,0 +1,153 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: promtail-config
+  namespace: monitoring
+  labels:
+    app: promtail
+data:
+  promtail.yaml: |
+    server:
+      http_listen_port: 3101
+      grpc_listen_port: 9095
+    
+    positions:
+      filename: /tmp/positions.yaml
+    
+    clients:
+      - url: http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push
+    
+    scrape_configs:
+      # Logs from develop namespace
+      - job_name: kubernetes-pods-develop
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - develop
+        pipeline_stages:
+          - docker: {}
+          - labels:
+              stream:
+              container:
+              pod:
+              namespace:
+              app:
+          - labeldrop:
+              - filename
+          # Extraire le level depuis les logs (format texte: ERROR, WARN, DEBUG, INFO, etc.)
+          - regex:
+              expression: '(?i)\[(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC)\]|(?i)(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC):'
+          # Normaliser le level en minuscules avant de l'ajouter comme label
+          - template:
+              source: level
+              template: '{{ .level | ToLower }}'
+          - labels:
+              level:
+          - match:
+              selector: '{namespace="develop"}'
+              stages:
+                - labels:
+                    environment: "develop"
+                    namespace:
+        relabel_configs:
+          - source_labels:
+              - __meta_kubernetes_pod_node_name
+            target_label: node_name
+          - source_labels:
+              - __meta_kubernetes_namespace
+            target_label: namespace
+          - source_labels:
+              - __meta_kubernetes_pod_name
+            target_label: pod
+          - source_labels:
+              - __meta_kubernetes_pod_label_app
+            target_label: app
+          - source_labels:
+              - __meta_kubernetes_pod_container_name
+            target_label: container
+          - action: replace
+            replacement: $1
+            separator: /
+            source_labels:
+              - namespace
+              - app
+            target_label: job
+          - action: replace
+            source_labels:
+              - __meta_kubernetes_pod_uid
+            target_label: pod_uid
+          - action: replace
+            source_labels:
+              - __meta_kubernetes_pod_container_id
+            regex: (.+)
+            target_label: container_id
+            replacement: $1
+            separator: /
+        
+      # Logs from prod namespace
+      - job_name: kubernetes-pods-prod
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - prod
+        pipeline_stages:
+          - docker: {}
+          - labels:
+              stream:
+              container:
+              pod:
+              namespace:
+              app:
+          - labeldrop:
+              - filename
+          # Extraire le level depuis les logs (format texte: ERROR, WARN, DEBUG, INFO, etc.)
+          - regex:
+              expression: '(?i)\[(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC)\]|(?i)(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC):'
+          # Normaliser le level en minuscules avant de l'ajouter comme label
+          - template:
+              source: level
+              template: '{{ .level | ToLower }}'
+          - labels:
+              level:
+          - match:
+              selector: '{namespace="prod"}'
+              stages:
+                - labels:
+                    environment: "prod"
+                    namespace:
+        relabel_configs:
+          - source_labels:
+              - __meta_kubernetes_pod_node_name
+            target_label: node_name
+          - source_labels:
+              - __meta_kubernetes_namespace
+            target_label: namespace
+          - source_labels:
+              - __meta_kubernetes_pod_name
+            target_label: pod
+          - source_labels:
+              - __meta_kubernetes_pod_label_app
+            target_label: app
+          - source_labels:
+              - __meta_kubernetes_pod_container_name
+            target_label: container
+          - action: replace
+            replacement: $1
+            separator: /
+            source_labels:
+              - namespace
+              - app
+            target_label: job
+          - action: replace
+            source_labels:
+              - __meta_kubernetes_pod_uid
+            target_label: pod_uid
+          - action: replace
+            source_labels:
+              - __meta_kubernetes_pod_container_id
+            regex: (.+)
+            target_label: container_id
+            replacement: $1
+            separator: /

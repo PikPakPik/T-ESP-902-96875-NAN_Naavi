@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgdata
+  namespace: develop
+  labels:
+    app: pgdata
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pgdata
+  template:
+    metadata:
+      labels:
+        app: pgdata
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "postgres-dev"
+        vault.hashicorp.com/agent-inject-secret-database: "kv-dev/data/database/config"
+        vault.hashicorp.com/agent-inject-template-database: |
+          {{- with secret "kv-dev/data/database/config" -}}
+          export POSTGRES_DB="{{ .Data.data.database }}"
+          export POSTGRES_USER="{{ .Data.data.username }}"
+          export POSTGRES_PASSWORD="{{ .Data.data.password }}"
+          {{- end -}}
+    spec:
+      serviceAccountName: postgres-vault
+      containers:
+        - name: postgres
+          image: postgres:17-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432
+          command: ["/bin/sh"]
+          args:
+            - -c
+            - |
+              source /vault/secrets/database
+              exec docker-entrypoint.sh postgres
+          env:
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
