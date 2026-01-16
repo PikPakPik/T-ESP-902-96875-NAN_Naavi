@@ -40,7 +40,7 @@ export class TeamComponent {
     },
     {
       name: 'Yann PLOUHINEC',
-      roles: ['Responsable Qualité', 'Développeur mobile'],
+      roles: ['Responsable Qualité', 'Développeur mobile', 'DPO'],
       avatar: 'YP',
       email: 'yann.plouhinec@epitech.eu',
     },
@@ -61,12 +61,6 @@ export class TeamComponent {
       roles: ['Développeur backend'],
       avatar: 'JM',
       email: 'julien.mercourt@epitech.eu',
-    },
-    {
-      name: 'Raphael EOUZAN',
-      roles: ['Développeur backend'],
-      avatar: 'RE',
-      email: 'raphael.eouzan@epitech.eu',
     },
     {
       name: 'Alexandre TRESSEL',
