@@ -666,7 +666,9 @@ body {
 
     .footer-links {
       display: flex;
-      gap: 2rem;
+      flex-direction: column;
+      gap: 0.5rem;
+      align-items: flex-end;
 
       a {
         color: var(--gray-400);

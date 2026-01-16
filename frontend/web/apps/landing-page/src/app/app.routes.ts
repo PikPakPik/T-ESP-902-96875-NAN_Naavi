@@ -12,4 +12,9 @@ export const appRoutes: Route[] = [
     loadComponent: () =>
       import('./team/team.component').then((m) => m.TeamComponent),
   },
+  {
+    path: 'privacy-policy',
+    loadComponent: () =>
+      import('./privacy-policy/privacy-policy.component').then((m) => m.PrivacyPolicyComponent),
+  },
 ];

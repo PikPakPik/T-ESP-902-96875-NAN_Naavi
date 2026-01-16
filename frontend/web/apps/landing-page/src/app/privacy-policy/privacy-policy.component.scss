@@ -1,0 +1,140 @@
+.privacy-policy-container {
+  min-height: calc(100vh - 200px);
+  padding: 2rem 1rem;
+  padding-top: 8rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+
+  .privacy-header {
+    text-align: center;
+    margin-bottom: 3rem;
+
+    .privacy-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #4A5D23, #7FB069);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .privacy-subtitle {
+      font-size: 1rem;
+      color: #7f8c8d;
+      font-style: italic;
+    }
+  }
+
+  .privacy-content {
+    max-width: 900px;
+    margin: 0 auto;
+
+    ::ng-deep .p-card {
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      padding: 2rem;
+
+      .p-card-body {
+        padding: 0;
+      }
+    }
+
+    .section {
+      margin-bottom: 2rem;
+
+      h2 {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+        margin-top: 1.5rem;
+      }
+
+      h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #34495e;
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+      }
+
+      p {
+        font-size: 1rem;
+        line-height: 1.7;
+        color: #555;
+        margin-bottom: 1rem;
+        text-align: justify;
+      }
+
+      ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+
+        li {
+          font-size: 1rem;
+          line-height: 1.7;
+          color: #555;
+          margin-bottom: 0.5rem;
+
+          strong {
+            color: #2c3e50;
+            font-weight: 600;
+          }
+        }
+      }
+
+      a {
+        color: #7FB069;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s ease;
+
+        &:hover {
+          color: #4A5D23;
+          text-decoration: underline;
+        }
+      }
+    }
+
+    ::ng-deep .p-divider {
+      margin: 2rem 0;
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .privacy-policy-container {
+    padding: 1rem 0.5rem;
+
+    .privacy-header {
+      margin-bottom: 2rem;
+
+      .privacy-title {
+        font-size: 2rem;
+      }
+    }
+
+    .privacy-content {
+      ::ng-deep .p-card {
+        padding: 1.5rem;
+      }
+
+      .section {
+        h2 {
+          font-size: 1.5rem;
+        }
+
+        h3 {
+          font-size: 1.1rem;
+        }
+
+        p,
+        ul li {
+          font-size: 0.95rem;
+        }
+      }
+    }
+  }
+}
