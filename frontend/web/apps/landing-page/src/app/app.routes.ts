@@ -13,8 +13,18 @@ export const appRoutes: Route[] = [
       import('./team/team.component').then((m) => m.TeamComponent),
   },
   {
+    path: 'contact',
+    loadComponent: () =>
+      import('./contact/contact.component').then((m) => m.ContactComponent),
+  },
+  {
     path: 'privacy-policy',
     loadComponent: () =>
       import('./privacy-policy/privacy-policy.component').then((m) => m.PrivacyPolicyComponent),
+  },
+  {
+    path: 'delete-account',
+    loadComponent: () =>
+      import('./delete-account/delete-account.component').then((m) => m.DeleteAccountComponent),
   },
 ];

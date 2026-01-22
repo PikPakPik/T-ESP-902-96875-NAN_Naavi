@@ -41,6 +41,10 @@ export class AppComponent implements OnInit {
         label: "L'équipe",
         routerLink: '/team',
       },
+      {
+        label: 'Contact',
+        routerLink: '/contact',
+      },
     ];
   }
 }

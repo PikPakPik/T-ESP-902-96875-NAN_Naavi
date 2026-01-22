@@ -1,0 +1,143 @@
+.delete-account-container {
+  min-height: calc(100vh - 200px);
+  padding: 2rem 1rem;
+  padding-top: 8rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+
+  .delete-account-header {
+    text-align: center;
+    margin-bottom: 3rem;
+
+    .delete-account-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #4A5D23, #7FB069);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  }
+
+  .delete-account-content {
+    max-width: 700px;
+    margin: 0 auto;
+
+    ::ng-deep .p-card {
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      padding: 2rem;
+
+      .p-card-body {
+        padding: 0;
+      }
+    }
+  }
+
+  .content-wrapper {
+    text-align: center;
+    padding: 1rem;
+
+    .icon-wrapper {
+      margin-bottom: 2rem;
+
+      i {
+        font-size: 4rem;
+        color: #e74c3c;
+      }
+    }
+
+    .message {
+      font-size: 1.2rem;
+      color: #2c3e50;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .email-wrapper {
+      margin: 2rem 0;
+      padding: 1.5rem;
+      background: #f8f9fa;
+      border-radius: 12px;
+      border: 2px solid #7FB069;
+
+      .email-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #4A5D23;
+        text-decoration: none;
+        transition: all 0.3s ease;
+
+        i {
+          font-size: 1.8rem;
+        }
+
+        &:hover {
+          color: #7FB069;
+          transform: scale(1.05);
+        }
+      }
+    }
+
+    .info {
+      font-size: 1rem;
+      color: #7f8c8d;
+      font-style: italic;
+      margin-top: 2rem;
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .delete-account-container {
+    padding: 1rem 0.5rem;
+    padding-top: 6rem;
+
+    .delete-account-header {
+      margin-bottom: 2rem;
+
+      .delete-account-title {
+        font-size: 2rem;
+      }
+    }
+
+    .delete-account-content {
+      ::ng-deep .p-card {
+        padding: 1.5rem;
+      }
+    }
+
+    .content-wrapper {
+      .icon-wrapper {
+        i {
+          font-size: 3rem;
+        }
+      }
+
+      .message {
+        font-size: 1.1rem;
+      }
+
+      .email-wrapper {
+        padding: 1rem;
+
+        .email-link {
+          font-size: 1.1rem;
+
+          i {
+            font-size: 1.5rem;
+          }
+        }
+      }
+
+      .info {
+        font-size: 0.95rem;
+      }
+    }
+  }
+}
