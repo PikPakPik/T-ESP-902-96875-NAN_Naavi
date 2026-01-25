@@ -114,6 +114,7 @@ spec:
               export SPRINGDOC_SWAGGER_UI_URL='https://dev.naavi-trails.fr/api/v1/identity/api-docs'
               export SPRINGDOC_SWAGGER_UI_DISABLE_SWAGGER_DEFAULT_URL=true
               export SPRINGDOC_API_DOCS_ENABLED=true
+              export NAAVI_FRONTEND_URL='https://dev.naavi-trails.fr'
               export JAVA_OPTS="-Xmx512m -Xms256m"
               
               cp /vault/secrets/default-private /usr/share/default.private.pem
