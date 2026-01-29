@@ -114,11 +114,26 @@ class GitLabKPICollector:
                 'Individual GitLab issue with all metadata',
                 labels=[
                     'project_id', 'project', 'namespace',
-                    'issue_iid', 'issue_id', 'title', 'state',
+                    'issue_iid', 'issue_id', 'title', 'state', 'issue_type',
+                    'work_item_status',
                     'author', 'assignees', 'labels',
                     'created_at', 'updated_at', 'closed_at',
                     'milestone', 'web_url'
                 ]
+            ),
+
+            # Issue count by state (opened/closed) for aggregation
+            'issue_status': GaugeMetricFamily(
+                'gitlab_issue_status',
+                'GitLab issues count by state (opened/closed)',
+                labels=['project_id', 'project', 'namespace', 'state']
+            ),
+
+            # Issue count by work item status (To do, In progress, Done, Won't do, Duplicate) - GitLab 18.2+ Premium/Ultimate
+            'issue_work_item_status': GaugeMetricFamily(
+                'gitlab_issue_work_item_status',
+                'GitLab issues count by work item status (To do, In progress, Done, Won\'t do, Duplicate)',
+                labels=['project_id', 'project', 'namespace', 'work_item_status']
             ),
 
             # Individual merge requests
@@ -293,8 +308,18 @@ class GitLabKPICollector:
             logger.info(f"  Found {len(issues)} issues")
 
             assignee_count = 0
+            status_counts = {'opened': 0, 'closed': 0}
+            work_item_status_counts = {}
 
             for issue in issues:
+                status_counts[issue.state] = status_counts.get(issue.state, 0) + 1
+                issue_type = getattr(issue, 'issue_type', 'issue') or 'issue'
+                # Work item status (To do, In progress, Done, Won't do, Duplicate) - GitLab 18.2+ Premium/Ultimate
+                work_item_status = getattr(issue, 'status', None) or getattr(issue, 'work_item_status', None)
+                if not work_item_status or not str(work_item_status).strip():
+                    work_item_status = 'Open' if issue.state == 'opened' else 'Closed'
+                work_item_status = self._safe_str(work_item_status, 50)
+                work_item_status_counts[work_item_status] = work_item_status_counts.get(work_item_status, 0) + 1
                 # Get assignees
                 assignees = ''
                 assignee_list = []
@@ -320,6 +345,8 @@ class GitLabKPICollector:
                         str(issue.iid), str(issue.id),
                         self._safe_str(issue.title, 150),
                         issue.state,
+                        self._safe_str(issue_type),
+                        work_item_status,
                         issue.author.get('username', 'unknown'),
                         assignees,
                         labels,
@@ -346,6 +373,22 @@ class GitLabKPICollector:
                             1
                         )
                         assignee_count += 1
+
+            # Export issue count by state (opened/closed) for aggregation in Grafana
+            for state, count in status_counts.items():
+                if count > 0:
+                    metrics['issue_status'].add_metric(
+                        [project_id, project_name, namespace, state],
+                        count
+                    )
+
+            # Export issue count by work item status (To do, In progress, Done, etc.) for Grafana
+            for work_item_status_name, count in work_item_status_counts.items():
+                if count > 0:
+                    metrics['issue_work_item_status'].add_metric(
+                        [project_id, project_name, namespace, work_item_status_name],
+                        count
+                    )
 
             return len(issues), assignee_count
 
