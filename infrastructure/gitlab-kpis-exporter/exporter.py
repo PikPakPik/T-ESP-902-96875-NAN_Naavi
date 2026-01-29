@@ -8,7 +8,7 @@ All data is exported as individual entities, aggregations are done in Grafana.
 import os
 import time
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any
 import gitlab
 from prometheus_client import start_http_server
@@ -114,26 +114,11 @@ class GitLabKPICollector:
                 'Individual GitLab issue with all metadata',
                 labels=[
                     'project_id', 'project', 'namespace',
-                    'issue_iid', 'issue_id', 'title', 'state', 'issue_type',
-                    'work_item_status',
+                    'issue_iid', 'issue_id', 'title', 'state',
                     'author', 'assignees', 'labels',
                     'created_at', 'updated_at', 'closed_at',
                     'milestone', 'web_url'
                 ]
-            ),
-
-            # Issue count by state (opened/closed) for aggregation
-            'issue_status': GaugeMetricFamily(
-                'gitlab_issue_status',
-                'GitLab issues count by state (opened/closed)',
-                labels=['project_id', 'project', 'namespace', 'state']
-            ),
-
-            # Issue count by work item status (To do, In progress, Done, Won't do, Duplicate) - GitLab 18.2+ Premium/Ultimate
-            'issue_work_item_status': GaugeMetricFamily(
-                'gitlab_issue_work_item_status',
-                'GitLab issues count by work item status (To do, In progress, Done, Won\'t do, Duplicate)',
-                labels=['project_id', 'project', 'namespace', 'work_item_status']
             ),
 
             # Individual merge requests
@@ -207,6 +192,13 @@ class GitLabKPICollector:
                     'project_id', 'project', 'namespace',
                     'issue_iid', 'issue_id', 'assignee', 'state'
                 ]
+            ),
+
+            # Commit count per contributor (grouped by author_email, for display with author_name)
+            'commit_contributor_count': GaugeMetricFamily(
+                'gitlab_commit_contributor_count',
+                'Number of commits per contributor per project (grouped by author_email, author_name for display)',
+                labels=['project_id', 'project', 'namespace', 'author_email', 'author_name']
             ),
         }
 
@@ -308,18 +300,8 @@ class GitLabKPICollector:
             logger.info(f"  Found {len(issues)} issues")
 
             assignee_count = 0
-            status_counts = {'opened': 0, 'closed': 0}
-            work_item_status_counts = {}
 
             for issue in issues:
-                status_counts[issue.state] = status_counts.get(issue.state, 0) + 1
-                issue_type = getattr(issue, 'issue_type', 'issue') or 'issue'
-                # Work item status (To do, In progress, Done, Won't do, Duplicate) - GitLab 18.2+ Premium/Ultimate
-                work_item_status = getattr(issue, 'status', None) or getattr(issue, 'work_item_status', None)
-                if not work_item_status or not str(work_item_status).strip():
-                    work_item_status = 'Open' if issue.state == 'opened' else 'Closed'
-                work_item_status = self._safe_str(work_item_status, 50)
-                work_item_status_counts[work_item_status] = work_item_status_counts.get(work_item_status, 0) + 1
                 # Get assignees
                 assignees = ''
                 assignee_list = []
@@ -345,8 +327,6 @@ class GitLabKPICollector:
                         str(issue.iid), str(issue.id),
                         self._safe_str(issue.title, 150),
                         issue.state,
-                        self._safe_str(issue_type),
-                        work_item_status,
                         issue.author.get('username', 'unknown'),
                         assignees,
                         labels,
@@ -373,22 +353,6 @@ class GitLabKPICollector:
                             1
                         )
                         assignee_count += 1
-
-            # Export issue count by state (opened/closed) for aggregation in Grafana
-            for state, count in status_counts.items():
-                if count > 0:
-                    metrics['issue_status'].add_metric(
-                        [project_id, project_name, namespace, state],
-                        count
-                    )
-
-            # Export issue count by work item status (To do, In progress, Done, etc.) for Grafana
-            for work_item_status_name, count in work_item_status_counts.items():
-                if count > 0:
-                    metrics['issue_work_item_status'].add_metric(
-                        [project_id, project_name, namespace, work_item_status_name],
-                        count
-                    )
 
             return len(issues), assignee_count
 
@@ -564,30 +528,41 @@ class GitLabKPICollector:
             return 0
 
     def _collect_commits(self, project, project_id: str, project_name: str, namespace: str, metrics: Dict[str, Any]) -> int:
-        """Collect commits as individual metrics
+        """Collect commits as individual metrics (only commits since COMMIT_SINCE_DAYS).
+        Also exports gitlab_commit_contributor_count per project (grouped by author_email, author_name for display).
         Returns: number of commits"""
         try:
-            # Get recent commits from default branch (limit to avoid too much data)
-            # You can adjust per_page to get more/less commits
+            commit_since_days = int(os.getenv('COMMIT_SINCE_DAYS', '30'))
+            since_date = datetime.now(timezone.utc) - timedelta(days=commit_since_days)
+            since_iso = since_date.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+            # Get commits from default branch since the given date (commits récents = sur la période)
             commits = project.commits.list(
                 ref_name=project.default_branch,
+                since=since_iso,
                 per_page=100,
-                all=False
+                all=True
             )
-            logger.info(f"  Found {len(commits)} recent commits")
+            logger.info(f"  Found {len(commits)} commits since last {commit_since_days} days")
+
+            # Aggregate by author_email for contributor count (display author_name, group by email)
+            contributor_counts: Dict[str, tuple] = {}  # author_email -> (count, author_name)
 
             for commit in commits:
                 # Get first line of commit message
                 message_lines = commit.message.split('\n') if hasattr(commit, 'message') else []
                 first_line = message_lines[0] if message_lines else ''
 
+                author_email = self._safe_str(commit.author_email)
+                author_name = self._safe_str(commit.author_name)
+
                 metrics['commit'].add_metric(
                     [
                         project_id, project_name, namespace,
                         self._safe_str(commit.id),
                         self._safe_str(commit.short_id),
-                        self._safe_str(commit.author_name),
-                        self._safe_str(commit.author_email),
+                        author_name,
+                        author_email,
                         self._safe_str(commit.committer_name),
                         self._safe_str(commit.committer_email),
                         self._safe_str(commit.created_at),
@@ -596,6 +571,16 @@ class GitLabKPICollector:
                         self._safe_str(commit.web_url)
                     ],
                     1
+                )
+
+                if author_email:
+                    prev = contributor_counts.get(author_email, (0, author_name))
+                    contributor_counts[author_email] = (prev[0] + 1, author_name)
+
+            for author_email, (count, author_name) in contributor_counts.items():
+                metrics['commit_contributor_count'].add_metric(
+                    [project_id, project_name, namespace, author_email, author_name],
+                    count
                 )
 
             return len(commits)
