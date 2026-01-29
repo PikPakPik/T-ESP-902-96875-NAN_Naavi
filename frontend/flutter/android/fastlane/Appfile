@@ -1,0 +1,5 @@
+# Appfile - Configuration Fastlane pour Android
+# Documentation: https://docs.fastlane.tools/advanced/#appfile
+
+# Package name de l'application Android (identique pour dev et prod)
+package_name("com.eloi.naavitrails")

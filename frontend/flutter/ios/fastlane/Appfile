@@ -1,0 +1,8 @@
+# Appfile - Configuration Fastlane
+# Documentation: https://docs.fastlane.tools/advanced/#appfile
+
+# Team ID Apple Developer
+team_id(ENV["APPLE_TEAM_ID"] || "F66Y3F327L")
+
+# Bundle ID de l'app
+app_identifier("com.eloi.naavitrails")

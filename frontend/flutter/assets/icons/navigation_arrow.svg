@@ -1,0 +1,7 @@
+<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Main arrow body (blue triangle pointing up) -->
+  <path d="M40 8 L67 67 L40 55 L13 67 Z" fill="#4A90E2"/>
+
+  <!-- Inner highlight for 3D effect -->
+  <path d="M40 15 L58 60 L40 52 L22 60 Z" fill="#5BA3F5" opacity="0.5"/>
+</svg>

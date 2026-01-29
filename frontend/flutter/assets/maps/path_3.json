@@ -1,0 +1,435 @@
+{
+  "type": "Feature",
+  "geometry": {
+    "coordinates": [
+      [
+        -1.5644,
+        47.2128
+      ],
+      [
+        -1.5638,
+        47.2126
+      ],
+      [
+        -1.5632,
+        47.2124
+      ],
+      [
+        -1.5625,
+        47.2122
+      ],
+      [
+        -1.5618,
+        47.2120
+      ],
+      [
+        -1.5611,
+        47.2118
+      ],
+      [
+        -1.5604,
+        47.2116
+      ],
+      [
+        -1.5597,
+        47.2114
+      ],
+      [
+        -1.5590,
+        47.2113
+      ],
+      [
+        -1.5583,
+        47.2112
+      ],
+      [
+        -1.5576,
+        47.2111
+      ],
+      [
+        -1.5569,
+        47.2110
+      ],
+      [
+        -1.5562,
+        47.2109
+      ],
+      [
+        -1.5555,
+        47.2109
+      ],
+      [
+        -1.5548,
+        47.2109
+      ],
+      [
+        -1.5541,
+        47.2109
+      ],
+      [
+        -1.5534,
+        47.2110
+      ],
+      [
+        -1.5527,
+        47.2111
+      ],
+      [
+        -1.5520,
+        47.2112
+      ],
+      [
+        -1.5513,
+        47.2113
+      ],
+      [
+        -1.5506,
+        47.2114
+      ],
+      [
+        -1.5499,
+        47.2115
+      ],
+      [
+        -1.5493,
+        47.2117
+      ],
+      [
+        -1.5487,
+        47.2119
+      ],
+      [
+        -1.5482,
+        47.2121
+      ],
+      [
+        -1.5477,
+        47.2123
+      ],
+      [
+        -1.5473,
+        47.2125
+      ],
+      [
+        -1.5469,
+        47.2128
+      ],
+      [
+        -1.5466,
+        47.2131
+      ],
+      [
+        -1.5463,
+        47.2134
+      ],
+      [
+        -1.5461,
+        47.2137
+      ],
+      [
+        -1.5459,
+        47.2141
+      ],
+      [
+        -1.5458,
+        47.2145
+      ],
+      [
+        -1.5457,
+        47.2149
+      ],
+      [
+        -1.5457,
+        47.2153
+      ],
+      [
+        -1.5457,
+        47.2157
+      ],
+      [
+        -1.5457,
+        47.2161
+      ],
+      [
+        -1.5458,
+        47.2165
+      ],
+      [
+        -1.5459,
+        47.2169
+      ],
+      [
+        -1.5460,
+        47.2173
+      ],
+      [
+        -1.5462,
+        47.2177
+      ],
+      [
+        -1.5464,
+        47.2181
+      ],
+      [
+        -1.5466,
+        47.2185
+      ],
+      [
+        -1.5469,
+        47.2189
+      ],
+      [
+        -1.5472,
+        47.2193
+      ],
+      [
+        -1.5476,
+        47.2197
+      ],
+      [
+        -1.5480,
+        47.2200
+      ],
+      [
+        -1.5485,
+        47.2203
+      ],
+      [
+        -1.5490,
+        47.2206
+      ],
+      [
+        -1.5495,
+        47.2209
+      ],
+      [
+        -1.5501,
+        47.2211
+      ],
+      [
+        -1.5507,
+        47.2213
+      ],
+      [
+        -1.5513,
+        47.2215
+      ],
+      [
+        -1.5519,
+        47.2217
+      ],
+      [
+        -1.5525,
+        47.2218
+      ],
+      [
+        -1.5532,
+        47.2219
+      ],
+      [
+        -1.5539,
+        47.2220
+      ],
+      [
+        -1.5546,
+        47.2221
+      ],
+      [
+        -1.5553,
+        47.2221
+      ],
+      [
+        -1.5560,
+        47.2221
+      ],
+      [
+        -1.5567,
+        47.2221
+      ],
+      [
+        -1.5574,
+        47.2220
+      ],
+      [
+        -1.5581,
+        47.2219
+      ],
+      [
+        -1.5588,
+        47.2218
+      ],
+      [
+        -1.5595,
+        47.2217
+      ],
+      [
+        -1.5602,
+        47.2215
+      ],
+      [
+        -1.5608,
+        47.2213
+      ],
+      [
+        -1.5614,
+        47.2211
+      ],
+      [
+        -1.5620,
+        47.2209
+      ],
+      [
+        -1.5625,
+        47.2206
+      ],
+      [
+        -1.5630,
+        47.2203
+      ],
+      [
+        -1.5634,
+        47.2200
+      ],
+      [
+        -1.5638,
+        47.2197
+      ],
+      [
+        -1.5641,
+        47.2193
+      ],
+      [
+        -1.5644,
+        47.2189
+      ],
+      [
+        -1.5646,
+        47.2185
+      ],
+      [
+        -1.5648,
+        47.2181
+      ],
+      [
+        -1.5649,
+        47.2177
+      ],
+      [
+        -1.5650,
+        47.2173
+      ],
+      [
+        -1.5650,
+        47.2169
+      ],
+      [
+        -1.5650,
+        47.2165
+      ],
+      [
+        -1.5650,
+        47.2161
+      ],
+      [
+        -1.5649,
+        47.2157
+      ],
+      [
+        -1.5648,
+        47.2153
+      ],
+      [
+        -1.5647,
+        47.2149
+      ],
+      [
+        -1.5645,
+        47.2145
+      ],
+      [
+        -1.5644,
+        47.2141
+      ],
+      [
+        -1.5643,
+        47.2137
+      ],
+      [
+        -1.5643,
+        47.2133
+      ],
+      [
+        -1.5644,
+        47.2129
+      ],
+      [
+        -1.5644,
+        47.2128
+      ]
+    ],
+    "type": "LineString"
+  },
+  "properties": {
+    "gencomm": "ITIPDL044V500ILE",
+    "avis": null,
+    "carac": "Boucle",
+    "difficulte": "Facile",
+    "cat": [
+      "Pédestre"
+    ],
+    "duree": 90,
+    "lineaire": 6.5,
+    "commune_nom": "Nantes",
+    "type_ffrp": "Circuit de Petite Randonnée",
+    "classe": "SDR",
+    "usag_ped": 1,
+    "usag_equ": 0,
+    "usag_vtt": 0,
+    "usage_pmr": 1,
+    "geo_point_2d": {
+      "lon": -1.5553,
+      "lat": 47.2165
+    },
+    "itidistance": 6.5,
+    "nomoffre": "TOUR DE L'ÎLE DE NANTES",
+    "descriptifsynthetique": "Un parcours urbain unique qui fait le tour complet de l'Île de Nantes en suivant ses quais réaménagés.",
+    "descriptif": "Découvrez l'Île de Nantes sous un nouveau jour avec ce circuit qui longe les bords de Loire et d'Erdre. Admirez les anciennes friches industrielles reconverties, les Machines de l'Île, le quartier de la Création, et profitez de magnifiques vues sur la ville. Un parcours parfait pour découvrir la transformation urbaine de Nantes.",
+    "itibalisage": "bleu",
+    "labels": null,
+    "itideniveledescente": 10,
+    "itidenivelemontee": 10,
+    "itifermeturetemporaire": null,
+    "itiarrivee": "NANTES - Île de Nantes",
+    "itidepart": "NANTES - Île de Nantes",
+    "nomgest": "Nantes Métropole",
+    "adresse1gest": null,
+    "adresse1suitegest": null,
+    "adresse2gest": null,
+    "adresse3gest": null,
+    "codepostal": "44200",
+    "commune": "NANTES",
+    "codeinseecommune": "44109",
+    "commtel": null,
+    "plateformeurl": null,
+    "videosurl": null,
+    "commweb": null,
+    "insee_com": "44109",
+    "updated": "2025-01-20T10:00:00+01:00",
+    "published": "2025-01-20T10:00:00+01:00",
+    "itilocodiffduree": "Pédestre||Facile||||||90",
+    "itipointinteret": "Les Machines de l'Île, Hangar à Bananes, Lieu Unique, Quartier de la Création",
+    "siren_epci": "244400404",
+    "epci_nom": "Nantes Métropole",
+    "alias": "NANTES : Tour de l'Île de Nantes",
+    "date_creat": "2025-01-20",
+    "delegation": "NAN",
+    "com_geo": "Nantes",
+    "epci_geo": "Nantes Métropole",
+    "deleg_geo": "Nantes Métropole",
+    "depart": "Île de Nantes",
+    "arrivee": "Île de Nantes",
+    "balisage": "Bleu",
+    "pdipr_date_inscription": "2025-01-20",
+    "pdipr_inscription": "Oui"
+  }
+}

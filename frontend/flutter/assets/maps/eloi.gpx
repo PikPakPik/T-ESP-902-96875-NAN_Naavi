@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Naavi Test" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>Fake Location - Île de Nantes Start</name>
+  </metadata>
+  <wpt lat="47.2128" lon="-1.5644">
+    <ele>10.0</ele>
+    <name>Départ Tour Île de Nantes</name>
+    <time>2025-01-21T10:00:00Z</time>
+  </wpt>
+</gpx>
+

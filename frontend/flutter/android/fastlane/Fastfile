@@ -1,0 +1,198 @@
+# Fastfile - Lanes Fastlane pour Android CI/CD
+# Documentation: https://docs.fastlane.tools
+
+require 'base64'
+
+default_platform(:android)
+
+platform :android do
+  
+  # ============================================
+  # Helper pour trouver l'AAB
+  # ============================================
+  
+  def find_aab_path(flavor = "prod")
+    # Chemins possibles pour l'AAB
+    possible_paths = [
+      "../build/app/outputs/bundle/#{flavor}Release/app-#{flavor}-release.aab",
+      "../build/app/outputs/bundle/#{flavor}Release/*.aab",
+      "#{ENV['CI_PROJECT_DIR']}/build/app/outputs/bundle/#{flavor}Release/app-#{flavor}-release.aab"
+    ]
+    
+    possible_paths.each do |pattern|
+      files = Dir[pattern]
+      if files.any?
+        UI.message("✅ Found AAB at: #{files.first}")
+        return files.first
+      end
+    end
+    
+    # Debug: afficher le contenu du répertoire
+    UI.message("🔍 Looking for AAB files...")
+    UI.message("Current directory: #{Dir.pwd}")
+    
+    bundle_dir = "../build/app/outputs/bundle/#{flavor}Release"
+    if Dir.exist?(bundle_dir)
+      UI.message("Contents of #{bundle_dir}:")
+      Dir["#{bundle_dir}/*"].each { |f| UI.message("  - #{f}") }
+    else
+      UI.message("❌ Directory #{bundle_dir} does not exist")
+    end
+    
+    nil
+  end
+
+  # ============================================
+  # Configuration API Google Play
+  # ============================================
+  
+  private_lane :get_google_play_credentials do
+    # Le fichier JSON du service account doit être fourni via variable d'environnement
+    json_key_path = ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_PATH"]
+    json_key_content = ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"]
+    json_key_base64 = ENV["GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64"]
+    
+    require 'json'
+    require 'fileutils'
+    
+    # Priorité 1: Base64 (si fourni)
+    if json_key_base64
+      UI.message("📦 Décodage du JSON depuis Base64...")
+      begin
+        decoded_json = Base64.decode64(json_key_base64)
+        # Vérifier que c'est du JSON valide
+        JSON.parse(decoded_json)
+        # Créer un fichier temporaire dans /tmp
+        temp_dir = "/tmp"
+        FileUtils.mkdir_p(temp_dir)
+        json_key_path = File.join(temp_dir, "google-play-key-#{Process.pid}-#{Time.now.to_i}.json")
+        File.write(json_key_path, decoded_json, mode: 'wb')
+        UI.message("✅ JSON décodé et écrit dans: #{json_key_path}")
+      rescue JSON::ParserError => e
+        UI.user_error!("❌ JSON invalide après décodage Base64: #{e.message}")
+      rescue => e
+        UI.user_error!("❌ Erreur lors du décodage Base64: #{e.message}")
+      end
+    # Priorité 2: JSON direct (si fourni)
+    elsif json_key_content
+      UI.message("📦 Utilisation du JSON direct...")
+      begin
+        # Vérifier que c'est du JSON valide
+        JSON.parse(json_key_content)
+        # Créer un fichier temporaire dans /tmp
+        temp_dir = "/tmp"
+        FileUtils.mkdir_p(temp_dir)
+        json_key_path = File.join(temp_dir, "google-play-key-#{Process.pid}-#{Time.now.to_i}.json")
+        File.write(json_key_path, json_key_content, mode: 'wb')
+        UI.message("✅ JSON écrit dans: #{json_key_path}")
+      rescue JSON::ParserError => e
+        UI.user_error!("❌ JSON invalide: #{e.message}")
+      rescue => e
+        UI.user_error!("❌ Erreur lors de l'écriture du JSON: #{e.message}")
+      end
+    end
+    
+    # Vérification finale
+    unless json_key_path && File.exist?(json_key_path)
+      UI.user_error!("❌ Google Play Service Account JSON not found! Please set one of:\n" \
+                     "  - GOOGLE_PLAY_SERVICE_ACCOUNT_JSON (JSON direct)\n" \
+                     "  - GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64 (JSON encodé en Base64)\n" \
+                     "  - GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_PATH (chemin vers le fichier JSON)")
+    end
+    
+    # Vérifier que le fichier contient du JSON valide et qu'il n'est pas vide
+    begin
+      file_content = File.read(json_key_path)
+      if file_content.empty?
+        UI.user_error!("❌ Le fichier JSON est vide")
+      end
+      parsed = JSON.parse(file_content)
+      UI.message("✅ Fichier JSON valide (#{file_content.length} bytes): #{json_key_path}")
+      UI.message("   Service account: #{parsed['client_email']}") if parsed['client_email']
+    rescue JSON::ParserError => e
+      UI.user_error!("❌ Le fichier JSON n'est pas valide: #{e.message}\n" \
+                     "   Contenu (premiers 200 caractères): #{file_content[0..200]}")
+    rescue => e
+      UI.user_error!("❌ Erreur lors de la lecture du fichier JSON: #{e.message}")
+    end
+    
+    json_key_path
+  end
+
+  # ============================================
+  # Déploiement Internal Testing - [DEV] (branche develop)
+  # ============================================
+  
+  desc "Déploie sur Google Play Internal Testing avec le préfixe [DEV] pour la branche develop"
+  lane :deploy_internal_dev do |options|
+    json_key_path = get_google_play_credentials
+    
+    # Récupérer les informations de commit pour le changelog
+    commit_sha = ENV["CI_COMMIT_SHORT_SHA"] || `git rev-parse --short HEAD`.strip
+    commit_message = ENV["CI_COMMIT_MESSAGE"] || `git log -1 --pretty=%B`.strip
+    branch_name = ENV["CI_COMMIT_REF_NAME"] || `git branch --show-current`.strip
+    build_number = ENV["CI_PIPELINE_IID"] || Time.now.strftime("%Y%m%d%H%M")
+    
+    changelog = "[DEV] Build ##{build_number}\n\n" \
+                "Branch: #{branch_name}\n" \
+                "Commit: #{commit_sha}\n\n" \
+                "#{commit_message}"
+    
+    # Trouver l'AAB
+    aab_path = options[:aab] || find_aab_path("dev")
+    
+    UI.user_error!("❌ No AAB file found! Make sure build_android_dev ran successfully.") unless aab_path
+    
+    UI.message("📱 Uploading to Google Play Internal Testing [DEV]...")
+    UI.message("📦 AAB: #{aab_path}")
+    UI.message("📝 Changelog:\n#{changelog}")
+    
+    supply(
+      aab: aab_path,
+      track: "internal",
+      json_key: json_key_path,
+      package_name: "com.eloi.naavitrails",
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      release_status: "draft"
+    )
+    
+    UI.success("✅ Upload Google Play Internal Testing [DEV] terminé!")
+  end
+
+  # ============================================
+  # Déploiement Production - Tags
+  # ============================================
+  
+  desc "Déploie sur Google Play Production pour les tags de release"
+  lane :deploy_production do |options|
+    json_key_path = get_google_play_credentials
+    
+    # Récupérer les informations du tag
+    tag_name = ENV["CI_COMMIT_TAG"] || `git describe --tags --abbrev=0`.strip
+    
+    # Trouver l'AAB
+    aab_path = options[:aab] || find_aab_path("prod")
+    
+    UI.user_error!("❌ No AAB file found! Make sure build_android_prod ran successfully.") unless aab_path
+    
+    UI.message("🚀 Uploading to Google Play Production...")
+    UI.message("📦 AAB: #{aab_path}")
+    UI.message("🏷️  Tag: #{tag_name}")
+    
+    # Upload vers Google Play Production
+    supply(
+      aab: aab_path,
+      track: "production",
+      json_key: json_key_path,
+      package_name: "com.eloi.naavitrails",
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      release_status: "draft" # Changez en "completed" pour publier automatiquement
+    )
+    
+    UI.success("✅ Upload Google Play Production terminé pour la version #{tag_name}!")
+  end
+end

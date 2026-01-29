@@ -1,0 +1,20 @@
+//
+//  prod.xcconfig
+//  Runner
+//
+//  Created by Alexandre Tressel on 03/06/2025.
+//
+
+#include "Flutter/Generated.xcconfig"
+
+// App Configuration
+PRODUCT_BUNDLE_IDENTIFIER=com.eloi.naavitrails
+APP_NAME=Naavi
+APP_ICON_NAME=AppIcon
+
+// Code Signing - Manual pour CI/CD
+CODE_SIGN_STYLE=Manual
+DEVELOPMENT_TEAM=F66Y3F327L
+CODE_SIGN_IDENTITY=Apple Distribution
+// Utilise le UUID du profile (ne change pas contrairement au nom)
+PROVISIONING_PROFILE=945bdc1a-6e09-4675-b388-6653365a5c01

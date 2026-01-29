@@ -1,0 +1,28 @@
+# Matchfile - Configuration Fastlane Match
+# Documentation: https://docs.fastlane.tools/actions/match/
+
+# URL du repo Git privé qui stocke les certificats
+git_url(ENV["MATCH_GIT_URL"] || "git@gitlab.com:epitech-msc-2026/infra/ios-certificates.git")
+
+# Type de stockage (git est recommandé)
+storage_mode("git")
+
+# Type de certificat pour App Store / TestFlight
+type("appstore")
+
+# Bundle ID de l'app
+app_identifier("com.eloi.naavitrails")
+
+# Team ID Apple Developer
+team_id(ENV["APPLE_TEAM_ID"] || "F66Y3F327L")
+
+# Branche du repo de certificats
+git_branch("main")
+
+# Optimisation du clonage (plus rapide)
+shallow_clone(true)
+clone_branch_directly(true)
+
+# Nom du keychain temporaire pour CI/CD
+keychain_name("fastlane_keychain")
+keychain_password(ENV["MATCH_KEYCHAIN_PASSWORD"])
