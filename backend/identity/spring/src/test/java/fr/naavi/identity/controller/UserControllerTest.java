@@ -107,6 +107,35 @@ public class UserControllerTest {
     }
 
     @Test
+    void shouldUpdateUser_WithEmailChange_SendsAuthorizationEmail() throws Exception {
+        User user = UserSeeder.USER;
+        UsernamePasswordAuthenticationToken authToken = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, user);
+
+        String newEmail = "newemail@naavi.test";
+        String payload = "{\"email\":\"" + newEmail + "\"}";
+
+        mockMvc.perform(put("/user")
+                        .with(authentication(authToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").doesNotExist())
+                .andExpect(jsonPath("$.firstname").value(user.getFirstname()))
+                .andExpect(jsonPath("$.lastname").value(user.getLastname()))
+                .andExpect(jsonPath("$.fullName").value(user.getFullName()))
+                .andExpect(jsonPath("$.email").value(user.getEmail()))
+                .andExpect(jsonPath("$.roles").isArray())
+                .andExpect(jsonPath("$.permissions").isArray())
+                .andExpect(jsonPath("$.createdAt").exists())
+                .andExpect(jsonPath("$.updatedAt").value(IsNull.nullValue()));
+
+        User updatedUser = userRepository.findById(user.getId()).orElseThrow();
+        assertEquals(user.getEmail(), updatedUser.getEmail());
+        assertNotEquals(newEmail, updatedUser.getEmail());
+    }
+
+    @Test
     void shouldSearchUser_AsNonAdmin_ReturnsForbidden() throws Exception {
         User nonAdmin = UserSeeder.USER;
         UsernamePasswordAuthenticationToken authToken = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, nonAdmin);

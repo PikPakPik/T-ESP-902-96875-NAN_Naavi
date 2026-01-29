@@ -1,6 +1,7 @@
 package fr.naavi.identity.service;
 
 import fr.naavi.core.abstraction.BaseMailer;
+import fr.naavi.identity.entity.Authorization;
 import fr.naavi.identity.entity.ResetPasswordRequest;
 import fr.naavi.identity.entity.User;
 import jakarta.mail.MessagingException;
@@ -8,6 +9,7 @@ import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
@@ -19,6 +21,9 @@ public class MailerService extends BaseMailer {
 
     @Autowired
     private SpringTemplateEngine templateEngine;
+
+    @Value("${naavi.frontend.url:https://naavi-trails.fr}")
+    private String frontendUrl;
 
     /**
      * Sends a registration email to the user.
@@ -72,6 +77,7 @@ public class MailerService extends BaseMailer {
             Context context = new Context();
             context.setVariable("fullName", resetPasswordRequest.getUser().getFullName());
             context.setVariable("token", resetPasswordRequest.getToken());
+            context.setVariable("frontendUrl", frontendUrl);
 
             String htmlContent = templateEngine.process("forgot-password.html", context);
 
@@ -111,6 +117,102 @@ public class MailerService extends BaseMailer {
             this.sendEmail(mimeMessage);
         } catch (MessagingException e) {
             logger.info("Error while sending reset password confirmation email to user {}", user.getEmail());
+        }
+    }
+
+    /**
+     * Sends an email confirmation email to the user.
+     * This email is sent after a user registers to confirm their email address.
+     *
+     * @param authorization the authorization containing user information and token for email confirmation
+     */
+    public void sendEmailConfirmationEmail(Authorization authorization) {
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+
+            Context context = new Context();
+            context.setVariable("fullName", authorization.getUser().getFullName());
+            context.setVariable("token", authorization.getToken());
+            context.setVariable("frontendUrl", frontendUrl);
+
+            String htmlContent = templateEngine.process("email-confirmation.html", context);
+
+            helper.setTo(authorization.getUser().getEmail());
+            helper.setSubject("Confirmez votre adresse email - Naavi Trails");
+            helper.setText(htmlContent, true);
+
+            this.sendEmail(mimeMessage);
+        } catch (MessagingException e) {
+            logger.info(
+                    "Error while sending email confirmation email to user {}",
+                    authorization.getUser().getEmail()
+            );
+        }
+    }
+
+    /**
+     * Sends an email change confirmation email to the old email address.
+     * This email is sent when a user requests to change their email address.
+     *
+     * @param authorization the authorization containing user information and token for email change confirmation.
+     */
+    public void sendEmailChangeOldEmailConfirmation(Authorization authorization) {
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+
+            Context context = new Context();
+            context.setVariable("fullName", authorization.getUser().getFullName());
+            context.setVariable("token", authorization.getToken());
+            context.setVariable("newEmail", authorization.getNewValue());
+            context.setVariable("frontendUrl", frontendUrl);
+
+            String htmlContent = templateEngine.process("email-change-old.html", context);
+
+            helper.setTo(authorization.getUser().getEmail());
+            helper.setSubject("Confirmation de changement d'adresse email - Naavi Trails");
+            helper.setText(htmlContent, true);
+
+            this.sendEmail(mimeMessage);
+        } catch (MessagingException e) {
+            logger.info(
+                    "Error while sending email change confirmation to old email {}",
+                    authorization.getUser().getEmail()
+            );
+        }
+    }
+
+    /**
+     * Sends an email change confirmation email to the new email address.
+     * This email is sent when a user requests to change their email address.
+     *
+     * @param authorization the authorization containing user information and token for email change confirmation.
+     */
+    public void sendEmailChangeNewEmailConfirmation(Authorization authorization) {
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+
+            Context context = new Context();
+            context.setVariable("fullName", authorization.getUser().getFullName());
+            context.setVariable("token", authorization.getToken());
+            context.setVariable("oldEmail", authorization.getOldValue());
+            context.setVariable("email", authorization.getNewValue());
+            context.setVariable("frontendUrl", frontendUrl);
+
+            String htmlContent = templateEngine.process("email-change-new.html", context);
+
+            helper.setTo(authorization.getNewValue());
+            helper.setSubject("Confirmez votre nouvelle adresse email - Naavi Trails");
+            helper.setText(htmlContent, true);
+
+            this.sendEmail(mimeMessage);
+        } catch (MessagingException e) {
+            logger.info(
+                    "Error while sending email change confirmation to new email {}",
+                    authorization.getNewValue()
+            );
         }
     }
 }

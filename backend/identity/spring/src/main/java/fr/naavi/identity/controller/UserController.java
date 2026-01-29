@@ -8,8 +8,10 @@ import fr.naavi.core.exception.children.NaaviNotFoundException;
 import fr.naavi.identity.abstraction.AbstractController;
 import fr.naavi.identity.dto.input.UserDTO;
 import fr.naavi.identity.dto.output.UserDto;
+import fr.naavi.identity.entity.Authorization;
 import fr.naavi.identity.entity.User;
 import fr.naavi.identity.repository.UserRepository;
+import fr.naavi.identity.service.AuthorizationService;
 import fr.naavi.identity.service.MailerService;
 import fr.naavi.identity.service.UserService;
 import fr.naavi.identity.validation.ValidationGroups;
@@ -54,6 +56,9 @@ public class UserController extends AbstractController {
 
     @Autowired
     private MailerService mailerService;
+
+    @Autowired
+    private AuthorizationService authorizationService;
 
     /**
      * Endpoint to retrieve the current authenticated user.
@@ -138,6 +143,8 @@ public class UserController extends AbstractController {
     @PutMapping("/user")
     public UserDto updateUser(@RequestBody @Validated UserDTO userDto) {
         User user = this.userService.updateUser(this.getUser().getId(), userDto, false);
+        Authorization authorization = this.authorizationService.createAuthorizationForUpdateOldEmail(user, userDto);
+        this.mailerService.sendEmailChangeOldEmailConfirmation(authorization);
         return new UserDto(user, false);
     }
 

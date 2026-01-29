@@ -2,6 +2,9 @@ package fr.naavi.identity.security;
 
 import fr.naavi.identity.dto.output.AuthenticationDTO;
 import fr.naavi.identity.entity.User;
+import fr.naavi.identity.enums.StatusEnum;
+import fr.naavi.identity.exception.BannedException;
+import fr.naavi.identity.exception.UnverifiedException;
 import fr.naavi.identity.service.AuthenticationService;
 import fr.naavi.identity.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +72,14 @@ public class LoginAuthenticationProvider implements AuthenticationProvider {
 
         if (!this.passwordEncoder.matches(password, user.getPassword())) {
             throw new BadCredentialsException("Invalid credentials provided.");
+        }
+
+        if (user.getStatus() != StatusEnum.VERIFIED) {
+            throw new UnverifiedException();
+        }
+
+        if (user.getStatus().equals(StatusEnum.BANNED)) {
+            throw new BannedException();
         }
 
         Map<String, String> accessToken = this.authenticationService.accessToken();

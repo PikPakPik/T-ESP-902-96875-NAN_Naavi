@@ -14,6 +14,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/naavi_identity
       SPRING_MAIL_HOST: mailer
       SPRING_MAIL_PORT: 1025
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: false
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_REQUIRED: false
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=naavi-network"

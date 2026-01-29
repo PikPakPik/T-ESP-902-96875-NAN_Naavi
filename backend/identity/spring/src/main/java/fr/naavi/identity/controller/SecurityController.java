@@ -8,6 +8,7 @@ import fr.naavi.core.exception.children.NaaviUnauthorizedException;
 import fr.naavi.core.service.TurnstileService;
 import fr.naavi.core.utils.RequestUtils;
 import fr.naavi.identity.abstraction.AbstractController;
+import fr.naavi.identity.dto.input.AuthorizationDTO;
 import fr.naavi.identity.dto.input.ForgotPasswordDTO;
 import fr.naavi.identity.dto.input.IsAvailableEmailDTO;
 import fr.naavi.identity.dto.input.LoginDTO;
@@ -15,11 +16,15 @@ import fr.naavi.identity.dto.input.RefreshDTO;
 import fr.naavi.identity.dto.input.RegisterDTO;
 import fr.naavi.identity.dto.input.ResetPasswordDTO;
 import fr.naavi.identity.dto.output.AuthenticationDTO;
+import fr.naavi.identity.entity.Authorization;
 import fr.naavi.identity.entity.ResetPasswordRequest;
 import fr.naavi.identity.entity.Session;
 import fr.naavi.identity.entity.User;
+import fr.naavi.identity.exception.BannedException;
+import fr.naavi.identity.exception.UnverifiedException;
 import fr.naavi.identity.repository.SessionRepository;
 import fr.naavi.identity.service.AuthenticationService;
+import fr.naavi.identity.service.AuthorizationService;
 import fr.naavi.identity.service.MailerService;
 import fr.naavi.identity.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -50,6 +55,7 @@ public class SecurityController extends AbstractController {
     private final SessionRepository sessionRepository;
     private final AuthenticationService authenticationService;
     private final TurnstileService turnstileService;
+    private final AuthorizationService authorizationService;
 
     /**
      * Constructs a SecurityController
@@ -61,7 +67,8 @@ public class SecurityController extends AbstractController {
             MailerService mailerService,
             SessionRepository sessionRepository,
             AuthenticationService authenticationService,
-            TurnstileService turnstileService
+            TurnstileService turnstileService,
+            AuthorizationService authorizationService
     ) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
@@ -69,6 +76,7 @@ public class SecurityController extends AbstractController {
         this.sessionRepository = sessionRepository;
         this.authenticationService = authenticationService;
         this.turnstileService = turnstileService;
+        this.authorizationService = authorizationService;
     }
 
     /**
@@ -98,6 +106,22 @@ public class SecurityController extends AbstractController {
                     content = @Content(
                             mediaType = "application/json",
                             examples = {
+                                    @ExampleObject(
+                                            name = "If unverified exception is thrown",
+                                            value = "{\n"
+                                                    + "  \"i18nKey\": \"security.email_not_verified\",\n"
+                                                    + "  \"message\": \"Your email address has not been confirmed. Please check your email and click the confirmation link.\",\n"
+                                                    + "  \"extra\": null\n"
+                                                    + "}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "If banned exception is thrown",
+                                            value = "{\n"
+                                                    + "  \"i18nKey\": \"security.account_banned\",\n"
+                                                    + "  \"message\": \"Your account has been banned.\",\n"
+                                                    + "  \"extra\": null\n"
+                                                    + "}"
+                                    ),
                                     @ExampleObject(
                                             name = "If credentials are invalid",
                                             value = "{\n"
@@ -133,6 +157,16 @@ public class SecurityController extends AbstractController {
             );
 
             return (AuthenticationDTO) authentication.getDetails();
+        } catch (UnverifiedException e) {
+            throw new NaaviBadCredentialsException(
+                    "security.email_not_verified",
+                    e.getMessage()
+            );
+        } catch (BannedException e) {
+            throw new NaaviBadCredentialsException(
+                    "security.account_banned",
+                    e.getMessage()
+            );
         } catch (Exception e) {
             throw new NaaviBadCredentialsException(
                     "security.invalid_credentials",
@@ -223,7 +257,13 @@ public class SecurityController extends AbstractController {
         User newUser = this.userService.createUser(registerDto);
         this.mailerService.sendRegistrationEmail(newUser);
 
-        return new ApiResponseDTO("security.register.success", "User registered successfully.");
+        Authorization authorization = this.authorizationService.createAuthorizationForRegistration(newUser);
+        this.mailerService.sendEmailConfirmationEmail(authorization);
+
+        return new ApiResponseDTO(
+                "security.register.success",
+                "User registered successfully. Please check your email to confirm your account."
+        );
     }
 
     /**
@@ -593,6 +633,92 @@ public class SecurityController extends AbstractController {
                 "security.email_unavailable",
                 "This email address is already taken.",
                 Map.of("success", false)
+        );
+    }
+
+    /**
+     * Endpoint to handle authorization requests.
+     * This endpoint is used to process an authorization request using a valid authorization token.
+     *
+     * @param authorizationDTO the authorization token details
+     * @return an ApiResponseDTO indicating success or failure
+     */
+    @Operation(
+            summary = "Traitement de la demande d'autorisation",
+            description = "Permet de traiter une demande d'autorisation à l'aide d'un token d'autorisation valide.",
+            tags = {"Sécurité"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Autorisation réussie.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "If authorization is successful",
+                                            value = "{\n"
+                                                    + "  \"i18nKey\": \"authorization.success\",\n"
+                                                    + "  \"message\": \"Your authorization request has been successfully completed.\",\n"
+                                                    + "  \"extra\": null\n"
+                                                    + "}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "If turnstile validation fails",
+                                            value = "{\n"
+                                                    + "  \"i18nKey\": \"unauthorized\",\n"
+                                                    + "  \"message\": \"Can't access this resource\",\n"
+                                                    + "  \"extra\": null\n"
+                                                    + "}"
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Token d'autorisation est invalide ou expiré.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"authorization.request_not_found\",\n"
+                                            + "  \"message\": \"The authorization request is invalid or has expired.\",\n"
+                                            + "  \"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "422", ref = "#/components/responses/ValidationError"),
+    })
+    @PostMapping("/authorization")
+    @AuthenticationNotRequired
+    public ApiResponseDTO authorization(@RequestBody @Validated AuthorizationDTO authorizationDTO) {
+        boolean turnstile = this.turnstileService.validate(
+                authorizationDTO.getToken(), RequestUtils.getClientIpAddress()
+        );
+
+        if (!turnstile) {
+            throw new NaaviUnauthorizedException();
+        }
+
+        Authorization authorizationRequest = this.authorizationService.checkIfAuthorizationRequestExists(
+                authorizationDTO.getAuthorizationToken()
+        );
+
+        if (authorizationRequest == null) {
+            throw new GenericHttpException(
+                    HttpStatus.NOT_FOUND,
+                    "authorization.request_not_found",
+                    "The authorization request is invalid or has expired."
+            );
+        }
+
+        this.authorizationService.processAuthorization(authorizationRequest);
+
+        return new ApiResponseDTO(
+                "authorization.success",
+                "Your authorization request has been successfully completed."
         );
     }
 }

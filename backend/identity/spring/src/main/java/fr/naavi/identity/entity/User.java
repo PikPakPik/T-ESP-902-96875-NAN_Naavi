@@ -6,6 +6,7 @@ import fr.naavi.identity.converter.PermissionsConverter;
 import fr.naavi.identity.converter.RolesConverter;
 import fr.naavi.identity.entitylistener.UserListener;
 import fr.naavi.identity.enums.StatusEnum;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
@@ -15,6 +16,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -55,6 +57,12 @@ public class User {
 
     @Column
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<Authorization> authorizations = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<ResetPasswordRequest> resetPasswordRequests = new ArrayList<>();
 
     /**
      * @return The unique identifier of the user.

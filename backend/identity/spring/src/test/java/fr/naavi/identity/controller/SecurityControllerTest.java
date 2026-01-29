@@ -3,6 +3,7 @@ package fr.naavi.identity.controller;
 import fr.naavi.core.exception.GlobalExceptionHandler;
 import fr.naavi.core.service.TurnstileService;
 import fr.naavi.identity.configuration.CacheConfigurationTest;
+import fr.naavi.identity.dto.input.AuthorizationDTO;
 import fr.naavi.identity.dto.input.ForgotPasswordDTO;
 import fr.naavi.identity.dto.input.IsAvailableEmailDTO;
 import fr.naavi.identity.dto.input.LoginDTO;
@@ -10,12 +11,19 @@ import fr.naavi.identity.dto.input.RefreshDTO;
 import fr.naavi.identity.dto.input.RegisterDTO;
 import fr.naavi.identity.dto.input.ResetPasswordDTO;
 import fr.naavi.identity.dto.output.AuthenticationDTO;
+import fr.naavi.identity.entity.Authorization;
 import fr.naavi.identity.entity.ResetPasswordRequest;
 import fr.naavi.identity.entity.Session;
+import fr.naavi.identity.entity.User;
+import fr.naavi.identity.enums.StatusEnum;
+import fr.naavi.identity.exception.BannedException;
+import fr.naavi.identity.exception.UnverifiedException;
 import fr.naavi.identity.repository.ResetPasswordRequestRepository;
 import fr.naavi.identity.repository.SessionRepository;
+import fr.naavi.identity.repository.UserRepository;
 import fr.naavi.identity.seeder.UserSeeder;
 import fr.naavi.identity.service.AuthenticationService;
+import fr.naavi.identity.service.AuthorizationService;
 import fr.naavi.identity.service.MailerService;
 import fr.naavi.identity.service.UserService;
 import fr.naavi.identity.util.AuthenticationManagerUtil;
@@ -23,6 +31,7 @@ import fr.naavi.identity.util.DtoFactory;
 import org.hamcrest.core.IsNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -38,6 +47,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -73,10 +83,16 @@ public class SecurityControllerTest {
     private SessionRepository sessionRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private ResetPasswordRequestRepository resetPasswordRequestRepository;
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private AuthorizationService authorizationService;
 
     @MockitoBean
     private MailerService mailerService;
@@ -154,6 +170,54 @@ public class SecurityControllerTest {
                 .andExpect(jsonPath("$.extra.email").value("must not be blank"));
     }
 
+    @Test
+    void shouldLogin_WithUnverifiedUser() throws Exception {
+        this.userSeeder.createUnverifiedUser();
+
+        LoginDTO loginDTO = DtoFactory.createDto(LoginDTO.class,
+                Map.of(
+                        "email", UserSeeder.UNVERIFIED_USER_EMAIL,
+                        "password", UserSeeder.USER_DEFAULT_PASSWORD,
+                        "token", "azertyuiop"
+                )
+        );
+
+        when(authenticationManager.authenticate(ArgumentMatchers.any())).thenThrow(new UnverifiedException());
+
+        mockMvc.perform(post("/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(loginDTO)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.i18nKey").value("security.email_not_verified"))
+                .andExpect(jsonPath("$.message").value("Your email address has not been confirmed. Please check your email and click the confirmation link."))
+                .andExpect(jsonPath("$.extra").value(IsNull.nullValue()));
+    }
+
+    @Test
+    void shouldLogin_WithBannedUser() throws Exception {
+        this.userSeeder.createBannedUser();
+
+        LoginDTO loginDTO = DtoFactory.createDto(LoginDTO.class,
+                Map.of(
+                        "email", UserSeeder.BANNED_USER_EMAIL,
+                        "password", UserSeeder.USER_DEFAULT_PASSWORD,
+                        "token", "azertyuiop"
+                )
+        );
+
+        when(authenticationManager.authenticate(ArgumentMatchers.any())).thenThrow(new BannedException());
+
+        mockMvc.perform(post("/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(loginDTO)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.i18nKey").value("security.account_banned"))
+                .andExpect(jsonPath("$.message").value("Your account has been banned."))
+                .andExpect(jsonPath("$.extra").value(IsNull.nullValue()));
+    }
+
     /*
      * REGISTER ENDPOINT TESTS
      */
@@ -177,7 +241,7 @@ public class SecurityControllerTest {
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.i18nKey").value("security.register.success"))
-                .andExpect(jsonPath("$.message").value("User registered successfully."))
+                .andExpect(jsonPath("$.message").value("User registered successfully. Please check your email to confirm your account."))
                 .andExpect(jsonPath("$.extra").value(IsNull.nullValue()));
     }
 
@@ -383,8 +447,8 @@ public class SecurityControllerTest {
                 fr.naavi.identity.dto.input.ResetPasswordDTO.class,
                 Map.of(
                         "resetPasswordToken", resetRequest.getToken(),
-                        "password", "new-password",
-                        "confirmPassword", "new-password",
+                        "password", "NewPassword1!",
+                        "confirmPassword", "NewPassword1!",
                         "token", "azertyuiop"
                 )
         );
@@ -405,8 +469,8 @@ public class SecurityControllerTest {
                 ResetPasswordDTO.class,
                 Map.of(
                         "resetPasswordToken", "non-existent-token",
-                        "password", "new-password",
-                        "confirmPassword", "new-password",
+                        "password", "NewPassword1!",
+                        "confirmPassword", "NewPassword1!",
                         "token", "azertyuiop"
                 )
         );
@@ -426,8 +490,8 @@ public class SecurityControllerTest {
         ResetPasswordDTO resetPasswordDTO = DtoFactory.createDto(
                 ResetPasswordDTO.class,
                 Map.of(
-                        "password", "new-password",
-                        "confirmPassword", "new-password",
+                        "password", "NewPassword1!",
+                        "confirmPassword", "NewPassword1!",
                         "token", "azertyuiop"
                 )
         );
@@ -500,5 +564,57 @@ public class SecurityControllerTest {
                 .andExpect(jsonPath("$.i18nKey").value("validation.failed"))
                 .andExpect(jsonPath("$.message").value("Validation failed"))
                 .andExpect(jsonPath("$.extra.email").value("must not be blank"));
+    }
+
+    /*
+     * AUTHORIZATION ENDPOINT TESTS
+     */
+
+    @Test
+    void shouldAuthorization_WithValidToken() throws Exception {
+        User user = this.userSeeder.createUnverifiedUser();
+
+        User userAfterCreation = this.userRepository.findById(user.getId()).orElseThrow();
+        assertEquals(StatusEnum.UNVERIFIED, userAfterCreation.getStatus());
+
+        Authorization authorization = this.authorizationService.createAuthorizationForRegistration(user);
+
+        AuthorizationDTO authorizationDTO = DtoFactory.createDto(AuthorizationDTO.class,
+                Map.of(
+                        "authorizationToken", authorization.getToken(),
+                        "token", "azertyuiop"
+                )
+        );
+
+        mockMvc.perform(post("/authorization")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(authorizationDTO)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.i18nKey").value("authorization.success"))
+                .andExpect(jsonPath("$.message").value("Your authorization request has been successfully completed."))
+                .andExpect(jsonPath("$.extra").value(IsNull.nullValue()));
+
+        User updatedUser = this.userRepository.findById(user.getId()).orElseThrow();
+        assertEquals(StatusEnum.VERIFIED, updatedUser.getStatus());
+    }
+
+    @Test
+    void shouldAuthorization_WithInvalidToken() throws Exception {
+        AuthorizationDTO authorizationDTO = DtoFactory.createDto(AuthorizationDTO.class,
+                Map.of(
+                        "authorizationToken", "invalid-token",
+                        "token", "azertyuiop"
+                )
+        );
+
+        mockMvc.perform(post("/authorization")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(authorizationDTO)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.i18nKey").value("authorization.request_not_found"))
+                .andExpect(jsonPath("$.message").value("The authorization request is invalid or has expired."))
+                .andExpect(jsonPath("$.extra").value(IsNull.nullValue()));
     }
 }

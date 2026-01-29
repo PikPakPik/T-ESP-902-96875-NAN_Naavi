@@ -187,7 +187,9 @@ public class UserService {
                         "The email address you entered already exists."
                 );
             }
-            user.setEmail(userDto.getEmail());
+            if (fromAdmin) {
+                user.setEmail(userDto.getEmail());
+            }
         }
 
         if (fromAdmin) {
@@ -230,6 +232,28 @@ public class UserService {
         user.setPassword(this.hashPassword(randomPassword));
 
         userRepository.save(user);
+    }
+
+    /**
+     * Updates the status of a user.
+     *
+     * @param user   The user whose status is to be updated.
+     * @param status The new status to set.
+     */
+    public void updateStatus(User user, StatusEnum status) {
+        user.setStatus(status);
+        this.userRepository.save(user);
+    }
+
+    /**
+     * Updates the email of a user.
+     *
+     * @param user  The user whose email is to be updated.
+     * @param email The new email to set.
+     */
+    public void updateEmail(User user, String email) {
+        user.setEmail(email);
+        this.userRepository.save(user);
     }
 
     /**

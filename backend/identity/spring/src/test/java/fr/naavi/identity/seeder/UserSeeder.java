@@ -22,6 +22,8 @@ public class UserSeeder {
 
     public static final String NEW_USER_EMAIL = "newUser@naavi.local";
     public static final String INVALID_USER_EMAIL = "invalidUser@naavi.local";
+    public static final String UNVERIFIED_USER_EMAIL = "unverifiedUser@naavi.local";
+    public static final String BANNED_USER_EMAIL = "bannedUser@naavi.local";
 
     public static final String USER_EMAIL = "user@naavi.local";
     public static User USER = null;
@@ -29,7 +31,7 @@ public class UserSeeder {
     public static final String ADMIN_EMAIL = "admin@naavi.local";
     public static User ADMIN = null;
 
-    public static final String USER_DEFAULT_PASSWORD = "azertyuiop";
+    public static final String USER_DEFAULT_PASSWORD = "Azertyuiop1!";
 
     public void seedUsers() {
         userRepository.deleteAll();
@@ -71,6 +73,32 @@ public class UserSeeder {
         user.setRoles(roles);
         user.setPermissions(permissions);
         user.setStatus(status);
+        return user;
+    }
+
+    public User createUnverifiedUser() {
+        User user = this.createUser(
+                "Unverified",
+                "User",
+                UNVERIFIED_USER_EMAIL,
+                List.of(),
+                List.of(),
+                StatusEnum.UNVERIFIED
+        );
+        userRepository.save(user);
+        return user;
+    }
+
+    public User createBannedUser() {
+        User user = this.createUser(
+                "Banned",
+                "User",
+                BANNED_USER_EMAIL,
+                List.of(),
+                List.of(),
+                StatusEnum.BANNED
+        );
+        userRepository.save(user);
         return user;
     }
 }
