@@ -22,3 +22,7 @@ quality:
 .PHONY: bash
 bash:
 	docker compose exec -it spring /bin/sh
+
+.PHONY: compile-local
+compile-local:
+    docker compose exec spring ./mvnw -Pdev install clean compile
