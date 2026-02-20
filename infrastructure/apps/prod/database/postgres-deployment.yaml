@@ -28,7 +28,7 @@ spec:
       serviceAccountName: postgres-vault
       containers:
         - name: postgres
-          image: postgres:17-alpine
+          image: postgis/postgis:17-3.5-alpine
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5432
