@@ -103,6 +103,8 @@ spec:
               [ -f /vault/secrets/auth-password ] && source /vault/secrets/auth-password
               [ -f /vault/secrets/exchange-password ] && source /vault/secrets/exchange-password
               
+              export SPRING_PROFILES_ACTIVE=k8s
+              export NAAVI_ENV=prod
               export SPRING_JPA_HIBERNATE_DDL_AUTO=update
               export SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
               export SPRINGDOC_SWAGGER_UI_SERVER_URL='https://naavi-trails.fr/api/v1/hike'

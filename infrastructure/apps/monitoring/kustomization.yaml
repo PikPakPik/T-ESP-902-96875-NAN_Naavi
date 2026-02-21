@@ -29,6 +29,8 @@ resources:
   
   # Grafana
   - grafana/configmap-datasources.yaml
+  - grafana/configmap-dashboard-provider.yaml
+  - grafana/configmap-dashboards.yaml
   - grafana/deployment.yaml
   - grafana/service.yaml
   - grafana/ingress.yaml
@@ -44,15 +46,3 @@ resources:
   - gitlab-kpis-exporter/deployment.yaml
   - gitlab-kpis-exporter/service.yaml
 
-# Note: Les dashboards Grafana peuvent être ajoutés plus tard
-# Pour ajouter des dashboards, décommentez le configMapGenerator ci-dessous
-# et créez les fichiers JSON correspondants dans grafana/
-#
-# configMapGenerator:
-#   - name: grafana-dashboards
-#     files:
-#       - dashboard-logs.json=grafana/dashboard-logs.json
-#       - dashboard-applications.json=grafana/dashboard-applications.json
-#     options:
-#       labels:
-#         app: grafana

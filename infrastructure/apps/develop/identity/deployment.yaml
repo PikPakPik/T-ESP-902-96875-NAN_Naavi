@@ -94,7 +94,7 @@ spec:
       serviceAccountName: identity-vault
       containers:
         - name: identity
-          image: registry.gitlab.com/epitech-msc-2026/backend/identity:v1.0.1
+          image: registry.gitlab.com/epitech-msc-2026/backend/identity:linux-feature-logging
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
@@ -109,6 +109,8 @@ spec:
               [ -f /vault/secrets/auth-password ] && source /vault/secrets/auth-password
               [ -f /vault/secrets/exchange-password ] && source /vault/secrets/exchange-password
               
+              export SPRING_PROFILES_ACTIVE=k8s
+              export NAAVI_ENV=develop
               export SPRING_JPA_HIBERNATE_DDL_AUTO=update
               export SPRINGDOC_SWAGGER_UI_SERVER_URL='https://dev.naavi-trails.fr/api/v1/identity'
               export SPRINGDOC_SWAGGER_UI_URL='https://dev.naavi-trails.fr/api/v1/identity/api-docs'

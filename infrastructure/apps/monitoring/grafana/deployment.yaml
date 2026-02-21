@@ -61,6 +61,10 @@ spec:
               mountPath: /var/lib/grafana
             - name: datasources
               mountPath: /etc/grafana/provisioning/datasources
+            - name: dashboard-provider
+              mountPath: /etc/grafana/provisioning/dashboards
+            - name: dashboard-files
+              mountPath: /etc/grafana/dashboards
           resources:
             requests:
               memory: "256Mi"
@@ -87,11 +91,9 @@ spec:
         - name: datasources
           configMap:
             name: grafana-datasources
-        - name: dashboards
+        - name: dashboard-provider
           configMap:
             name: grafana-dashboard-provider
-        # Note: dashboard-files volume retiré car les dashboards ne sont pas encore configurés
-        # Pour ajouter des dashboards, décommentez le volume ci-dessous et ajoutez le configMapGenerator dans kustomization.yaml
-        # - name: dashboard-files
-        #   configMap:
-        #     name: grafana-dashboards
+        - name: dashboard-files
+          configMap:
+            name: grafana-dashboards
