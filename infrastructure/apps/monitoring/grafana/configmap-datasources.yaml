@@ -18,10 +18,9 @@ data:
         jsonData:
           maxLines: 1000
           derivedFields:
-            - datasourceUid: loki
-              matcherRegex: "traceID=(\\w+)"
+            - matcherRegex: '"(?:traceId|trace_id)":"([a-f0-9]{16,32})"'
               name: TraceID
-              url: '$${__value.raw}'
+              url: 'https://seq.dev.naavi-trails.fr/#/events?filter=@TraceId%3D%27${__value.raw}%27'
       - name: Prometheus
         uid: prometheus
         type: prometheus

@@ -1,0 +1,55 @@
+{
+  "annotations": {"list": []},
+  "description": "Traces Naavi - liens vers Seq. Les traces OpenTelemetry sont envoyées à Seq. Cliquez sur traceID dans les logs pour ouvrir la trace dans Seq.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": true,
+      "title": "Seq (traces)",
+      "tooltip": "Ouvrir Seq pour voir les traces",
+      "type": "link",
+      "url": "https://seq.dev.naavi-trails.fr"
+    },
+    {
+      "asDropdown": false,
+      "icon": "list",
+      "includeVars": false,
+      "keepTime": true,
+      "tags": ["naavi", "logs"],
+      "targetBlank": false,
+      "title": "Logs Backend",
+      "tooltip": "Voir les logs backend",
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "gridPos": {"h": 4, "w": 24, "x": 0, "y": 0},
+      "id": 1,
+      "options": {
+        "content": "## Traces Naavi\n\nLes **traces OpenTelemetry** (Identity, Hike) sont envoyées vers **Seq**.\n\n- **Seq** : [seq.dev.naavi-trails.fr](https://seq.dev.naavi-trails.fr) — visualisation des traces et logs\n- Dans les **logs** (dashboard Naavi Backend Logs), cliquez sur un **traceID** pour ouvrir la trace correspondante dans Seq\n\n*Configurez l'URL Seq dans le datasource Loki (derivedFields) si votre instance Seq a une URL différente.*",
+        "mode": "markdown"
+      },
+      "title": "Traces",
+      "type": "text"
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["naavi", "traces"],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Naavi Traces",
+  "uid": "naavi-traces",
+  "version": 1,
+  "weekStart": ""
+}
