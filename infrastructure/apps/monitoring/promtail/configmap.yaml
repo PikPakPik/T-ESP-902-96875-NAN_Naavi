@@ -35,9 +35,9 @@ data:
               app:
           - labeldrop:
               - filename
-          # Extraire le level : JSON ("level":"ERROR") ou texte ([ERROR], ERROR:)
+          # Extraire le level : JSON, [LEVEL], LEVEL:, ou format Spring Boot (timestamp LEVEL ...)
           - regex:
-              expression: '"level"\s*:\s*"(?P<level>[^"]+)"|(?i)\[(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC)\]|(?i)(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC):'
+              expression: '"level"\s*:\s*"(?P<level>[^"]+)"|(?i)\[(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC)\]|(?i)(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC):|\d{4}-\d{2}-\d{2}T[^\s]+\s+(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC)\s'
           - template:
               source: level
               template: '{{ if .level }}{{ .level | ToLower }}{{ else }}info{{ end }}'
@@ -101,9 +101,9 @@ data:
               app:
           - labeldrop:
               - filename
-          # Extraire le level : JSON ("level":"ERROR") ou texte ([ERROR], ERROR:)
+          # Extraire le level : JSON, [LEVEL], LEVEL:, ou format Spring Boot (timestamp LEVEL ...)
           - regex:
-              expression: '"level"\s*:\s*"(?P<level>[^"]+)"|(?i)\[(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC)\]|(?i)(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC):'
+              expression: '"level"\s*:\s*"(?P<level>[^"]+)"|(?i)\[(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC)\]|(?i)(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC):|\d{4}-\d{2}-\d{2}T[^\s]+\s+(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC)\s'
           - template:
               source: level
               template: '{{ if .level }}{{ .level | ToLower }}{{ else }}info{{ end }}'
