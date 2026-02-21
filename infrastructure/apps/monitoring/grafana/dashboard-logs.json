@@ -182,7 +182,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "{environment=~\"$environment\", app=~\"$app\", level=~\"$level\"}",
+          "expr": "{environment=~\"$environment\", app=~\"$app\", level=~\"$level\"} |= `$search` | json | CorrelationId =~ `.*$correlation_id.*` | RequestId =~ `.*$request_id.*` | RequestPath =~ `.*$request_path.*` | RequestMethod =~ `.*$http_method.*`",
           "queryType": "range",
           "refId": "A"
         }
@@ -267,6 +267,85 @@
         "skipUrlSync": false,
         "sort": 1,
         "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "",
+          "value": ""
+        },
+        "hide": 0,
+        "label": "Search",
+        "name": "search",
+        "options": [],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "",
+          "value": ""
+        },
+        "hide": 0,
+        "label": "Correlation ID",
+        "name": "correlation_id",
+        "options": [],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "",
+          "value": ""
+        },
+        "hide": 0,
+        "label": "Request ID",
+        "name": "request_id",
+        "options": [],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "",
+          "value": ""
+        },
+        "hide": 0,
+        "label": "Request Path",
+        "name": "request_path",
+        "options": [],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": ""
+        },
+        "hide": 0,
+        "includeAll": true,
+        "label": "HTTP Method",
+        "multi": false,
+        "name": "http_method",
+        "options": [
+          { "selected": true, "text": "All", "value": "" },
+          { "selected": false, "text": "GET", "value": "GET" },
+          { "selected": false, "text": "POST", "value": "POST" },
+          { "selected": false, "text": "PUT", "value": "PUT" },
+          { "selected": false, "text": "DELETE", "value": "DELETE" },
+          { "selected": false, "text": "PATCH", "value": "PATCH" }
+        ],
+        "query": ",GET,POST,PUT,DELETE,PATCH",
+        "skipUrlSync": false,
+        "type": "custom"
       }
     ]
   },
