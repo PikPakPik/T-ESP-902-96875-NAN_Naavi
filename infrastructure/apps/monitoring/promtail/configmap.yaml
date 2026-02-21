@@ -27,35 +27,32 @@ data:
                 - develop
         pipeline_stages:
           - cri: {}
-          - labels:
-              stream:
-              container:
-              pod:
-              namespace:
-              app:
-          - labeldrop:
-              - filename
-          # Extraire le level : JSON, [LEVEL], LEVEL:, ou format Spring Boot (timestamp LEVEL ...)
+          # Extraire le level depuis le JSON (LogstashEncoder)
+          - json:
+              expressions:
+                level: level
+          # Fallback : si pas de JSON, essayer regex classique
           - regex:
-              expression: '"level"\s*:\s*"(?P<level>[^"]+)"|(?i)\[(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC)\]|(?i)(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC):|\d{4}-\d{2}-\d{2}T[^\s]+\s+(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC)\s'
+              expression: '(?i)\[(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC)\]'
           - template:
               source: level
               template: '{{ if .level }}{{ .level | ToLower }}{{ else }}info{{ end }}'
           - labels:
               level:
-          - match:
-              selector: '{namespace="develop"}'
-              stages:
-                - labels:
-                    environment: "develop"
-                    namespace:
+          # Label statique environment=develop
+          - static_labels:
+              environment: develop
         relabel_configs:
           - source_labels:
-              - __meta_kubernetes_pod_uid
+              - __meta_kubernetes_pod_node_name
+            target_label: __host__
+          - source_labels:
+              - __meta_kubernetes_namespace
+              - __meta_kubernetes_pod_name
               - __meta_kubernetes_pod_container_name
             target_label: __path__
             separator: /
-            replacement: /var/log/pods/*$1/*.log
+            replacement: /var/log/pods/$1_$2_*/$3/*.log
           - source_labels:
               - __meta_kubernetes_pod_node_name
             target_label: node_name
@@ -72,23 +69,16 @@ data:
               - __meta_kubernetes_pod_container_name
             target_label: container
           - action: replace
-            replacement: $1
+            replacement: $1/$2
             separator: /
             source_labels:
-              - namespace
-              - app
+              - __meta_kubernetes_namespace
+              - __meta_kubernetes_pod_label_app
             target_label: job
           - action: replace
             source_labels:
               - __meta_kubernetes_pod_uid
             target_label: pod_uid
-          - action: replace
-            source_labels:
-              - __meta_kubernetes_pod_container_id
-            regex: (.+)
-            target_label: container_id
-            replacement: $1
-            separator: /
         
       # Logs from prod namespace
       - job_name: kubernetes-pods-prod
@@ -99,35 +89,32 @@ data:
                 - prod
         pipeline_stages:
           - cri: {}
-          - labels:
-              stream:
-              container:
-              pod:
-              namespace:
-              app:
-          - labeldrop:
-              - filename
-          # Extraire le level : JSON, [LEVEL], LEVEL:, ou format Spring Boot (timestamp LEVEL ...)
+          # Extraire le level depuis le JSON (LogstashEncoder)
+          - json:
+              expressions:
+                level: level
+          # Fallback : si pas de JSON, essayer regex classique
           - regex:
-              expression: '"level"\s*:\s*"(?P<level>[^"]+)"|(?i)\[(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC)\]|(?i)(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC):|\d{4}-\d{2}-\d{2}T[^\s]+\s+(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC)\s'
+              expression: '(?i)\[(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC)\]'
           - template:
               source: level
               template: '{{ if .level }}{{ .level | ToLower }}{{ else }}info{{ end }}'
           - labels:
               level:
-          - match:
-              selector: '{namespace="prod"}'
-              stages:
-                - labels:
-                    environment: "prod"
-                    namespace:
+          # Label statique environment=prod
+          - static_labels:
+              environment: prod
         relabel_configs:
           - source_labels:
-              - __meta_kubernetes_pod_uid
+              - __meta_kubernetes_pod_node_name
+            target_label: __host__
+          - source_labels:
+              - __meta_kubernetes_namespace
+              - __meta_kubernetes_pod_name
               - __meta_kubernetes_pod_container_name
             target_label: __path__
             separator: /
-            replacement: /var/log/pods/*$1/*.log
+            replacement: /var/log/pods/$1_$2_*/$3/*.log
           - source_labels:
               - __meta_kubernetes_pod_node_name
             target_label: node_name
@@ -144,20 +131,13 @@ data:
               - __meta_kubernetes_pod_container_name
             target_label: container
           - action: replace
-            replacement: $1
+            replacement: $1/$2
             separator: /
             source_labels:
-              - namespace
-              - app
+              - __meta_kubernetes_namespace
+              - __meta_kubernetes_pod_label_app
             target_label: job
           - action: replace
             source_labels:
               - __meta_kubernetes_pod_uid
             target_label: pod_uid
-          - action: replace
-            source_labels:
-              - __meta_kubernetes_pod_container_id
-            regex: (.+)
-            target_label: container_id
-            replacement: $1
-            separator: /
