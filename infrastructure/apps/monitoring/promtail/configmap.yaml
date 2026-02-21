@@ -35,13 +35,12 @@ data:
               app:
           - labeldrop:
               - filename
-          # Extraire le level depuis les logs (format texte: ERROR, WARN, DEBUG, INFO, etc.)
+          # Extraire le level : JSON ("level":"ERROR") ou texte ([ERROR], ERROR:)
           - regex:
-              expression: '(?i)\[(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC)\]|(?i)(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC):'
-          # Normaliser le level en minuscules avant de l'ajouter comme label
+              expression: '"level"\s*:\s*"(?P<level>[^"]+)"|(?i)\[(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC)\]|(?i)(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC):'
           - template:
               source: level
-              template: '{{ .level | ToLower }}'
+              template: '{{ if .level }}{{ .level | ToLower }}{{ else }}info{{ end }}'
           - labels:
               level:
           - match:
@@ -102,13 +101,12 @@ data:
               app:
           - labeldrop:
               - filename
-          # Extraire le level depuis les logs (format texte: ERROR, WARN, DEBUG, INFO, etc.)
+          # Extraire le level : JSON ("level":"ERROR") ou texte ([ERROR], ERROR:)
           - regex:
-              expression: '(?i)\[(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC)\]|(?i)(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC):'
-          # Normaliser le level en minuscules avant de l'ajouter comme label
+              expression: '"level"\s*:\s*"(?P<level>[^"]+)"|(?i)\[(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC)\]|(?i)(?P<level>ERROR|WARN|WARNING|DEBUG|INFO|FATAL|TRACE|PANIC):'
           - template:
               source: level
-              template: '{{ .level | ToLower }}'
+              template: '{{ if .level }}{{ .level | ToLower }}{{ else }}info{{ end }}'
           - labels:
               level:
           - match:
