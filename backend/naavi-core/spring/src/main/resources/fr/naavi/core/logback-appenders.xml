@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<included>
+    <!-- JSON console appender for Loki/Promtail (K8s) and human-readable local -->
+    <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeMdcKeyName>CorrelationId</includeMdcKeyName>
+            <includeMdcKeyName>RequestId</includeMdcKeyName>
+            <includeMdcKeyName>RequestPath</includeMdcKeyName>
+            <includeMdcKeyName>RequestMethod</includeMdcKeyName>
+            <includeMdcKeyName>MicroService</includeMdcKeyName>
+            <customFields>{"application":"${appName:-naavi}"}</customFields>
+            <fieldNames>
+                <timestamp>@timestamp</timestamp>
+                <message>message</message>
+                <logger>logger</logger>
+                <thread>thread</thread>
+                <level>level</level>
+            </fieldNames>
+        </encoder>
+    </appender>
+
+    <!-- GELF appender for Seq (local dev) - disabled in ci (tests) et k8s (Loki) -->
+    <springProfile name="!ci &amp; !k8s">
+        <appender name="GELF" class="biz.paluch.logging.gelf.logback.GelfLogbackAppender">
+            <host>udp:${seqHost:-localhost}</host>
+            <port>${seqPort:-12201}</port>
+            <version>1.1</version>
+            <facility>${appName:-naavi}</facility>
+            <!-- extractStackTrace=false : stack trace via message (GlobalExceptionHandler) pour Seq @x -->
+            <extractStackTrace>false</extractStackTrace>
+            <filterStackTrace>true</filterStackTrace>
+            <includeLocation>true</includeLocation>
+            <includeFullMdc>true</includeFullMdc>
+            <additionalFields>Environment=${environment:-local}</additionalFields>
+            <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+                <level>INFO</level>
+            </filter>
+        </appender>
+    </springProfile>
+</included>
