@@ -89,7 +89,7 @@ spec:
       serviceAccountName: hike-vault
       containers:
         - name: hike
-          image: registry.gitlab.com/epitech-msc-2026/backend/hike:linux-feature-logging
+          image: registry.gitlab.com/epitech-msc-2026/backend/hike:linux-develop
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

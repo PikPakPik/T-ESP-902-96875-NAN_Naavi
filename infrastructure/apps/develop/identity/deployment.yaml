@@ -94,7 +94,7 @@ spec:
       serviceAccountName: identity-vault
       containers:
         - name: identity
-          image: registry.gitlab.com/epitech-msc-2026/backend/identity:linux-feature-logging
+          image: registry.gitlab.com/epitech-msc-2026/backend/identity:linux-develop
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

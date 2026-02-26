@@ -12,7 +12,7 @@ spec:
     - namePattern: "identity-develop"
       images:
         - alias: identity
-          imageName: registry.gitlab.com/epitech-msc-2026/backend/identity:linux-feature-logging
+          imageName: registry.gitlab.com/epitech-msc-2026/backend/identity:linux-develop
     - namePattern: "backoffice-develop"
       images:
         - alias: backoffice
@@ -24,4 +24,4 @@ spec:
     - namePattern: "hike-develop"
       images:
         - alias: hike
-          imageName: registry.gitlab.com/epitech-msc-2026/backend/hike:linux-feature-logging
+          imageName: registry.gitlab.com/epitech-msc-2026/backend/hike:linux-develop
