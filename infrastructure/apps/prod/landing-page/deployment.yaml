@@ -6,9 +6,9 @@ metadata:
   labels:
     app: landing-page
 spec:
-  replicas: 1
+  replicas: 2
   selector:
-    matchLabels:
+    matchLabels:  
       app: landing-page
   template:
     metadata:
