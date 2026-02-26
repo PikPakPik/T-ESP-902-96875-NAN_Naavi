@@ -45,7 +45,7 @@ data:
       max_query_parallelism: 32
       max_streams_per_user: 10000
       max_line_size: 256KB
-      max_entries_limit_per_query: 5000
+      max_entries_limit_per_query: 100000
       max_cache_freshness_per_query: 10m
       per_stream_rate_limit: 3MB
       per_stream_rate_limit_burst: 15MB
