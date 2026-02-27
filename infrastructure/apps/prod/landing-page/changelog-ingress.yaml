@@ -1,15 +1,16 @@
-# Redirections dev.naavi-trails.fr/changelog* → GitLab Pages (changelog develop)
+# Redirections naavi-trails.fr/changelog* → GitLab Pages (changelog main/prod)
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: changelog-mobile-ingress
-  namespace: develop
+  namespace: prod
   annotations:
     nginx.ingress.kubernetes.io/configuration-snippet: |
-      return 302 https://epitech-msc-2026.gitlab.io/changelog/develop/mobile/changelog.json;
+      return 302 https://epitech-msc-2026.gitlab.io/changelog/main/mobile/changelog.json;
 spec:
   rules:
-    - host: dev.naavi-trails.fr
+    - host: naavi-trails.fr
       http:
         paths:
           - path: /changelog/mobile
@@ -24,16 +25,16 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: changelog-backoffice-ingress
-  namespace: develop
+  namespace: prod
   annotations:
     nginx.ingress.kubernetes.io/configuration-snippet: |
-      return 302 https://epitech-msc-2026.gitlab.io/changelog/develop/backoffice/changelog.json;
+      return 302 https://epitech-msc-2026.gitlab.io/changelog/main/backoffice/changelog.json;
 spec:
   rules:
-    - host: dev.naavi-trails.fr
+    - host: naavi-trails.fr
       http:
         paths:
-          - path: /changelog
+          - path: /changelog/backoffice
             pathType: Prefix
             backend:
               service:
