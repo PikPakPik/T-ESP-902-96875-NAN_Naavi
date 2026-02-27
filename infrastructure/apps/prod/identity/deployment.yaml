@@ -45,6 +45,13 @@ spec:
           {{- with secret "kv-prod/data/turnstile" -}}
           export CLOUDFLARE_TURNSTILE_SECRET_KEY="{{ .Data.data.secretKey }}"
           {{- end -}}
+        vault.hashicorp.com/agent-inject-secret-s3: "kv-prod/data/s3"
+        vault.hashicorp.com/agent-inject-template-s3: |
+          {{- with secret "kv-prod/data/s3" -}}
+          export S3_ENDPOINT="{{ .Data.data.url }}"
+          export S3_ACCESS_KEY="{{ or .Data.data.accessKey .Data.data.id }}"
+          export S3_SECRET_KEY="{{ .Data.data.secretKey }}"
+          {{- end -}}
         vault.hashicorp.com/agent-inject-secret-default-private: "kv-prod/data/certificates/default"
         vault.hashicorp.com/agent-inject-template-default-private: |
           {{- with secret "kv-prod/data/certificates/default" -}}
@@ -105,6 +112,7 @@ spec:
               source /vault/secrets/database
               [ -f /vault/secrets/secrets ] && source /vault/secrets/secrets
               [ -f /vault/secrets/turnstile ] && source /vault/secrets/turnstile
+              [ -f /vault/secrets/s3 ] && source /vault/secrets/s3
               [ -f /vault/secrets/default-password ] && source /vault/secrets/default-password
               [ -f /vault/secrets/auth-password ] && source /vault/secrets/auth-password
               [ -f /vault/secrets/exchange-password ] && source /vault/secrets/exchange-password
