@@ -49,7 +49,7 @@ spec:
         vault.hashicorp.com/agent-inject-template-s3: |
           {{- with secret "kv-dev/data/s3" -}}
           export S3_ENDPOINT="{{ .Data.data.url }}"
-          export S3_ACCESS_KEY="{{ or .Data.data.accessKey .Data.data.id }}"
+          export S3_ACCESS_KEY="{{ .Data.data.accessKey }}"
           export S3_SECRET_KEY="{{ .Data.data.secretKey }}"
           {{- end -}}
         vault.hashicorp.com/agent-inject-secret-default-private: "kv-dev/data/certificates/default"
