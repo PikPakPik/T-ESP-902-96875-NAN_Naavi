@@ -11,6 +11,7 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.InputStream;
@@ -59,6 +60,7 @@ public class S3Service {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(this.bucket)
                     .key(key)
+                    .acl(ObjectCannedACL.PUBLIC_READ)
                     .build();
 
             byte[] fileContent = inputStream.readAllBytes();
