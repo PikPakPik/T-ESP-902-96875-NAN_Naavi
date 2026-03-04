@@ -1,0 +1,68 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+  namespace: prod
+  labels:
+    app: postgres-backup
+spec:
+  schedule: "0 2 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: postgres-backup
+          annotations:
+            vault.hashicorp.com/agent-inject: "true"
+            vault.hashicorp.com/role: "postgres-prod"
+            vault.hashicorp.com/agent-pre-populate-only: "true"
+            vault.hashicorp.com/agent-inject-secret-database: "kv-prod/data/database/config"
+            vault.hashicorp.com/agent-inject-template-database: |
+              {{- with secret "kv-prod/data/database/config" -}}
+              export PGUSER="{{ .Data.data.username }}"
+              export PGPASSWORD="{{ .Data.data.password }}"
+              {{- end -}}
+            vault.hashicorp.com/agent-inject-secret-s3: "kv-prod/data/s3"
+            vault.hashicorp.com/agent-inject-template-s3: |
+              {{- with secret "kv-prod/data/s3" -}}
+              export AWS_ACCESS_KEY_ID="{{ .Data.data.accessKey }}"
+              export AWS_SECRET_ACCESS_KEY="{{ .Data.data.secretKey }}"
+              export S3_ENDPOINT="{{ .Data.data.url }}"
+              {{- end -}}
+        spec:
+          serviceAccountName: postgres-vault
+          restartPolicy: OnFailure
+          containers:
+            - name: backup
+              image: postgis/postgis:17-3.5-alpine
+              env:
+                - name: S3_BUCKET
+                  value: "naavi-backups"
+              command: ["/bin/sh"]
+              args:
+                - -c
+                - |
+                  set -e
+                  source /vault/secrets/database
+                  source /vault/secrets/s3
+                  apk add --no-cache aws-cli > /dev/null 2>&1
+                  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                  for DB in naavi_hike naavi_identity naavi_authentication; do
+                    echo "Backing up $DB..."
+                    pg_dump -h pgdata -U "$PGUSER" -d "$DB" | gzip | \
+                      aws s3 cp \
+                        --endpoint-url "$S3_ENDPOINT" \
+                        - "s3://$S3_BUCKET/prod/${DB}_${TIMESTAMP}.sql.gz"
+                  done
+                  echo "Backup completed successfully"
+              resources:
+                requests:
+                  memory: "128Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "256Mi"
+                  cpu: "250m"

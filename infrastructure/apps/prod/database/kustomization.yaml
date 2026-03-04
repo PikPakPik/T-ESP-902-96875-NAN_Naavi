@@ -3,4 +3,5 @@ resources:
   - postgres-deployment.yaml
   - postgres-service.yaml
   - vault-serviceaccount.yaml
+  - backup-cronjob.yaml
 
