@@ -51,13 +51,10 @@ spec:
                   source /vault/secrets/s3
                   apk add --no-cache aws-cli > /dev/null 2>&1
                   TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-                  for DB in naavi_hike naavi_identity naavi_authentication; do
-                    echo "Backing up $DB..."
-                    pg_dump -h pgdata -U "$PGUSER" -d "$DB" | gzip | \
-                      aws s3 cp \
-                        --endpoint-url "$S3_ENDPOINT" \
-                        - "s3://$S3_BUCKET/prod/${DB}_${TIMESTAMP}.sql.gz"
-                  done
+                  pg_dump -h pgdata -U "$PGUSER" -d "naavi" | gzip | \
+                    aws s3 cp \
+                      --endpoint-url "$S3_ENDPOINT" \
+                      - "s3://$S3_BUCKET/prod/naavi_${TIMESTAMP}.sql.gz"
                   echo "Backup completed successfully"
               resources:
                 requests:
