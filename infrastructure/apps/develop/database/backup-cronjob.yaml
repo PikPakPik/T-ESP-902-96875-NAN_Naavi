@@ -54,7 +54,7 @@ spec:
                   pg_dump -h pgdata -U "$PGUSER" -d "naavi" | gzip | \
                     aws s3 cp \
                       --endpoint-url "$S3_ENDPOINT" \
-                      - "s3://$S3_BUCKET/develop/naavi_${TIMESTAMP}.sql.gz"
+                      - "s3://$S3_BUCKET/develop/${TIMESTAMP}/naavi.sql.gz"
                   echo "Backup completed successfully"
               resources:
                 requests:
