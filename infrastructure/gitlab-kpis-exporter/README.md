@@ -27,18 +27,12 @@ Chaque issue expose:
 - `issue_iid`, `issue_id` - IID et ID de l'issue
 - `title` - Titre de l'issue (tronqué à 150 chars)
 - `state` - État (opened, closed)
-- `issue_type` - Type (issue, incident, test_case, task)
-- `work_item_status` - **Statut work item** (GitLab 18.2+ Premium/Ultimate) : To do, In progress, Done, Won't do, Duplicate. En Free ou si non configuré : Open / Closed.
 - `author` - Username de l'auteur
 - `assignees` - Liste des assignees (séparés par virgule)
 - `labels` - Labels de l'issue
 - `created_at`, `updated_at`, `closed_at` - Timestamps
 - `milestone` - Milestone associée
 - `web_url` - URL vers l'issue
-
-**Métrique:** `gitlab_issue_status` – Nombre d'issues par état (opened/closed), pour agrégation dans Grafana.
-
-**Métrique:** `gitlab_issue_work_item_status` – Nombre d'issues par **statut work item** (To do, In progress, Done, Won't do, Duplicate, ou Open/Closed en fallback). Voir [GitLab Status](https://docs.gitlab.com/user/work_items/status/).
 
 ### Merge Requests
 **Métrique:** `gitlab_merge_request`
@@ -181,6 +175,7 @@ Modifiez `configmap.yaml` pour ajuster:
 - `INCLUDE_SUBGROUPS`: Inclure les sous-groupes (true/false)
 - `PORT`: Port du serveur de métriques (défaut: 8080)
 - `REFRESH_INTERVAL`: Intervalle de refresh en secondes (défaut: 3600)
+- `COMMIT_SINCE_DAYS`: Nombre de jours pour les commits récents (défaut: 30). Seuls les commits sur la branche par défaut depuis cette date sont exportés.
 
 ## Configuration Prometheus
 
