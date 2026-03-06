@@ -41,6 +41,9 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column
+    private String profilePicture;
+
     @Column(columnDefinition = "text")
     @Convert(converter = RolesConverter.class)
     private List<RoleEnum> roles = new ArrayList<>();
@@ -132,6 +135,20 @@ public class User {
      */
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    /**
+     * @return The URL or path to the user's profile picture.
+     */
+    public String getProfilePicture() {
+        return profilePicture;
+    }
+
+    /**
+     * @param profilePicture The URL or path to set for the user's profile picture.
+     */
+    public void setProfilePicture(String profilePicture) {
+        this.profilePicture = profilePicture;
     }
 
     /**

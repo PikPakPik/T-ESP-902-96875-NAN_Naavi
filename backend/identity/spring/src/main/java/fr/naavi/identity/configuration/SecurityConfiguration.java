@@ -61,6 +61,7 @@ public class SecurityConfiguration {
     ) throws Exception {
         http.securityMatcher("/login");
         http.csrf(AbstractHttpConfigurer::disable);
+        http.headers(headers -> headers.contentTypeOptions(c -> {}).frameOptions(f -> f.deny()));
         http.logout(AbstractHttpConfigurer::disable);
         http.httpBasic(AbstractHttpConfigurer::disable);
         http.formLogin(AbstractHttpConfigurer::disable);
@@ -84,6 +85,7 @@ public class SecurityConfiguration {
     public SecurityFilterChain internalFilterChain(HttpSecurity http, InternalApiKeyFilter internalApiKeyFilter) throws Exception {
         http.securityMatcher("/internal/**");
         http.csrf(AbstractHttpConfigurer::disable);
+        http.headers(headers -> headers.contentTypeOptions(c -> {}).frameOptions(f -> f.deny()));
         http.logout(AbstractHttpConfigurer::disable);
         http.httpBasic(AbstractHttpConfigurer::disable);
         http.formLogin(AbstractHttpConfigurer::disable);
@@ -106,6 +108,7 @@ public class SecurityConfiguration {
     public SecurityFilterChain swaggerFilterChain(HttpSecurity http) throws Exception {
         http.securityMatcher("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html");
         http.csrf(AbstractHttpConfigurer::disable);
+        http.headers(headers -> headers.contentTypeOptions(c -> {}).frameOptions(f -> f.sameOrigin()));
         http.logout(AbstractHttpConfigurer::disable);
         http.httpBasic(AbstractHttpConfigurer::disable);
         http.formLogin(AbstractHttpConfigurer::disable);
@@ -143,6 +146,10 @@ public class SecurityConfiguration {
         http.logout(AbstractHttpConfigurer::disable);
         http.httpBasic(AbstractHttpConfigurer::disable);
         http.formLogin(AbstractHttpConfigurer::disable);
+        http.headers(headers -> headers
+                .contentTypeOptions(c -> {})
+                .frameOptions(f -> f.deny())
+        );
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(new AuthenticationNotRequiredMatcher(handlerMapping)).permitAll()

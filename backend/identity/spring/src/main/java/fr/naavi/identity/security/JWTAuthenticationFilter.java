@@ -8,6 +8,7 @@ import fr.naavi.identity.entity.Session;
 import fr.naavi.identity.entity.User;
 import fr.naavi.identity.repository.SessionRepository;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -98,13 +99,23 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                 );
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-        } catch (Exception e) {
-            log.error("Authentication error: {}", e.getMessage());
+        } catch (JwtException e) {
+            log.warn("Authentication failed (invalid or expired token): {}", e.getMessage());
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             ApiResponseDTO apiResponseDto = new ApiResponseDTO(
                     "authentication.error",
                     "Authentication error"
+            );
+            response.getWriter().write(objectMapper.writeValueAsString(apiResponseDto));
+            return;
+        } catch (Exception e) {
+            log.error("Internal error during authentication", e);
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            ApiResponseDTO apiResponseDto = new ApiResponseDTO(
+                    "internal.error",
+                    "An internal error occurred"
             );
             response.getWriter().write(objectMapper.writeValueAsString(apiResponseDto));
             return;

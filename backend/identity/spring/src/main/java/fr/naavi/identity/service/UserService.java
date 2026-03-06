@@ -2,10 +2,12 @@ package fr.naavi.identity.service;
 
 import fr.naavi.core.enums.PermissionEnum;
 import fr.naavi.core.enums.RoleEnum;
+import fr.naavi.core.enums.S3Enum;
 import fr.naavi.core.exception.children.NaaviBadCredentialsException;
 import fr.naavi.core.exception.children.NaaviConflictException;
 import fr.naavi.core.exception.children.NaaviNotFoundException;
 import fr.naavi.core.service.RandomService;
+import fr.naavi.core.service.S3Service;
 import fr.naavi.identity.dto.input.RegisterDTO;
 import fr.naavi.identity.dto.input.ResetPasswordDTO;
 import fr.naavi.identity.dto.input.UserDTO;
@@ -26,6 +28,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final ResetPasswordRequestRepository resetPasswordRequestRepository;
     private final RandomService randomService;
+    private final S3Service s3Service;
 
     /**
      * Constructs a UserService
@@ -34,11 +37,13 @@ public class UserService {
     public UserService(
             UserRepository userRepository,
             ResetPasswordRequestRepository resetPasswordRequestRepository,
-            RandomService randomService
+            RandomService randomService,
+            S3Service s3Service
     ) {
         this.userRepository = userRepository;
         this.resetPasswordRequestRepository = resetPasswordRequestRepository;
         this.randomService = randomService;
+        this.s3Service = s3Service;
     }
 
     /**
@@ -230,6 +235,28 @@ public class UserService {
 
         String randomPassword = randomService.randomString(16);
         user.setPassword(this.hashPassword(randomPassword));
+
+        if (user.getProfilePicture() != null) {
+            s3Service.delete(S3Enum.USERS, user.getProfilePicture(), null);
+            user.setProfilePicture(null);
+        }
+
+        userRepository.save(user);
+    }
+
+    /**
+     * Deletes a user's profile picture from the repository and S3.
+     *
+     * @param id The ID of the user whose profile picture is to be deleted.
+     */
+    public void deleteUserProfilePictureById(Long id) {
+        User user = userRepository.findByIdAndStatusNotDeleted(id)
+                .orElseThrow(() -> new NaaviNotFoundException("user.not_found", "User not found"));
+
+        if (user.getProfilePicture() != null) {
+            s3Service.delete(S3Enum.USERS, user.getProfilePicture(), null);
+            user.setProfilePicture(null);
+        }
 
         userRepository.save(user);
     }

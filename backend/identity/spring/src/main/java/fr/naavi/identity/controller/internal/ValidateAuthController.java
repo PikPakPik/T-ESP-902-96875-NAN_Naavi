@@ -3,6 +3,8 @@ package fr.naavi.identity.controller.internal;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 import fr.naavi.core.dto.InternalAuthTokenDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import fr.naavi.core.enums.JwtEnum;
 import fr.naavi.core.enums.TokenType;
 import fr.naavi.core.service.JwtService;
@@ -32,6 +34,9 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/internal")
 public class ValidateAuthController extends AbstractController {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ValidateAuthController.class);
+
     private final JwtService jwtService;
     private final SessionRepository sessionRepository;
 
@@ -62,6 +67,7 @@ public class ValidateAuthController extends AbstractController {
                 : authorizationValue;
 
         if (token == null || token.isEmpty()) {
+            LOG.info("InternalToken exchange: no token provided, returning guest");
             response.setHeader("X-User", this.generateGuestToken());
             return ResponseEntity.noContent().build();
         }
@@ -73,15 +79,19 @@ public class ValidateAuthController extends AbstractController {
             Optional<Session> session = this.sessionRepository.findByAccessToken(sessId);
 
             if (session.isEmpty()) {
+                LOG.warn("InternalToken exchange: invalid session for sessId={}", sessId);
                 throw new Exception("Invalid session");
             }
 
             if (session.get().getAccessTokenExpiredAt().isBefore(LocalDateTime.now())) {
+                LOG.warn("InternalToken exchange: session expired for sessId={}", sessId);
                 throw new Exception("Session expired");
             }
 
+            LOG.info("InternalToken exchange: success for user={}", session.get().getUser().getEmail());
             response.setHeader("X-User", this.generateLoggedToken(session.get().getUser()));
         } catch (Exception e) {
+            LOG.warn("InternalToken exchange failed: {} - returning guest", e.getMessage());
             response.setHeader("X-User", this.generateGuestToken());
         }
 

@@ -7,7 +7,7 @@
       "vendor": {
         "name": "GitLab"
       },
-      "version": "6.14.0"
+      "version": "6.15.1"
     },
     "scanner": {
       "id": "semgrep",
@@ -2994,23 +2994,23 @@
       }
     ],
     "type": "sast",
-    "start_time": "2026-01-29T12:41:51",
-    "end_time": "2026-01-29T12:42:11",
+    "start_time": "2026-03-06T18:06:11",
+    "end_time": "2026-03-06T18:06:32",
     "status": "success",
     "observability": {
       "events": [
         {
           "event": "collect_sast_scan_metrics_from_pipeline",
-          "property": "3749ad9f-e8ea-4964-ace1-85ee0bb5d09b",
+          "property": "c18d4f8b-adc1-4f38-bfc1-1941e7a260ec",
           "label": "semgrep",
           "value": 0,
-          "version": "6.14.0",
+          "version": "6.15.1",
           "exit_code": 0,
           "override_count": 0,
           "passthrough_count": 0,
           "custom_exclude_path_count": 0,
-          "time_s": 19,
-          "file_count": 72
+          "time_s": 21,
+          "file_count": 73
         }
       ]
     }
@@ -3018,11 +3018,80 @@
   "version": "15.2.2",
   "vulnerabilities": [
     {
-      "id": "901e2c44a450d67432fe5cecbc964c37a6cef1fd5e06effbc1f76bbb364b24b4",
+      "id": "4797ca94e29a29de5cb1ead655728ede37db5ce922070b9c16184407c73a8515",
+      "category": "sast",
+      "name": "Use of a broken or risky cryptographic algorithm (SHA1/MD5)",
+      "description": "The application was found using an insecure or risky digest or signature algorithm. Both MD5\nand SHA1 hash algorithms have been found to be vulnerable to producing collisions.\nThis means\nthat two different values, when hashed, can lead to the same hash value. If the application is\ntrying\nto use these hash methods for storing passwords, then it is recommended to switch to a\npassword hashing\nalgorithm such as Argon2id or PBKDF2.\nstrongly recommended that a standard Digest algorithm be chosen instead as implementing\na digest by hand is error-prone.\n\nExample of creating a SHA-384 hash:\n```\n// Create a MessageDigest using the SHA-384 algorithm\nMessageDigest sha384Digest = MessageDigest.getInstance(\"SHA-384\");\n// Call update with your data\nsha384Digest.update(input);\n// Only call digest once all data has been fed into the update sha384digest instance\nbyte[] output = sha384Digest.digest();\n// output base64 encoded version of the hash\nSystem.out.println(\"hash: \" + Base64.getEncoder().encodeToString(output));\n```\n\nFor more information on secure password storage see OWASP:\nhttps://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html\n",
+      "cve": "semgrep_id:find_sec_bugs.WEAK_MESSAGE_DIGEST_MD5-1.WEAK_MESSAGE_DIGEST_SHA1-1:245:245",
+      "severity": "Medium",
+      "scanner": {
+        "id": "semgrep",
+        "name": "Semgrep"
+      },
+      "location": {
+        "file": "spring/src/main/java/fr/naavi/identity/controller/UserController.java",
+        "start_line": 245
+      },
+      "identifiers": [
+        {
+          "type": "semgrep_id",
+          "name": "find_sec_bugs.WEAK_MESSAGE_DIGEST_MD5-1.WEAK_MESSAGE_DIGEST_SHA1-1",
+          "value": "find_sec_bugs.WEAK_MESSAGE_DIGEST_MD5-1.WEAK_MESSAGE_DIGEST_SHA1-1"
+        },
+        {
+          "type": "cwe",
+          "name": "CWE-327",
+          "value": "327",
+          "url": "https://cwe.mitre.org/data/definitions/327.html"
+        },
+        {
+          "type": "owasp",
+          "name": "A04:2021 - Insecure Design",
+          "value": "A04:2021"
+        },
+        {
+          "type": "owasp",
+          "name": "A6:2017 - Security Misconfiguration",
+          "value": "A6:2017"
+        },
+        {
+          "type": "find_sec_bugs_type",
+          "name": "Find Security Bugs-WEAK_MESSAGE_DIGEST_MD5",
+          "value": "WEAK_MESSAGE_DIGEST_MD5"
+        },
+        {
+          "type": "find_sec_bugs_type",
+          "name": "Find Security Bugs-WEAK_MESSAGE_DIGEST_SHA1",
+          "value": "WEAK_MESSAGE_DIGEST_SHA1"
+        }
+      ],
+      "tracking": {
+        "type": "source",
+        "items": [
+          {
+            "file": "spring/src/main/java/fr/naavi/identity/controller/UserController.java",
+            "line_start": 245,
+            "line_end": 245,
+            "signatures": [
+              {
+                "algorithm": "scope_offset_compressed",
+                "value": "spring/src/main/java/fr/naavi/identity/controller/UserController.java|UserController[0]|ApiResponseDTO[0]:84"
+              },
+              {
+                "algorithm": "scope_offset",
+                "value": "spring/src/main/java/fr/naavi/identity/controller/UserController.java|UserController[0]|ApiResponseDTO[0]:90"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "50c910c08af1ccc4a17c790bd05ed1417bdc43e65be681a3ce264a6470eacb33",
       "category": "sast",
       "name": "Use of a broken or risky cryptographic algorithm",
       "description": "Detected use of the 'none' algorithm in a JWT token. The 'none'\nalgorithm assumes the integrity of the token has already been verified.\nThis would allow a malicious actor to forge a JWT token that will\nautomatically be verified. Do not explicitly use the 'none' algorithm.\nInstead, use an algorithm such as 'HS256'.\n\nFor more information on how to securely use JWT please see OWASP:\n- https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html\n",
-      "cve": "semgrep_id:java_crypto_rule_JwtNoneAlgorithm:114:114",
+      "cve": "semgrep_id:java_crypto_rule_JwtNoneAlgorithm:124:124",
       "severity": "Critical",
       "scanner": {
         "id": "semgrep",
@@ -3030,7 +3099,7 @@
       },
       "location": {
         "file": "spring/src/main/java/fr/naavi/identity/controller/internal/ValidateAuthController.java",
-        "start_line": 114
+        "start_line": 124
       },
       "identifiers": [
         {
@@ -3061,8 +3130,8 @@
         "items": [
           {
             "file": "spring/src/main/java/fr/naavi/identity/controller/internal/ValidateAuthController.java",
-            "line_start": 114,
-            "line_end": 114,
+            "line_start": 124,
+            "line_end": 124,
             "signatures": [
               {
                 "algorithm": "scope_offset_compressed",

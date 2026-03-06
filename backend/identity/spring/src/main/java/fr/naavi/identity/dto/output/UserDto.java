@@ -2,6 +2,7 @@ package fr.naavi.identity.dto.output;
 
 import fr.naavi.core.enums.PermissionEnum;
 import fr.naavi.core.enums.RoleEnum;
+import fr.naavi.core.enums.S3Enum;
 import fr.naavi.identity.entity.User;
 import fr.naavi.identity.enums.StatusEnum;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -23,6 +24,9 @@ public class UserDto {
 
     @Schema(description = "Email de l'utilisateur", example = "jean.dupont@email.com")
     private final String email;
+
+    @Schema(description = "URL vers l'image de profil stockée sur S3", example = "https://s3.example.com/users/file.jpg")
+    private final String profilePicture;
 
     @ArraySchema(schema = @Schema(
             description = "Liste des rôles de l'utilisateur",
@@ -56,6 +60,9 @@ public class UserDto {
         this.firstname = user.getFirstname();
         this.lastname = user.getLastname();
         this.email = user.getEmail();
+        this.profilePicture = user.getProfilePicture() == null ?
+                null :
+                S3Enum.USERS.toString().toLowerCase() + "/" + user.getProfilePicture();
         this.roles = user.getRoles();
         this.permissions = user.getPermissions();
         this.status = user.getStatus();
@@ -106,6 +113,15 @@ public class UserDto {
      */
     public String getEmail() {
         return email;
+    }
+
+    /**
+     * Get the profile picture URL of the user.
+     *
+     * @return The profile picture URL of the user, or null if not set.
+     */
+    public String getProfilePicture() {
+        return profilePicture;
     }
 
     /**

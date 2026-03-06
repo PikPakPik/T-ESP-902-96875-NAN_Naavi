@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <springProperty name="appName" source="spring.application.name" defaultValue="Naavi Identity"/>
+    <springProperty name="seqHost" source="SEQ_HOST" defaultValue="localhost"/>
+    <springProperty name="seqPort" source="SEQ_PORT" defaultValue="12201"/>
+    <springProperty name="environment" source="NAAVI_ENV" defaultValue="local"/>
+
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+    <include resource="fr/naavi/core/logback-appenders.xml"/>
+
+    <!-- GELF désactivé : ci (tests), k8s (logs via Loki/Promtail) -->
+    <springProfile name="ci,k8s">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+    <springProfile name="!ci &amp; !k8s">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="GELF"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="dev,local">
+        <logger name="fr.naavi" level="DEBUG"/>
+    </springProfile>
+    <springProfile name="!dev &amp; !local">
+        <logger name="fr.naavi" level="INFO"/>
+    </springProfile>
+    <logger name="org.springframework.web" level="WARN"/>
+    <logger name="org.springframework.security" level="WARN"/>
+    <logger name="org.springframework.boot" level="WARN"/>
+    <logger name="org.hibernate" level="WARN"/>
+    <logger name="org.quartz" level="WARN"/>
+    <logger name="org.springdoc" level="WARN"/>
+</configuration>

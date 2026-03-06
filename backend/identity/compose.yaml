@@ -16,6 +16,7 @@ services:
       SPRING_MAIL_PORT: 1025
       SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: false
       SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_REQUIRED: false
+      SEQ_HOST: "seq-input-gelf"
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=naavi-network"

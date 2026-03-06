@@ -1,6 +1,8 @@
 package fr.naavi.identity.controller;
 
+import fr.naavi.core.enums.S3Enum;
 import fr.naavi.core.exception.GlobalExceptionHandler;
+import fr.naavi.core.service.S3Service;
 import fr.naavi.identity.configuration.CacheConfigurationTest;
 import fr.naavi.identity.entity.User;
 import fr.naavi.identity.repository.UserRepository;
@@ -9,11 +11,13 @@ import fr.naavi.identity.util.AuthenticationManagerUtil;
 import org.hamcrest.core.IsNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.context.ActiveProfiles;
@@ -22,13 +26,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -49,6 +49,9 @@ public class UserControllerTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @MockitoBean
+    private S3Service s3Service;
 
     @BeforeEach
     void setUp() {
@@ -133,6 +136,134 @@ public class UserControllerTest {
         User updatedUser = userRepository.findById(user.getId()).orElseThrow();
         assertEquals(user.getEmail(), updatedUser.getEmail());
         assertNotEquals(newEmail, updatedUser.getEmail());
+    }
+
+    @Test
+    void shouldUploadProfilePicture_WithUnauthenticatedUser_ReturnsUnauthorized() throws Exception {
+        MockMultipartFile image = new MockMultipartFile(
+                "image", "photo.png", "image/png", "fake-image-content".getBytes()
+        );
+
+        mockMvc.perform(multipart("/user/profile-picture").file(image))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldUploadProfilePicture_WithEmptyFile_ReturnsBadRequest() throws Exception {
+        UsernamePasswordAuthenticationToken authToken = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        MockMultipartFile image = new MockMultipartFile(
+                "image", "photo.png", "image/png", new byte[0]
+        );
+
+        mockMvc.perform(multipart("/user/profile-picture")
+                        .file(image)
+                        .with(authentication(authToken)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.i18nKey").value("user.profile.invalid_file"))
+                .andExpect(jsonPath("$.message").value("The file is empty or invalid."));
+    }
+
+    @Test
+    void shouldUploadProfilePicture_WithInvalidContentType_ReturnsBadRequest() throws Exception {
+        UsernamePasswordAuthenticationToken authToken = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        MockMultipartFile image = new MockMultipartFile(
+                "image", "document.pdf", "application/pdf", "fake-pdf-content".getBytes()
+        );
+
+        mockMvc.perform(multipart("/user/profile-picture")
+                        .file(image)
+                        .with(authentication(authToken)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.i18nKey").value("user.profile.invalid_file"))
+                .andExpect(jsonPath("$.message").value("Only image files are allowed."));
+    }
+
+    @Test
+    void shouldUploadProfilePicture_WithValidFile_ReturnsSuccess() throws Exception {
+        UsernamePasswordAuthenticationToken authToken = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        MockMultipartFile image = new MockMultipartFile(
+                "image", "photo.png", "image/png", "fake-image-content".getBytes()
+        );
+
+        mockMvc.perform(multipart("/user/profile-picture")
+                        .file(image)
+                        .with(authentication(authToken)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.i18nKey").value("user.profile.uploaded"))
+                .andExpect(jsonPath("$.message").value("The image was successfully uploaded."));
+    }
+
+    @Test
+    void shouldUploadProfilePicture_WhenS3Fails_ReturnsBadRequest() throws Exception {
+        UsernamePasswordAuthenticationToken authToken = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        Mockito.doThrow(new RuntimeException("S3 unavailable"))
+                .when(s3Service).upload(Mockito.any(S3Enum.class), Mockito.any(), Mockito.anyString(), Mockito.any());
+
+        MockMultipartFile image = new MockMultipartFile(
+                "image", "photo.png", "image/png", "fake-image-content".getBytes()
+        );
+
+        mockMvc.perform(multipart("/user/profile-picture")
+                        .file(image)
+                        .with(authentication(authToken)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.i18nKey").value("user.profile.failed_upload"))
+                .andExpect(jsonPath("$.message").value("Failed to upload the image. Please try again later."));
+    }
+
+    @Test
+    void shouldDeleteProfilePicture_WithUnauthenticatedUser_ReturnsUnauthorized() throws Exception {
+        mockMvc.perform(delete("/user/profile-picture"))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldDeleteProfilePicture_WithNoProfilePicture_ReturnsBadRequest() throws Exception {
+        User user = UserSeeder.USER;
+        UsernamePasswordAuthenticationToken authToken = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, user);
+
+        // S'assurer que l'utilisateur n'a pas de photo de profil
+        user.setProfilePicture(null);
+        userRepository.save(user);
+
+        mockMvc.perform(delete("/user/profile-picture")
+                        .with(authentication(authToken))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.i18nKey").value("user.profile.no_picture"))
+                .andExpect(jsonPath("$.message").value("No profile picture to delete."));
+    }
+
+    @Test
+    void shouldDeleteProfilePicture_WithExistingProfilePicture_ReturnsSuccess() throws Exception {
+        User user = UserSeeder.USER;
+        UsernamePasswordAuthenticationToken authToken = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, user);
+
+        // Définir une photo de profil existante
+        user.setProfilePicture("existing-picture.png");
+        userRepository.save(user);
+
+        mockMvc.perform(delete("/user/profile-picture")
+                        .with(authentication(authToken))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.i18nKey").value("user.profile.deleted"))
+                .andExpect(jsonPath("$.message").value("The profile picture was successfully deleted."));
+
+        User updatedUser = userRepository.findById(user.getId()).orElseThrow();
+        assertNull(updatedUser.getProfilePicture());
     }
 
     @Test

@@ -3,8 +3,11 @@ package fr.naavi.identity.controller;
 import fr.naavi.core.dto.ApiResponseDTO;
 import fr.naavi.core.dto.PaginationDTO;
 import fr.naavi.core.dto.PaginatorDTO;
+import fr.naavi.core.enums.S3Enum;
+import fr.naavi.core.exception.children.NaaviBadRequestException;
 import fr.naavi.core.exception.children.NaaviConflictException;
 import fr.naavi.core.exception.children.NaaviNotFoundException;
+import fr.naavi.core.service.S3Service;
 import fr.naavi.identity.abstraction.AbstractController;
 import fr.naavi.identity.dto.input.UserDTO;
 import fr.naavi.identity.dto.output.UserDto;
@@ -29,14 +32,12 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.Set;
 
 @SecurityScheme(
         type = SecuritySchemeType.HTTP,
@@ -59,6 +60,9 @@ public class UserController extends AbstractController {
 
     @Autowired
     private AuthorizationService authorizationService;
+
+    @Autowired
+    private S3Service s3Service;
 
     /**
      * Endpoint to retrieve the current authenticated user.
@@ -146,6 +150,175 @@ public class UserController extends AbstractController {
         Authorization authorization = this.authorizationService.createAuthorizationForUpdateOldEmail(user, userDto);
         this.mailerService.sendEmailChangeOldEmailConfirmation(authorization);
         return new UserDto(user, false);
+    }
+
+    @Operation(
+            summary = "Mettre à jour la photo de profil",
+            description = "Permet à l'utilisateur connecté d'uploader une photo de profil. Formats acceptés : PNG, JPEG, JPG, WEBP, SVG, HEIC.",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            tags = {"Utilisateur"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Photo de profil uploadée avec succès.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{"
+                                            + "\"i18nKey\": \"user.profile.uploaded\","
+                                            + "\"message\": \"The image was successfully uploaded.\","
+                                            + "\"extra\": null"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Fichier invalide ou format non supporté.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Fichier vide ou invalide",
+                                            value = "{"
+                                                    + "\"i18nKey\": \"user.profile.invalid_file\","
+                                                    + "\"message\": \"The file is empty or invalid.\","
+                                                    + "\"extra\": null"
+                                                    + "}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "Format non autorisé",
+                                            value = "{"
+                                                    + "\"i18nKey\": \"hike.image.invalid_file\","
+                                                    + "\"message\": \"Only image files are allowed.\","
+                                                    + "\"extra\": [\n"
+                                                    + "\"image/png\",\n"
+                                                    + "\"image/svg+xml\",\n"
+                                                    + "\"image/jpg\",\n"
+                                                    + "\"image/jpeg\",\n"
+                                                    + "\"image/heic\",\n"
+                                                    + "\"image/webp\"\n"
+                                                    + "],\n"
+                                                    + "}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "Échec de l'upload",
+                                            value = "{"
+                                                    + "\"i18nKey\": \"user.profile.failed_upload\","
+                                                    + "\"message\": \"Failed to upload the image. Please try again later.\","
+                                                    + "\"extra\": null"
+                                                    + "}"
+                                    )
+                            }
+                    )
+            )
+    })
+    @PostMapping("/user/profile-picture")
+    public ApiResponseDTO uploadUserProfilePicture(@RequestParam("image") MultipartFile file) {
+        String fileName = file.getOriginalFilename();
+        if (file.isEmpty() || fileName == null) {
+            throw new NaaviBadRequestException("user.profile.invalid_file", "The file is empty or invalid.");
+        }
+
+        String contentType = file.getContentType() != null ? file.getContentType().toLowerCase() : "";
+        Set<String> allowedContentTypes = Set.of(
+                "image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml", "image/heic"
+        );
+        if (!allowedContentTypes.contains(contentType)) {
+            throw new NaaviBadRequestException("user.profile.invalid_file", "Only image files are allowed.", allowedContentTypes);
+        }
+
+        String extension = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
+
+        User user = this.getUser();
+
+        try {
+            if (user.getProfilePicture() != null) {
+                s3Service.delete(S3Enum.USERS, user.getProfilePicture(), null);
+            }
+
+            String toHash = fileName + "_" + System.currentTimeMillis();
+
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(toHash.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder();
+            for (byte b : digest) {
+                hex.append(String.format("%02x", b));
+            }
+            fileName = hex + "." + extension;
+
+            s3Service.upload(S3Enum.USERS, file.getInputStream(), fileName, null);
+            user.setProfilePicture(fileName);
+            userRepository.save(user);
+
+            return new ApiResponseDTO(
+                    "user.profile.uploaded",
+                    "The image was successfully uploaded."
+            );
+        } catch (Exception e) {
+            throw new NaaviBadRequestException(
+                    "user.profile.failed_upload",
+                    "Failed to upload the image. Please try again later."
+            );
+        }
+    }
+
+    @Operation(
+            summary = "Supprimer la photo de profil",
+            description = "Permet à l'utilisateur connecté de supprimer sa photo de profil.",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            tags = {"Utilisateur"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Photo de profil supprimée avec succès.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{"
+                                            + "\"i18nKey\": \"user.profile.deleted\","
+                                            + "\"message\": \"The profile picture was successfully deleted.\","
+                                            + "\"extra\": null"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Aucune photo de profil à supprimer ou échec de la suppression.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{"
+                                            + "\"i18nKey\": \"user.profile.no_picture\","
+                                            + "\"message\": \"No profile picture to delete.\","
+                                            + "\"extra\": null"
+                                            + "}"
+                            )
+                    )
+            )
+    })
+    @DeleteMapping("/user/profile-picture")
+    public ApiResponseDTO deleteUserProfilePicture() {
+        User user = this.getUser();
+        if (user.getProfilePicture() == null) {
+            throw new NaaviBadRequestException("user.profile.no_picture", "No profile picture to delete.");
+        }
+
+        s3Service.delete(S3Enum.USERS, user.getProfilePicture(), null);
+        user.setProfilePicture(null);
+        userRepository.save(user);
+        return new ApiResponseDTO(
+                "user.profile.deleted",
+                "The profile picture was successfully deleted."
+        );
     }
 
     //////////////////////
@@ -394,7 +567,14 @@ public class UserController extends AbstractController {
                     description = "Utilisateur supprimé avec succès.",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = ApiResponseDTO.class)
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{"
+                                            + "\"i18nKey\": \"user.deleted\","
+                                            + "\"message\": \"User successfully deleted\","
+                                            + "\"extra\": null"
+                                            + "}"
+                            )
                     )
             ),
             @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
@@ -419,5 +599,76 @@ public class UserController extends AbstractController {
     public ApiResponseDTO deleteUser(@PathVariable Long id) {
         this.userService.deleteUser(id);
         return new ApiResponseDTO("user.deleted", "User successfully deleted");
+    }
+
+    @Operation(
+            summary = "Supprimer la photo de profil d'un utilisateur",
+            description = "Permet à un administrateur de supprimer la photo de profil d'un utilisateur spécifique.",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            tags = {"Administration"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Photo de profil supprimée avec succès.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{"
+                                            + "\"i18nKey\": \"user.profile.deleted\","
+                                            + "\"message\": \"The profile picture was successfully deleted.\","
+                                            + "\"extra\": null"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
+            @ApiResponse(responseCode = "403", ref = "#/components/responses/AccessDeniedError"),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Utilisateur non trouvé.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    example = "{"
+                                            + "\"i18nKey\": \"user.not_found\","
+                                            + "\"message\": \"User not found.\","
+                                            + "\"extra\": null"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Aucune photo de profil à supprimer ou échec de la suppression.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Aucune photo de profil",
+                                            value = "{"
+                                                    + "\"i18nKey\": \"user.profile.no_picture\","
+                                                    + "\"message\": \"No profile picture to delete.\","
+                                                    + "\"extra\": null"
+                                                    + "}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "Échec de la suppression",
+                                            value = "{"
+                                                    + "\"i18nKey\": \"user.profile.failed_delete\","
+                                                    + "\"message\": \"Failed to delete the profile picture. Please try again later.\","
+                                                    + "\"extra\": null"
+                                                    + "}"
+                                    )
+                            }
+                    )
+            )
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/administration/users/{id}/profile-picture")
+    public ApiResponseDTO deleteUserProfilePictureFromAdmin(@PathVariable Long id) {
+        this.userService.deleteUserProfilePictureById(id);
+        return new ApiResponseDTO("user.profile.deleted", "The profile picture was successfully deleted.");
     }
 }
