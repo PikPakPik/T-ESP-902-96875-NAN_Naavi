@@ -1,652 +1,763 @@
 package fr.naavi.hike.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.naavi.core.dto.PaginationDTO;
-import fr.naavi.core.dto.PaginatorDTO;
-import fr.naavi.core.enums.RoleEnum;
 import fr.naavi.core.exception.GlobalExceptionHandler;
-import fr.naavi.hike.configuration.SecurityConfigurationTest;
-import fr.naavi.hike.dto.UserDTO;
+import fr.naavi.hike.configuration.CacheConfigurationTest;
 import fr.naavi.hike.dto.input.HikeDTO;
 import fr.naavi.hike.dto.input.HikeHistoryDTO;
-import fr.naavi.hike.dto.input.GeoPaginationDTO;
-import fr.naavi.hike.dto.output.HikeDto;
-import fr.naavi.hike.dto.output.HikeHistoryDto;
 import fr.naavi.hike.entity.Hike;
-import fr.naavi.hike.entity.HikeHistory;
-import fr.naavi.hike.enums.DifficultyEnum;
-import fr.naavi.hike.enums.SeasonEnum;
 import fr.naavi.hike.enums.SourceEnum;
-import fr.naavi.hike.enums.StatusEnum;
 import fr.naavi.hike.repository.HikeHistoryRepository;
 import fr.naavi.hike.repository.HikeRepository;
-import fr.naavi.hike.service.HikeService;
-import fr.naavi.hike.util.DtoFactory;
+import fr.naavi.hike.seeder.HikeHistorySeeder;
+import fr.naavi.hike.seeder.HikeSeeder;
+import fr.naavi.hike.seeder.UserSeeder;
+import fr.naavi.hike.utils.AuthenticationManagerUtil;
+import fr.naavi.hike.utils.DtoFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.RequestPostProcessor;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@SpringBootTest
+@AutoConfigureMockMvc
 @ActiveProfiles("ci")
-@WebMvcTest(HikeController.class)
-@Import({GlobalExceptionHandler.class, SecurityConfigurationTest.class})
 @TestPropertySource(locations = "classpath:application-ci.properties")
+@Import({GlobalExceptionHandler.class, CacheConfigurationTest.class})
 public class HikeControllerTest {
-    private final Random random = new Random();
-
-    @MockitoBean
-    private HikeRepository hikeRepository;
-
-    @MockitoBean
-    private HikeHistoryRepository hikeHistoryRepository;
-
-    @MockitoBean
-    private HikeService hikeService;
-
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
-    private WebApplicationContext webApplicationContext;
+    private UserSeeder userSeeder;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private HikeSeeder hikeSeeder;
+
+    @Autowired
+    private HikeHistorySeeder hikeHistorySeeder;
+
+    @Autowired
+    private HikeRepository hikeRepository;
+
+    @Autowired
+    private HikeHistoryRepository hikeHistoryRepository;
+
+    @MockitoBean
+    private AuthenticationManager authenticationManager;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders
-                .webAppContextSetup(webApplicationContext)
-                .apply(springSecurity())
-                .build();
+        hikeHistoryRepository.deleteAll();
+        hikeSeeder.seedHikes();
+        userSeeder.seedUsers();
     }
 
+    /*
+     * HIKES ENDPOINT TESTS
+     */
+
     @Test
-    void testHikes_shouldReturnPaginatedHikes() throws Exception {
-        Hike hike = this.createMockHike();
-        Hike hike2 = this.createMockHike();
-
-        List<HikeDto> hikeList = List.of(
-                new HikeDto(hike, true),
-                new HikeDto(hike2, true)
-        );
-
-        PaginationDTO paginationDTO = new PaginationDTO();
-        paginationDTO.setPage(1);
-        paginationDTO.setLimit(10);
-
-        PaginatorDTO<HikeDto> paginatorDTO = new PaginatorDTO<>(hikeList, hikeList.toArray().length, paginationDTO);
-
-        when(hikeRepository.findAllHikeWithPagination(any(GeoPaginationDTO.class)))
-                .thenReturn(paginatorDTO);
+    void shouldReturnPaginatedHikes_WithCorrectCoordinates() throws Exception {
+        String[] coords = HikeSeeder.COORDINATES.get(0).split(",");
 
         mockMvc.perform(get("/hikes")
-                        .param("latitude", "47.2180438")
-                        .param("longitude", "-1.5549507")
-                        .param("page", "1")
-                        .param("limit", "10"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("latitude", coords[1])
+                        .param("longitude", coords[2]))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items").isArray())
-                .andExpect(jsonPath("$.totalItems").value(hikeList.toArray().length))
+                .andExpect(jsonPath("$.totalItems").value(15))
                 .andExpect(jsonPath("$.totalPages").value(1))
                 .andExpect(jsonPath("$.currentPage").value(1))
                 .andExpect(jsonPath("$.nextPage").doesNotExist())
                 .andExpect(jsonPath("$.previousPage").doesNotExist());
-
-        verify(hikeRepository).findAllHikeWithPagination(any(GeoPaginationDTO.class));
     }
 
     @Test
-    void testGetHike_shouldReturnHikeById() throws Exception {
-        Long hikeId = 1L;
-        Hike hike = this.createMockHike();
+    void shouldReturnValidationError_WhenCoordinatesAreInvalid() throws Exception {
+        mockMvc.perform(get("/hikes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("latitude", "")
+                        .param("longitude", ""))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.i18nKey").value("validation.failed"))
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.extra").isMap())
+                .andExpect(jsonPath("$.extra.latitude").value("must not be null"))
+                .andExpect(jsonPath("$.extra.longitude").value("must not be null"));
+    }
 
-        when(hikeRepository.findById(hikeId)).thenReturn(Optional.of(hike));
+    @Test
+    void shouldReturnHikeDetails_WhenHikeExists() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
 
-        mockMvc.perform(get("/hikes/{id}", hikeId))
+        mockMvc.perform(get("/hikes/{id}", hike.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(hike.getId()))
                 .andExpect(jsonPath("$.name").value(hike.getName()))
-                .andExpect(jsonPath("$.startingPointLatitude").value(hike.getStartingPointLatitude()))
-                .andExpect(jsonPath("$.startingPointLongitude").value(hike.getStartingPointLongitude()))
-                .andExpect(jsonPath("$.startingElevation").value(hike.getStartingElevation()))
-                .andExpect(jsonPath("$.arrivalPointLatitude").value(hike.getArrivalPointLatitude()))
-                .andExpect(jsonPath("$.arrivalPointLongitude").value(hike.getArrivalPointLongitude()))
-                .andExpect(jsonPath("$.arrivalElevation").value(hike.getArrivalElevation()))
-                .andExpect(jsonPath("$.distance").value(hike.getDistance()))
-                .andExpect(jsonPath("$.location").value(hike.getLocation()))
-                .andExpect(jsonPath("$.difficulty").value(hike.getDifficulty().toString()))
-                .andExpect(jsonPath("$.status").value(hike.getStatus().toString()))
-                .andExpect(jsonPath("$.createdAt").exists())
-                .andExpect(jsonPath("$.updatedAt").exists());
-
-        verify(hikeRepository).findById(hikeId);
+                .andExpect(jsonPath("$.duration").exists());
     }
 
     @Test
-    void testGetHike_shouldReturn404WhenHikeNotFound() throws Exception {
-        Long hikeId = 999L;
+    void shouldReturnNotFound_WhenHikeDoesNotExist() throws Exception {
+        Long nonExistentId = 999999999L;
 
-        when(hikeRepository.findById(hikeId)).thenReturn(Optional.empty());
-
-        mockMvc.perform(get("/hikes/{id}", hikeId))
+        mockMvc.perform(get("/hikes/{id}", nonExistentId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.i18nKey").value("hike.not_found"))
-                .andExpect(jsonPath("$.message").value("Hike not found"));
-
-        verify(hikeRepository).findById(hikeId);
+                .andExpect(jsonPath("$.message").value("Hike not found"))
+                .andExpect(jsonPath("$.extra").doesNotExist());
     }
 
     @Test
-    void testCreateHike_shouldReturnCreatedHike() throws Exception {
-        HikeDTO hikeDTO = DtoFactory.createDto(HikeDTO.class, Map.ofEntries(
-                Map.entry("name", "Nouvelle randonnée"),
-                Map.entry("startingPointLatitude", 47.2180438348419),
-                Map.entry("startingPointLongitude", -1.5549507712791397),
-                Map.entry("startingElevation", 100),
-                Map.entry("arrivalPointLatitude", 47.2180438348419),
-                Map.entry("arrivalPointLongitude", -1.5549507712791397),
-                Map.entry("arrivalElevation", 200),
-                Map.entry("wkbGeometry", "NONE"),
-                Map.entry("wkbWaypoints", "NONE"),
-                Map.entry("distance", 5000),
-                Map.entry("duration", 7200),
-                Map.entry("difficulty", "MODERATE"),
-                Map.entry("status", "PUBLISHED")
+    void shouldCreateHike_WithLoggedUser_WhenValidRequest() throws Exception {
+        int size = HikeSeeder.SARTHE_COORDINATES.size();
+        int randomIndex = ThreadLocalRandom.current().nextInt(size);
+        String[] coords = HikeSeeder.SARTHE_COORDINATES.get(randomIndex).split(",");
+
+        double testDuration = 7200.0; // 2 hours in seconds
+        HikeDTO hikeDTO = DtoFactory.createDto(HikeDTO.class, Map.of(
+                "name", coords[0],
+                "startingPointLatitude", Double.parseDouble(coords[1]),
+                "startingPointLongitude", Double.parseDouble(coords[2]),
+                "startingElevation", 0,
+                "arrivalPointLatitude", Double.parseDouble(coords[1]),
+                "arrivalPointLongitude", Double.parseDouble(coords[2]),
+                "arrivalElevation", 0,
+                "wkbGeometry", "none",
+                "wkbWaypoints", "none",
+                "duration", testDuration
         ));
 
-        Hike createdHike = this.createMockHike();
-        createdHike.setName("Nouvelle randonnée");
-        HikeDto hikeDto = new HikeDto(createdHike, true);
-
-        when(hikeService.createHike(any(HikeDTO.class)))
-                .thenReturn(hikeDto);
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
 
         mockMvc.perform(post("/hikes")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(hikeDTO)))
+                        .content(DtoFactory.toJson(hikeDTO))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Nouvelle randonnée"))
-                .andExpect(jsonPath("$.startingPointLatitude").value(47.2180438348419))
-                .andExpect(jsonPath("$.startingPointLongitude").value(-1.5549507712791397))
-                .andExpect(jsonPath("$.startingElevation").value(100))
-                .andExpect(jsonPath("$.arrivalPointLatitude").value(47.2180438348419))
-                .andExpect(jsonPath("$.arrivalPointLongitude").value(-1.5549507712791397))
-                .andExpect(jsonPath("$.arrivalElevation").value(200))
-                .andExpect(jsonPath("$.distance").exists())
-                .andExpect(jsonPath("$.location").exists())
-                .andExpect(jsonPath("$.difficulty").exists())
-                .andExpect(jsonPath("$.status").exists())
-                .andExpect(jsonPath("$.createdAt").exists())
-                .andExpect(jsonPath("$.updatedAt").exists());
-
-        verify(hikeService).createHike(any(HikeDTO.class));
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.name").value(coords[0]))
+                .andExpect(jsonPath("$.source").value(SourceEnum.COMMUNITY.name()))
+                .andExpect(jsonPath("$.duration").value(testDuration));
     }
 
     @Test
-    void testCreateHike_shouldReturn422WhenNameIsNull() throws Exception {
-        HikeDTO hikeDTO = DtoFactory.createDto(HikeDTO.class, Map.ofEntries(
-                Map.entry("startingPointLatitude", 47.2180438348419),
-                Map.entry("startingPointLongitude", -1.5549507712791397),
-                Map.entry("startingElevation", 100),
-                Map.entry("arrivalPointLatitude", 47.2180438348419),
-                Map.entry("arrivalPointLongitude", -1.5549507712791397),
-                Map.entry("arrivalElevation", 200),
-                Map.entry("wkbGeometry", "LINESTRING(0 0, 1 1)"),
-                Map.entry("wkbWaypoints", "LINESTRING(0 0, 1 1)"),
-                Map.entry("distance", 5000),
-                Map.entry("duration", 7200),
-                Map.entry("seasons", List.of()),
-                Map.entry("difficulty", "EASY"),
-                Map.entry("status", "DRAFT")
-        ));
-
-        mockMvc.perform(post("/hikes")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(hikeDTO)))
-                .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.i18nKey").exists())
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.extra").exists());
-    }
-
-    @Test
-    void testCreateHike_shouldReturn422WhenValidationFails() throws Exception {
-        HikeDTO invalidHikeDTO = DtoFactory.createDto(HikeDTO.class, Map.of(
-                "startingPointLatitude", 47.2180438348419,
-                "startingPointLongitude", -1.5549507712791397
-        ));
-
-        mockMvc.perform(post("/hikes")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidHikeDTO)))
-                .andExpect(status().isUnprocessableEntity());
-    }
-
-    @Test
-    void testUpdateHike_shouldReturnUpdatedHike() throws Exception {
-        Long hikeId = 1L;
+    void shouldCreateHike_WithNullDuration_WhenDurationNotProvided() throws Exception {
+        int size = HikeSeeder.SARTHE_COORDINATES.size();
+        int randomIndex = ThreadLocalRandom.current().nextInt(size);
+        String[] coords = HikeSeeder.SARTHE_COORDINATES.get(randomIndex).split(",");
 
         HikeDTO hikeDTO = DtoFactory.createDto(HikeDTO.class, Map.of(
-                "name", "Randonnée mise à jour",
-                "distance", 8000,
-                "duration", 10800,
-                "difficulty", "HARD",
-                "status", "DRAFT"
+                "name", coords[0],
+                "startingPointLatitude", Double.parseDouble(coords[1]),
+                "startingPointLongitude", Double.parseDouble(coords[2]),
+                "startingElevation", 0,
+                "arrivalPointLatitude", Double.parseDouble(coords[1]),
+                "arrivalPointLongitude", Double.parseDouble(coords[2]),
+                "arrivalElevation", 0,
+                "wkbGeometry", "none",
+                "wkbWaypoints", "none"
         ));
 
-        Hike existingHike = this.createMockHike();
-        Hike updatedHike = this.createMockHike();
-        updatedHike.setName("Randonnée mise à jour");
-        updatedHike.setDistance(8000);
-        updatedHike.setDuration(10800);
-        updatedHike.setDifficulty(DifficultyEnum.HARD);
-        updatedHike.setStatus(StatusEnum.DRAFT);
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
 
-        HikeDto hikeDto = new HikeDto(updatedHike, true);
-
-        when(hikeRepository.findById(hikeId))
-                .thenReturn(Optional.of(existingHike));
-        when(hikeService.updateHike(any(Hike.class), any(HikeDTO.class)))
-                .thenReturn(hikeDto);
-
-        mockMvc.perform(put("/administration/hikes/{id}", hikeId)
+        mockMvc.perform(post("/hikes")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(hikeDTO)))
+                        .content(DtoFactory.toJson(hikeDTO))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Randonnée mise à jour"))
-                .andExpect(jsonPath("$.distance").value(8000))
-                .andExpect(jsonPath("$.difficulty").value("HARD"))
-                .andExpect(jsonPath("$.status").value("DRAFT"))
-                .andExpect(jsonPath("$.createdAt").exists())
-                .andExpect(jsonPath("$.updatedAt").exists());
-
-        verify(hikeRepository).findById(hikeId);
-        verify(hikeService).updateHike(any(Hike.class), any(HikeDTO.class));
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.name").value(coords[0]))
+                .andExpect(jsonPath("$.source").value(SourceEnum.COMMUNITY.name()))
+                .andExpect(jsonPath("$.duration").isEmpty());
     }
 
     @Test
-    void testUpdateHike_shouldReturn404WhenHikeNotFound() throws Exception {
-        Long hikeId = 999L;
+    void shouldCreateHike_WithUnloggedUser_WhenValidRequest() throws Exception {
+        int size = HikeSeeder.SARTHE_COORDINATES.size();
+        int randomIndex = ThreadLocalRandom.current().nextInt(size);
+        String[] coords = HikeSeeder.SARTHE_COORDINATES.get(randomIndex).split(",");
 
         HikeDTO hikeDTO = DtoFactory.createDto(HikeDTO.class, Map.of(
-                "name", "Randonnée mise à jour"
+                "name", coords[0],
+                "startingPointLatitude", Double.parseDouble(coords[1]),
+                "startingPointLongitude", Double.parseDouble(coords[2]),
+                "startingElevation", 0,
+                "arrivalPointLatitude", Double.parseDouble(coords[1]),
+                "arrivalPointLongitude", Double.parseDouble(coords[2]),
+                "arrivalElevation", 0,
+                "wkbGeometry", "none",
+                "wkbWaypoints", "none"
         ));
 
-        when(hikeRepository.findById(hikeId))
-                .thenReturn(Optional.empty());
-
-        mockMvc.perform(put("/administration/hikes/{id}", hikeId)
+        mockMvc.perform(post("/hikes")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(hikeDTO)))
+                        .content(DtoFactory.toJson(hikeDTO)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Unauthorized access. You must be authenticated to access this resource."));
+    }
+
+    @Test
+    void shouldReturnValidationError_WhenInvalidData() throws Exception {
+        int size = HikeSeeder.SARTHE_COORDINATES.size();
+        int randomIndex = ThreadLocalRandom.current().nextInt(size);
+        String[] coords = HikeSeeder.SARTHE_COORDINATES.get(randomIndex).split(",");
+
+        HikeDTO hikeDTO = DtoFactory.createDto(HikeDTO.class, Map.of(
+                "name", coords[0],
+                "startingPointLatitude", Double.parseDouble(coords[1]),
+                "startingPointLongitude", Double.parseDouble(coords[2]),
+                "startingElevation", 0,
+                "arrivalPointLatitude", Double.parseDouble(coords[1]),
+                "arrivalPointLongitude", Double.parseDouble(coords[2]),
+                "arrivalElevation", 0,
+                "wkbGeometry", "",
+                "wkbWaypoints", ""
+        ));
+
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        mockMvc.perform(post("/hikes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(hikeDTO))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.i18nKey").value("validation.failed"))
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.extra").isMap())
+                .andExpect(jsonPath("$.extra.wkbGeometry").value("must not be empty"))
+                .andExpect(jsonPath("$.extra.wkbWaypoints").value("must not be empty"));
+    }
+
+    @Test
+    void shouldReturnHistory_WithLoggedUser_WhenAuthenticated() throws Exception {
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        List<Hike> hikes = hikeRepository.findAll();
+        hikeHistorySeeder.seedHistory(UserSeeder.USER, hikes);
+
+        mockMvc.perform(get("/hikes/history")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items").isArray())
+                .andExpect(jsonPath("$.totalItems").value(hikes.size()))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.currentPage").value(1))
+                .andExpect(jsonPath("$.nextPage").value(2))
+                .andExpect(jsonPath("$.previousPage").doesNotExist());
+    }
+
+    @Test
+    void shouldReturnUnauthorized_WhenGetHistoryWithoutAuthentication() throws Exception {
+        mockMvc.perform(get("/hikes/history")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Unauthorized access. You must be authenticated to access this resource."));
+    }
+
+    @Test
+    void shouldSaveHistory_WithLoggedUser_WhenHikeExists() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
+        int randomDurationMinutes = ThreadLocalRandom.current().nextInt(1, 3600);
+
+        HikeHistoryDTO dto = DtoFactory.createDto(HikeHistoryDTO.class, Map.of(
+                "hikeId", hike.getId(),
+                "duration", randomDurationMinutes
+        ));
+
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        mockMvc.perform(post("/hikes/history")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(dto))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.i18nKey").value("hike.history.success"))
+                .andExpect(jsonPath("$.message").value("The hike has been successfully saved."))
+                .andExpect(jsonPath("$.extra").doesNotExist());
+    }
+
+    @Test
+    void shouldReturnNotFound_WhenSaveHistoryForNonExistentHike() throws Exception {
+        Long nonExistentId = 999999999L;
+        int randomDurationMinutes = ThreadLocalRandom.current().nextInt(1, 3600);
+
+        HikeHistoryDTO dto = DtoFactory.createDto(HikeHistoryDTO.class, Map.of(
+                "hikeId", nonExistentId,
+                "duration", randomDurationMinutes
+        ));
+
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        mockMvc.perform(post("/hikes/history")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(dto))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.i18nKey").value("hike.not_found"))
-                .andExpect(jsonPath("$.message").value("Hike not found"));
-
-        verify(hikeRepository).findById(hikeId);
+                .andExpect(jsonPath("$.message").value("Hike not found"))
+                .andExpect(jsonPath("$.extra").doesNotExist());
     }
 
     @Test
-    void testUpdateHike_shouldReturn422WhenNameIsNull() throws Exception {
-        Long hikeId = 1L;
+    void shouldReturnUnauthorized_WhenSaveHistoryWithoutAuthentication() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
 
-        HikeDTO hikeDTO = DtoFactory.createDto(HikeDTO.class, Map.of(
-                "distance", 8000,
-                "duration", 10800
+        HikeHistoryDTO dto = DtoFactory.createDto(HikeHistoryDTO.class, Map.of(
+                "hikeId", hike.getId()
         ));
 
-        mockMvc.perform(put("/administration/hikes/{id}", hikeId)
+        mockMvc.perform(post("/hikes/history")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(hikeDTO)))
-                .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.i18nKey").exists())
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.extra").exists());
+                        .content(DtoFactory.toJson(dto)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Unauthorized access. You must be authenticated to access this resource."));
     }
 
     @Test
-    void testDeleteHike_shouldReturnSuccessMessage() throws Exception {
-        Long hikeId = 1L;
-        Hike hike = this.createMockHike();
+    void shouldReturnValidationError_WhenSaveHistoryInvalidData() throws Exception {
+        HikeHistoryDTO dto = DtoFactory.createDto(HikeHistoryDTO.class, Map.of(
+                "duration", 10
+        ));
 
-        when(hikeRepository.findById(hikeId))
-                .thenReturn(Optional.of(hike));
-        doNothing().when(hikeService).deleteHike(any(Hike.class));
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
 
-        mockMvc.perform(delete("/administration/hikes/{id}", hikeId))
+        mockMvc.perform(post("/hikes/history")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(dto))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.i18nKey").value("validation.failed"))
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.extra").isMap())
+                .andExpect(jsonPath("$.extra.hikeId").value("must not be null"));
+    }
+
+    @Test
+    void shouldDeleteHistory_WithLoggedUser_WhenHistoryExists() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
+
+        hikeHistorySeeder.seedHistory(UserSeeder.USER, List.of(hike));
+
+        var history = hikeHistoryRepository.findAll().stream()
+                .filter(h -> h.getUser().equals(UserSeeder.USER.getId()))
+                .findFirst()
+                .orElseThrow();
+
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        mockMvc.perform(delete("/hikes/history/{id}", history.getId())
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.i18nKey").value("hike.history.success"))
+                .andExpect(jsonPath("$.message").value("The hike has been successfully deleted."));
+    }
+
+    @Test
+    void shouldReturnNotFound_WhenDeleteNonExistentHistory() throws Exception {
+        Long nonExistentId = 999999999L;
+
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        mockMvc.perform(delete("/hikes/history/{id}", nonExistentId)
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.i18nKey").value("hike.history.not_found"))
+                .andExpect(jsonPath("$.message").value("Hike history not found"))
+                .andExpect(jsonPath("$.extra").doesNotExist());
+    }
+
+    @Test
+    void shouldReturnUnauthorized_WhenDeleteHistoryWithoutAuthentication() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
+        hikeHistorySeeder.seedHistory(UserSeeder.USER, List.of(hike));
+
+        var history = hikeHistoryRepository.findAll().stream()
+                .filter(h -> h.getUser().equals(UserSeeder.USER.getId()))
+                .findFirst()
+                .orElseThrow();
+
+        mockMvc.perform(delete("/hikes/history/{id}", history.getId()))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Unauthorized access. You must be authenticated to access this resource."));
+    }
+
+    @Test
+    void shouldReturnForbidden_WhenUserDeletesAdminHistory() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
+
+        hikeHistorySeeder.seedHistory(UserSeeder.ADMIN, List.of(hike));
+
+        var adminHistory = hikeHistoryRepository.findAll().stream()
+                .filter(h -> h.getUser().equals(UserSeeder.ADMIN.getId()))
+                .findFirst()
+                .orElseThrow();
+
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        mockMvc.perform(delete("/hikes/history/{id}", adminHistory.getId())
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.i18nKey").value("hike.history.forbidden"))
+                .andExpect(jsonPath("$.message").value("You are not allowed to delete this hike history."))
+                .andExpect(jsonPath("$.extra").doesNotExist());
+    }
+
+    @Test
+    void shouldDeleteHistory_WhenAdminDeletesOtherUserHistory() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
+
+        hikeHistorySeeder.seedHistory(UserSeeder.USER, List.of(hike));
+
+        var userHistory = hikeHistoryRepository.findAll().stream()
+                .filter(h -> h.getUser().equals(UserSeeder.USER.getId()))
+                .findFirst()
+                .orElseThrow();
+
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
+
+        mockMvc.perform(delete("/hikes/history/{id}", userHistory.getId())
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.i18nKey").value("hike.history.success"))
+                .andExpect(jsonPath("$.message").value("The hike has been successfully deleted."));
+    }
+
+    /*
+     * ADMINISTRATION ENDPOINT TESTS
+     */
+
+    @Test
+    void shouldUpdateHike_WithAdmin_WhenValidRequest() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
+        String newName = hike.getName() + " - updated";
+        double newDuration = 5400.0; // 1.5 hours in seconds
+
+        HikeDTO hikeDTO = DtoFactory.createDto(HikeDTO.class, Map.of(
+                "name", newName,
+                "startingPointLatitude", hike.getStartingPointLatitude(),
+                "startingPointLongitude", hike.getStartingPointLongitude(),
+                "startingElevation", hike.getStartingElevation(),
+                "arrivalPointLatitude", hike.getArrivalPointLatitude(),
+                "arrivalPointLongitude", hike.getArrivalPointLongitude(),
+                "arrivalElevation", hike.getArrivalElevation(),
+                "wkbGeometry", "geom",
+                "wkbWaypoints", "wp",
+                "duration", newDuration
+        ));
+
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
+
+        mockMvc.perform(put("/administration/hikes/{id}", hike.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(hikeDTO))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(hike.getId()))
+                .andExpect(jsonPath("$.name").value(newName))
+                .andExpect(jsonPath("$.duration").value(newDuration));
+    }
+
+    @Test
+    void shouldReturnNotFound_WhenUpdateNonExistentHike() throws Exception {
+        Long nonExistentId = 999999999L;
+
+        HikeDTO hikeDTO = DtoFactory.createDto(HikeDTO.class, Map.of(
+                "name", "Non existent",
+                "startingPointLatitude", 0.0,
+                "startingPointLongitude", 0.0,
+                "startingElevation", 0,
+                "arrivalPointLatitude", 0.0,
+                "arrivalPointLongitude", 0.0,
+                "arrivalElevation", 0,
+                "wkbGeometry", "geom",
+                "wkbWaypoints", "wp"
+        ));
+
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
+
+        mockMvc.perform(put("/administration/hikes/{id}", nonExistentId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(hikeDTO))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.i18nKey").value("hike.not_found"))
+                .andExpect(jsonPath("$.message").value("Hike not found"))
+                .andExpect(jsonPath("$.extra").doesNotExist());
+    }
+
+    @Test
+    void shouldReturnForbidden_WhenUserUpdatesHikeWithoutAdminRole() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
+
+        HikeDTO hikeDTO = DtoFactory.createDto(HikeDTO.class, Map.of(
+                "name", "Attempted update",
+                "startingPointLatitude", hike.getStartingPointLatitude(),
+                "startingPointLongitude", hike.getStartingPointLongitude(),
+                "startingElevation", hike.getStartingElevation(),
+                "arrivalPointLatitude", hike.getArrivalPointLatitude(),
+                "arrivalPointLongitude", hike.getArrivalPointLongitude(),
+                "arrivalElevation", hike.getArrivalElevation(),
+                "wkbGeometry", "geom",
+                "wkbWaypoints", "wp"
+        ));
+
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        mockMvc.perform(put("/administration/hikes/{id}", hike.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(hikeDTO))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Access denied. You do not have the necessary permissions to access this resource"));
+    }
+
+    @Test
+    void shouldReturnUnauthorized_WhenUpdateHikeWithoutAuthentication() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
+
+        HikeDTO hikeDTO = DtoFactory.createDto(HikeDTO.class, Map.of(
+                "name", "No auth update",
+                "startingPointLatitude", hike.getStartingPointLatitude(),
+                "startingPointLongitude", hike.getStartingPointLongitude(),
+                "startingElevation", hike.getStartingElevation(),
+                "arrivalPointLatitude", hike.getArrivalPointLatitude(),
+                "arrivalPointLongitude", hike.getArrivalPointLongitude(),
+                "arrivalElevation", hike.getArrivalElevation(),
+                "wkbGeometry", "geom",
+                "wkbWaypoints", "wp"
+        ));
+
+        mockMvc.perform(put("/administration/hikes/{id}", hike.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(hikeDTO)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Unauthorized access. You must be authenticated to access this resource."));
+    }
+
+    @Test
+    void shouldReturnValidationError_WhenUpdateHikeInvalidData() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
+
+        HikeDTO hikeDTO = DtoFactory.createDto(HikeDTO.class, Map.of(
+                "name", ""
+        ));
+
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/administration/hikes/{id}", hike.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(hikeDTO))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.i18nKey").value("validation.failed"))
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.extra").isMap())
+                .andExpect(jsonPath("$.extra.name").value("must not be empty"));
+    }
+
+    @Test
+    void shouldDeleteHike_WithAdmin_WhenHikeExists() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
+
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
+
+        mockMvc.perform(delete("/administration/hikes/{id}", hike.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.i18nKey").value("hike.deleted"))
                 .andExpect(jsonPath("$.message").value("Hike successfully deleted"));
-
-        verify(hikeRepository).findById(hikeId);
-        verify(hikeService).deleteHike(any(Hike.class));
     }
 
     @Test
-    void testDeleteHike_shouldReturn404WhenHikeNotFound() throws Exception {
-        Long hikeId = 999L;
+    void shouldReturnNotFound_WhenDeleteNonExistentHike() throws Exception {
+        Long nonExistentId = 999999999L;
 
-        when(hikeRepository.findById(hikeId))
-                .thenReturn(Optional.empty());
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
 
-        mockMvc.perform(delete("/administration/hikes/{id}", hikeId))
+        mockMvc.perform(delete("/administration/hikes/{id}", nonExistentId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.i18nKey").value("hike.not_found"))
-                .andExpect(jsonPath("$.message").value("Hike not found"));
-
-        verify(hikeRepository).findById(hikeId);
+                .andExpect(jsonPath("$.message").value("Hike not found"))
+                .andExpect(jsonPath("$.extra").doesNotExist());
     }
 
     @Test
-    void testGetHistory_shouldReturnPaginatedHikeHistory() throws Exception {
-        UserDTO authenticatedUser = createMockUser();
+    void shouldReturnForbidden_WhenUserDeletesHikeWithoutAdminRole() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
 
-        Hike hike1 = this.createMockHike();
-        Hike hike2 = this.createMockHike();
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
 
-        HikeHistory hikeHistory1 = new HikeHistory();
-        hikeHistory1.setUser(authenticatedUser.getId());
-        hikeHistory1.setHike(hike1);
+        mockMvc.perform(delete("/administration/hikes/{id}", hike.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Access denied. You do not have the necessary permissions to access this resource"));
+    }
 
-        HikeHistory hikeHistory2 = new HikeHistory();
-        hikeHistory2.setUser(authenticatedUser.getId());
-        hikeHistory2.setHike(hike2);
 
-        List<HikeHistoryDto> historyList = List.of(
-                new HikeHistoryDto(hikeHistory1, true),
-                new HikeHistoryDto(hikeHistory2, true)
-        );
+    @Test
+    void shouldReturnUnauthorized_WhenDeleteHikeWithoutAuthentication() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
 
-        PaginationDTO paginationDTO = new PaginationDTO();
-        paginationDTO.setPage(1);
-        paginationDTO.setLimit(10);
+        mockMvc.perform(delete("/administration/hikes/{id}", hike.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Unauthorized access. You must be authenticated to access this resource."));
+    }
 
-        PaginatorDTO<HikeHistoryDto> paginatorDTO = new PaginatorDTO<>(historyList, historyList.size(), paginationDTO);
+    @Test
+    void shouldReturnUserHistory_WhenAdminRequestsUserHistory() throws Exception {
+        List<Hike> hikes = hikeRepository.findAll();
+        hikeHistorySeeder.seedHistory(UserSeeder.USER, hikes);
 
-        when(hikeHistoryRepository.findAllWithPagination(any(PaginationDTO.class), any(Long.class)))
-                .thenReturn(paginatorDTO);
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
 
-        mockMvc.perform(get("/hikes/history")
-                        .param("page", "1")
-                        .param("limit", "10")
-                        .with(createAuthenticatedUser(authenticatedUser)))
+        mockMvc.perform(get("/administration/hikes/history/user/{id}", UserSeeder.USER.getId())
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items").isArray())
-                .andExpect(jsonPath("$.items.length()").value(2))
-                .andExpect(jsonPath("$.totalItems").value(2))
+                .andExpect(jsonPath("$.totalItems").value(hikes.size()))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.currentPage").value(1))
+                .andExpect(jsonPath("$.nextPage").value(2))
+                .andExpect(jsonPath("$.previousPage").doesNotExist());
+    }
+
+    @Test
+    void shouldReturnForbidden_WhenNonAdminRequestsUserHistory() throws Exception {
+        List<Hike> hikes = hikeRepository.findAll();
+        hikeHistorySeeder.seedHistory(UserSeeder.USER, hikes);
+
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        mockMvc.perform(get("/administration/hikes/history/user/{id}", UserSeeder.USER.getId())
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Access denied. You do not have the necessary permissions to access this resource"));
+    }
+
+    @Test
+    void shouldReturnUnauthorized_WhenGetUserHistoryWithoutAuthentication() throws Exception {
+        List<Hike> hikes = hikeRepository.findAll();
+        hikeHistorySeeder.seedHistory(UserSeeder.USER, hikes);
+
+        mockMvc.perform(get("/administration/hikes/history/user/{id}", UserSeeder.USER.getId()))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Unauthorized access. You must be authenticated to access this resource."));
+    }
+
+    @Test
+    void shouldReturnPaginatedHikes_WithCorrectCoordinates_AsAdmin() throws Exception {
+        String[] coords = HikeSeeder.COORDINATES.get(0).split(",");
+
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
+
+        mockMvc.perform(get("/hikes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("latitude", coords[1])
+                        .param("longitude", coords[2])
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items").isArray())
+                .andExpect(jsonPath("$.totalItems").value(15))
                 .andExpect(jsonPath("$.totalPages").value(1))
                 .andExpect(jsonPath("$.currentPage").value(1))
                 .andExpect(jsonPath("$.nextPage").doesNotExist())
                 .andExpect(jsonPath("$.previousPage").doesNotExist());
-
-        verify(hikeHistoryRepository).findAllWithPagination(any(PaginationDTO.class), any(Long.class));
     }
 
     @Test
-    void testSaveHistory_shouldReturnSuccessMessage() throws Exception {
-        UserDTO authenticatedUser = createMockUser();
+    void shouldReturnForbidden_WhenUserIsNotAdmin() throws Exception {
+        String[] coords = HikeSeeder.COORDINATES.get(0).split(",");
 
-        Long hikeId = 1L;
-        Hike hike = this.createMockHike();
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
 
-        HikeHistoryDTO hikeHistoryDTO = DtoFactory.createDto(HikeHistoryDTO.class, Map.of(
-                "hikeId", hikeId,
-                "duration", 3600
-        ));
-
-        when(hikeRepository.findById(hikeId))
-                .thenReturn(Optional.of(hike));
-        doNothing().when(hikeService).saveHikeHistory(any(UserDTO.class), any(Hike.class), any(HikeHistoryDTO.class));
-
-        mockMvc.perform(post("/hikes/history")
+        mockMvc.perform(get("/administration/hikes")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(hikeHistoryDTO))
-                        .with(createAuthenticatedUser(authenticatedUser)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.i18nKey").value("hike.history.success"))
-                .andExpect(jsonPath("$.message").value("The hike has been successfully saved."));
-
-        verify(hikeRepository).findById(hikeId);
-        verify(hikeService).saveHikeHistory(any(UserDTO.class), any(Hike.class), any(HikeHistoryDTO.class));
+                        .param("latitude", coords[1])
+                        .param("longitude", coords[2])
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isForbidden());
     }
 
     @Test
-    void testSaveHistory_shouldReturn404WhenHikeNotFound() throws Exception {
-        UserDTO authenticatedUser = createMockUser();
+    void shouldReturnValidationError_WhenCoordinatesAreInvalid_AsAdmin() throws Exception {
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
 
-        Long hikeId = 999L;
-
-        HikeHistoryDTO hikeHistoryDTO = DtoFactory.createDto(HikeHistoryDTO.class, Map.of(
-                "hikeId", hikeId,
-                "duration", 3600
-        ));
-
-        when(hikeRepository.findById(hikeId))
-                .thenReturn(Optional.empty());
-
-        mockMvc.perform(post("/hikes/history")
+        mockMvc.perform(get("/administration/hikes")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(hikeHistoryDTO))
-                        .with(createAuthenticatedUser(authenticatedUser)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.i18nKey").value("hike.not_found"))
-                .andExpect(jsonPath("$.message").value("Hike not found"));
-
-        verify(hikeRepository).findById(hikeId);
-    }
-
-    @Test
-    void testSaveHistory_shouldReturn422WhenValidationFails() throws Exception {
-        UserDTO authenticatedUser = createMockUser();
-
-        HikeHistoryDTO invalidHikeHistoryDTO = DtoFactory.createDto(HikeHistoryDTO.class, Map.of(
-                "duration", 3600
-        ));
-
-        mockMvc.perform(post("/hikes/history")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidHikeHistoryDTO))
-                        .with(createAuthenticatedUser(authenticatedUser)))
-                .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.i18nKey").exists())
-                .andExpect(jsonPath("$.message").exists());
-    }
-
-    @Test
-    void testDeleteHistory_shouldReturnSuccessMessage() throws Exception {
-        UserDTO authenticatedUser = createMockUser();
-
-        Long historyId = 1L;
-        Hike hike = this.createMockHike();
-
-        HikeHistory hikeHistory = new HikeHistory();
-        hikeHistory.setUser(authenticatedUser.getId());
-        hikeHistory.setHike(hike);
-
-        when(hikeHistoryRepository.findById(historyId))
-                .thenReturn(Optional.of(hikeHistory));
-        doNothing().when(hikeHistoryRepository).delete(any(HikeHistory.class));
-
-        mockMvc.perform(delete("/hikes/history/{id}", historyId)
-                        .with(createAuthenticatedUser(authenticatedUser)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.i18nKey").value("hike.history.success"))
-                .andExpect(jsonPath("$.message").value("The hike has been successfully deleted."));
-
-        verify(hikeHistoryRepository).findById(historyId);
-        verify(hikeHistoryRepository).delete(any(HikeHistory.class));
-    }
-
-    @Test
-    void testDeleteHistory_shouldReturn404WhenHistoryNotFound() throws Exception {
-        UserDTO authenticatedUser = createMockUser();
-
-        Long historyId = 999L;
-
-        when(hikeHistoryRepository.findById(historyId))
-                .thenReturn(Optional.empty());
-
-        mockMvc.perform(delete("/hikes/history/{id}", historyId)
-                        .with(createAuthenticatedUser(authenticatedUser)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.i18nKey").value("hike.history.not_found"))
-                .andExpect(jsonPath("$.message").value("Hike history not found"));
-
-        verify(hikeHistoryRepository).findById(historyId);
-    }
-
-    @Test
-    void testDeleteHistory_shouldReturn403WhenUserNotOwnerAndNotAdmin() throws Exception {
-        UserDTO authenticatedUser = createMockUser();
-        UserDTO otherUser = createMockUser();
-        otherUser.setId(2L);
-
-        Long historyId = 1L;
-        Hike hike = this.createMockHike();
-
-        HikeHistory hikeHistory = new HikeHistory();
-        hikeHistory.setUser(otherUser.getId());
-        hikeHistory.setHike(hike);
-
-        when(hikeHistoryRepository.findById(historyId))
-                .thenReturn(Optional.of(hikeHistory));
-
-        mockMvc.perform(delete("/hikes/history/{id}", historyId)
-                        .with(createAuthenticatedUser(authenticatedUser)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.i18nKey").value("hike.history.forbidden"))
-                .andExpect(jsonPath("$.message").value("You are not allowed to delete this hike history."));
-
-        verify(hikeHistoryRepository).findById(historyId);
-    }
-
-    @Test
-    void testDeleteHistory_shouldAllowAdminToDeleteAnyHistory() throws Exception {
-        UserDTO adminUser = createMockUser();
-        adminUser.setRoles(List.of(RoleEnum.ROLE_ADMIN));
-
-        UserDTO otherUser = createMockUser();
-        otherUser.setId(2L);
-
-        Long historyId = 1L;
-        Hike hike = this.createMockHike();
-
-        HikeHistory hikeHistory = new HikeHistory();
-        hikeHistory.setUser(otherUser.getId());
-        hikeHistory.setHike(hike);
-
-        when(hikeHistoryRepository.findById(historyId))
-                .thenReturn(Optional.of(hikeHistory));
-        doNothing().when(hikeHistoryRepository).delete(any(HikeHistory.class));
-
-        mockMvc.perform(delete("/hikes/history/{id}", historyId)
-                        .with(createAuthenticatedUser(adminUser)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.i18nKey").value("hike.history.success"))
-                .andExpect(jsonPath("$.message").value("The hike has been successfully deleted."));
-
-        verify(hikeHistoryRepository).findById(historyId);
-        verify(hikeHistoryRepository).delete(any(HikeHistory.class));
-    }
-
-    @Test
-    void testDeleteHistory_shouldAllowModeratorToDeleteAnyHistory() throws Exception {
-        UserDTO moderatorUser = createMockUser();
-        moderatorUser.setRoles(List.of(RoleEnum.ROLE_MODERATOR));
-
-        UserDTO otherUser = createMockUser();
-        otherUser.setId(2L);
-
-        Long historyId = 1L;
-        Hike hike = this.createMockHike();
-
-        HikeHistory hikeHistory = new HikeHistory();
-        hikeHistory.setUser(otherUser.getId());
-        hikeHistory.setHike(hike);
-
-        when(hikeHistoryRepository.findById(historyId))
-                .thenReturn(Optional.of(hikeHistory));
-        doNothing().when(hikeHistoryRepository).delete(any(HikeHistory.class));
-
-        mockMvc.perform(delete("/hikes/history/{id}", historyId)
-                        .with(createAuthenticatedUser(moderatorUser)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.i18nKey").value("hike.history.success"))
-                .andExpect(jsonPath("$.message").value("The hike has been successfully deleted."));
-
-        verify(hikeHistoryRepository).findById(historyId);
-        verify(hikeHistoryRepository).delete(any(HikeHistory.class));
-    }
-
-    private Hike createMockHike() {
-        Hike hike = new Hike();
-        hike.setName("Test hike " + this.random.nextInt());
-        hike.setStartingPointLatitude(47.2180438348419);
-        hike.setStartingPointLongitude(-1.5549507712791397);
-        hike.setStartingElevation(100);
-        hike.setArrivalPointLatitude(47.2180438348419);
-        hike.setArrivalPointLongitude(-1.5549507712791397);
-        hike.setArrivalElevation(200);
-        hike.setWkbGeometry("NONE");
-        hike.setWkbWaypoints("NONE");
-        hike.setDistance(3600);
-        hike.setDuration(3600);
-        hike.setLocation("Mayenne");
-        hike.setSeasons(List.of(SeasonEnum.SPRING, SeasonEnum.SUMMER));
-        hike.setSource(SourceEnum.OFFICIAL);
-        hike.setDifficulty(DifficultyEnum.EASY);
-        hike.setStatus(StatusEnum.PUBLISHED);
-        hike.setCreatedAt(LocalDateTime.now().minusDays(10));
-        hike.setUpdatedAt(LocalDateTime.now());
-        return hike;
-    }
-
-    private UserDTO createMockUser() {
-        UserDTO userDTO = new UserDTO();
-        userDTO.setId(1L);
-        userDTO.setFirstname("Firstname");
-        userDTO.setLastname("Lastname");
-        userDTO.setEmail("firstname.lastname@domain.tdl");
-        userDTO.setRoles(List.of(RoleEnum.ROLE_USER));
-        userDTO.setPermissions(List.of());
-        return userDTO;
-    }
-
-    private RequestPostProcessor createAuthenticatedUser(UserDTO user) {
-        List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
-                .map(Enum::name)
-                .map(SimpleGrantedAuthority::new)
-                .toList();
-        return SecurityMockMvcRequestPostProcessors.authentication(
-                new UsernamePasswordAuthenticationToken(user, null, authorities)
-        );
+                        .param("latitude", "")
+                        .param("longitude", "")
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.i18nKey").value("validation.failed"))
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.extra").isMap())
+                .andExpect(jsonPath("$.extra.latitude").value("must not be null"))
+                .andExpect(jsonPath("$.extra.longitude").value("must not be null"));
     }
 }

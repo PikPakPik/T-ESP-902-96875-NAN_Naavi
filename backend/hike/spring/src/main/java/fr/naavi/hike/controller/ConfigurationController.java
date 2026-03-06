@@ -3,7 +3,6 @@ package fr.naavi.hike.controller;
 import fr.naavi.core.annotation.AuthenticationNotRequired;
 import fr.naavi.hike.enums.DifficultyEnum;
 import fr.naavi.hike.enums.PointOfInterestCategoryEnum;
-import fr.naavi.hike.enums.SeasonEnum;
 import fr.naavi.hike.enums.SourceEnum;
 import fr.naavi.hike.enums.StatusEnum;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,9 +44,6 @@ public class ConfigurationController {
                                             + "  \"sources\": ["
                                             + "    \"OFFICIAL\""
                                             + "  ],\n"
-                                            + "  \"seasons\": ["
-                                            + "    \"SPRING\""
-                                            + "  ],\n"
                                             + "  \"point_of_interest_categories\": ["
                                             + "    \"MUST_SEE_SPOT\""
                                             + "  ]\n"
@@ -63,7 +59,6 @@ public class ConfigurationController {
                 "difficulties", DifficultyEnum.values(),
                 "status", StatusEnum.values(),
                 "sources", SourceEnum.values(),
-                "seasons", SeasonEnum.values(),
                 "point_of_interest_categories", PointOfInterestCategoryEnum.values()
         );
     }

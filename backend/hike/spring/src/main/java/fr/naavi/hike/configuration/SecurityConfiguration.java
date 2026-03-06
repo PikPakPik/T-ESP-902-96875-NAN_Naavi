@@ -1,6 +1,7 @@
 package fr.naavi.hike.configuration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import tools.jackson.databind.ObjectMapper;
 import fr.naavi.core.service.JwtService;
 import fr.naavi.hike.security.AuthenticationNotRequiredMatcher;
 import fr.naavi.hike.security.JWTAuthenticationFilter;
@@ -26,6 +27,7 @@ import org.springframework.web.servlet.HandlerMapping;
 import java.util.Map;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfiguration {
     @Autowired
     @Qualifier("requestMappingHandlerMapping")
@@ -48,6 +50,7 @@ public class SecurityConfiguration {
     public SecurityFilterChain swaggerFilterChain(HttpSecurity http) throws Exception {
         http.securityMatcher("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html");
         http.csrf(AbstractHttpConfigurer::disable);
+        http.headers(headers -> headers.contentTypeOptions(c -> {}).frameOptions(f -> f.sameOrigin()));
         http.logout(AbstractHttpConfigurer::disable);
         http.httpBasic(AbstractHttpConfigurer::disable);
         http.formLogin(AbstractHttpConfigurer::disable);
@@ -82,6 +85,10 @@ public class SecurityConfiguration {
         http.logout(AbstractHttpConfigurer::disable);
         http.httpBasic(AbstractHttpConfigurer::disable);
         http.formLogin(AbstractHttpConfigurer::disable);
+        http.headers(headers -> headers
+                .contentTypeOptions(c -> {})
+                .frameOptions(f -> f.deny())
+        );
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(new AuthenticationNotRequiredMatcher(handlerMapping)).permitAll()

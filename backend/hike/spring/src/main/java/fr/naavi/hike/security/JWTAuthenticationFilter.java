@@ -1,6 +1,6 @@
 package fr.naavi.hike.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import fr.naavi.core.dto.ApiResponseDTO;
 import fr.naavi.core.enums.JwtEnum;
 import fr.naavi.core.enums.PermissionEnum;
@@ -9,6 +9,7 @@ import fr.naavi.core.enums.TokenType;
 import fr.naavi.core.service.JwtService;
 import fr.naavi.hike.dto.UserDTO;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -84,7 +85,13 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                     userDto.setRoles(roleEnums);
                     userDto.setPermissions(permissionEnums);
 
-                    Collection<GrantedAuthority> authorities = getAuthorities(roles);
+
+                    List<GrantedAuthority> authorities = new ArrayList<>();
+
+                    userDto.getRoles().forEach(role -> {
+                        authorities.add(new SimpleGrantedAuthority(role.name()));
+                    });
+
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                             userDto,
                             null,
@@ -93,8 +100,8 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }
-        } catch (Exception e) {
-            log.error("Authentication error: {}", e.getMessage());
+        } catch (JwtException e) {
+            log.warn("Authentication failed (invalid or expired token): {}", e.getMessage());
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             ApiResponseDTO apiResponseDto = new ApiResponseDTO(
@@ -103,27 +110,18 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
             );
             response.getWriter().write(objectMapper.writeValueAsString(apiResponseDto));
             return;
+        } catch (Exception e) {
+            log.error("Internal error during authentication", e);
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            ApiResponseDTO apiResponseDto = new ApiResponseDTO(
+                    "internal.error",
+                    "An internal error occurred"
+            );
+            response.getWriter().write(objectMapper.writeValueAsString(apiResponseDto));
+            return;
         }
 
         filterChain.doFilter(request, response);
-    }
-
-    /**
-     * Retrieves the authorities granted to the user.
-     *
-     * @return a collection of granted authorities
-     */
-    private Collection<GrantedAuthority> getAuthorities(Collection<String> user) {
-        List<GrantedAuthority> authorities = new ArrayList<>();
-
-        user.forEach(role -> {
-            authorities.add(new SimpleGrantedAuthority(role));
-        });
-
-        user.forEach(permission -> {
-            authorities.add(new SimpleGrantedAuthority("PERM_" + permission));
-        });
-
-        return authorities;
     }
 }

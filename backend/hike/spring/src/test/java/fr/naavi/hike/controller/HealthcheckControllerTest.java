@@ -1,54 +1,41 @@
 package fr.naavi.hike.controller;
 
-import org.junit.jupiter.api.BeforeEach;
+import fr.naavi.hike.configuration.CacheConfigurationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
-
-import javax.sql.DataSource;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ActiveProfiles("ci")
 @WebMvcTest(HealthcheckController.class)
 @TestPropertySource(locations = "classpath:application-ci.properties")
-class HealthcheckControllerTest {
-
-    @Autowired
-    private WebApplicationContext webApplicationContext;
-
+@Import(CacheConfigurationTest.class)
+public class HealthcheckControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockitoBean
-    private DataSource dataSource;
-
-    @BeforeEach
-    void setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-    }
-
     @Test
-    void healthCheck_ShouldReturnHealthStatus() throws Exception {
+    void healthCheck_shouldReturnOk() throws Exception {
         mockMvc.perform(get("/healthcheck"))
                 .andExpect(status().isOk())
+                .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.service").value("hike"))
                 .andExpect(jsonPath("$.i18nKey").value("healthcheck.success"))
                 .andExpect(jsonPath("$.message").value("Service is running"))
-                .andExpect(jsonPath("$.timestamp").exists());
+                .andExpect(jsonPath("$.timestamp").isNumber());
     }
 
 //    @Test
 //    void healthCheck_ShouldReturnError_WhenDatabaseIsDown() throws Exception {
-//        when(dataSource.getConnection()).thenThrow(new SQLException("DB KO"));
+//        when(dataSource.getConnection()).thenThrow(new SQLException("Database is down"));
 //
 //        mockMvc.perform(get("/healthcheck"))
 //                .andExpect(status().is5xxServerError())

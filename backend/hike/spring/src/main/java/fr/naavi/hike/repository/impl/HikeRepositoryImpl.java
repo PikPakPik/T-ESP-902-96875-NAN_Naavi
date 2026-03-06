@@ -30,7 +30,7 @@ public class HikeRepositoryImpl implements HikeRepositoryInterface {
     private Double earthRadius;
 
     @Override
-    public PaginatorDTO<HikeDto> findAllHikeWithPagination(GeoPaginationDTO geoPaginationDTO) {
+    public PaginatorDTO<HikeDto> findAllHikeWithPagination(GeoPaginationDTO geoPaginationDTO, boolean includeAllStatus) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Hike> query = cb.createQuery(Hike.class);
         Root<Hike> hike = query.from(Hike.class);
@@ -114,8 +114,10 @@ public class HikeRepositoryImpl implements HikeRepositoryInterface {
             countPredicates.add(cb.equal(countRoot.get("difficulty"), difficulty));
         }
 
-        predicates.add(cb.like(hike.get("status"), String.valueOf(StatusEnum.PUBLISHED)));
-        countPredicates.add(cb.like(countRoot.get("status"), String.valueOf(StatusEnum.PUBLISHED)));
+        if (!includeAllStatus) {
+            predicates.add(cb.equal(hike.get("status"), StatusEnum.PUBLISHED));
+            countPredicates.add(cb.equal(countRoot.get("status"), StatusEnum.PUBLISHED));
+        }
 
         query.where(cb.and(predicates.toArray(new Predicate[0])));
         countQuery.where(cb.and(countPredicates.toArray(new Predicate[0])));

@@ -1,6 +1,6 @@
-package fr.naavi.hike.util;
+package fr.naavi.hike.utils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 
 import java.lang.reflect.Field;
 import java.util.Map;

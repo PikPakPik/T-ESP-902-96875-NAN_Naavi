@@ -8,7 +8,6 @@ import fr.naavi.hike.dto.output.HikeDto;
 import fr.naavi.hike.entity.Hike;
 import fr.naavi.hike.entity.HikeHistory;
 import fr.naavi.hike.enums.DifficultyEnum;
-import fr.naavi.hike.enums.SeasonEnum;
 import fr.naavi.hike.enums.SourceEnum;
 import fr.naavi.hike.enums.StatusEnum;
 import fr.naavi.hike.repository.HikeHistoryRepository;
@@ -72,13 +71,6 @@ public class HikeService {
             hike.setStatus(StatusEnum.valueOf(hikeDto.getStatus()));
         }
 
-        if (hikeDto.getSeasons() != null) {
-            hike.setSeasons(hikeDto.getSeasons().stream()
-                    .filter(this::isValidSeason)
-                    .map(SeasonEnum::valueOf)
-                    .toList());
-        }
-
         return new HikeDto(this.hikeRepository.save(hike), true);
     }
 
@@ -124,13 +116,6 @@ public class HikeService {
 
         if (hikeDto.getDuration() != null) {
             hike.setDuration(hikeDto.getDuration());
-        }
-
-        if (hikeDto.getSeasons() != null) {
-            hike.setSeasons(hikeDto.getSeasons().stream()
-                    .filter(this::isValidSeason)
-                    .map(SeasonEnum::valueOf)
-                    .toList());
         }
 
         if (hikeDto.getDifficulty() != null && isValidDifficulty(hikeDto.getDifficulty())) {
@@ -200,25 +185,6 @@ public class HikeService {
             throw new NaaviBadCredentialsException(
                     "hike.difficulty_invalid",
                     "The difficulty '" + difficulty + "' does not exist."
-            );
-        }
-    }
-
-    /**
-     * Checks if the given season is valid.
-     *
-     * @param season The season to check.
-     * @return True if the season is valid, false otherwise.
-     */
-    @SuppressWarnings("PMD.UnusedPrivateMethod")
-    private boolean isValidSeason(String season) {
-        try {
-            SeasonEnum.valueOf(season);
-            return true;
-        } catch (IllegalArgumentException e) {
-            throw new NaaviBadCredentialsException(
-                    "hike.season_invalid",
-                    "The season '" + season + "' does not exist."
             );
         }
     }

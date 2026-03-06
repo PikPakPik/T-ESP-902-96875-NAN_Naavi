@@ -1,48 +1,35 @@
 package fr.naavi.hike.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.naavi.core.dto.PaginationDTO;
-import fr.naavi.core.dto.PaginatorDTO;
-import fr.naavi.core.enums.RoleEnum;
 import fr.naavi.core.exception.GlobalExceptionHandler;
-import fr.naavi.hike.configuration.SecurityConfigurationTest;
-import fr.naavi.hike.dto.UserDTO;
-import fr.naavi.hike.dto.input.GeoPaginationDTO;
+import fr.naavi.hike.configuration.CacheConfigurationTest;
+import fr.naavi.hike.dto.input.HikeDTO;
 import fr.naavi.hike.dto.input.PointOfInterestDTO;
-import fr.naavi.hike.dto.output.PointOfInterestDto;
-import fr.naavi.hike.entity.PointOfInterest;
 import fr.naavi.hike.enums.PointOfInterestCategoryEnum;
-import fr.naavi.hike.enums.StatusEnum;
 import fr.naavi.hike.repository.PointOfInterestRepository;
-import fr.naavi.hike.service.PointOfInterestService;
-import fr.naavi.hike.util.DtoFactory;
+import fr.naavi.hike.seeder.HikeSeeder;
+import fr.naavi.hike.seeder.PointOfInterestSeeder;
+import fr.naavi.hike.seeder.UserSeeder;
+import fr.naavi.hike.utils.AuthenticationManagerUtil;
+import fr.naavi.hike.utils.DtoFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.RequestPostProcessor;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -50,296 +37,339 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@SpringBootTest
+@AutoConfigureMockMvc
 @ActiveProfiles("ci")
-@WebMvcTest(PointOfInterestController.class)
-@Import({GlobalExceptionHandler.class, SecurityConfigurationTest.class})
 @TestPropertySource(locations = "classpath:application-ci.properties")
+@Import({GlobalExceptionHandler.class, CacheConfigurationTest.class})
 public class PointOfInterestControllerTest {
-    private final Random random = new Random();
-
-    @MockitoBean
-    private PointOfInterestRepository pointOfInterestRepository;
-
-    @MockitoBean
-    private PointOfInterestService pointOfInterestService;
-
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
-    private WebApplicationContext webApplicationContext;
+    private UserSeeder userSeeder;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private PointOfInterestSeeder pointOfInterestSeeder;
+
+    @Autowired
+    private PointOfInterestRepository pointOfInterestRepository;
+
+    @MockitoBean
+    private AuthenticationManager authenticationManager;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).apply(springSecurity()).build();
+        pointOfInterestSeeder.seedPointsOfInterest();
+        userSeeder.seedUsers();
     }
 
+    /*
+     * POIS ENDPOINT TESTS
+     */
     @Test
-    public void testPointsOfInterest_ShouldReturnPaginatedResults() throws Exception {
-        PaginationDTO paginationDTO = new PaginationDTO();
-        paginationDTO.setPage(1);
-        paginationDTO.setLimit(10);
-
-        PaginatorDTO<PointOfInterestDto> expectedResponse = new PaginatorDTO<>(List.of(), 0, paginationDTO);
-
-        when(pointOfInterestRepository.findAllPointOfInterestWithPagination(any(GeoPaginationDTO.class)))
-                .thenReturn(expectedResponse);
+    void shouldReturnPointsOfInterest_WhenRequestWithoutAuthentication() throws Exception {
+        String[] coords = PointOfInterestSeeder.COORDINATES.get(0).split(",");
 
         mockMvc.perform(get("/pois")
-                    .param("latitude", "47.21804383484344")
-                    .param("longitude", "-1.554950771331787")
-                    .param("page", "1")
-                    .param("size", "10"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("latitude", coords[1])
+                        .param("longitude", coords[2]))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items").isArray())
-                .andExpect(jsonPath("$.totalItems").value(0))
-                .andExpect(jsonPath("$.totalPages").value(0))
+                .andExpect(jsonPath("$.totalItems").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1))
                 .andExpect(jsonPath("$.currentPage").value(1))
                 .andExpect(jsonPath("$.nextPage").doesNotExist())
                 .andExpect(jsonPath("$.previousPage").doesNotExist());
-
-        verify(pointOfInterestRepository).findAllPointOfInterestWithPagination(any(GeoPaginationDTO.class));
     }
 
     @Test
-    public void testGetPointOfInterest_ShouldReturnPointOfInterest() throws Exception {
-        Long pointId = 1L;
-        PointOfInterest pointOfInterest = this.createMockPOI();
+    void shouldReturnPointOfInterest_WhenValidIdProvided() throws Exception {
+        Long poiId = pointOfInterestRepository.findAll().getFirst().getId();
 
-        when(pointOfInterestRepository.findById(pointId)).thenReturn(Optional.of(pointOfInterest));
-
-        mockMvc.perform(get("/pois/{id}", pointId))
+        mockMvc.perform(get("/pois/{id}", poiId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value(pointOfInterest.getName()))
-                .andExpect(jsonPath("$.description").value(pointOfInterest.getDescription()))
-                .andExpect(jsonPath("$.latitude").value(pointOfInterest.getLatitude()))
-                .andExpect(jsonPath("$.longitude").value(pointOfInterest.getLongitude()))
-                .andExpect(jsonPath("$.categories").isArray())
-                .andExpect(jsonPath("$.status").value(pointOfInterest.getStatus().toString()))
-                .andExpect(jsonPath("$.createdAt").exists())
-                .andExpect(jsonPath("$.updatedAt").exists());
-
-        verify(pointOfInterestRepository).findById(pointId);
+                .andExpect(jsonPath("$.id").value(poiId))
+                .andExpect(jsonPath("$.name").exists())
+                .andExpect(jsonPath("$.description").exists())
+                .andExpect(jsonPath("$.latitude").exists())
+                .andExpect(jsonPath("$.longitude").exists());
     }
 
     @Test
-    public void testGetPointOfInterest_ShouldReturn404WhenNotFound() throws Exception {
-        Long pointId = 999L;
+    void shouldReturn404_WhenPointOfInterestNotFound() throws Exception {
+        Long nonExistentId = 999999999L;
 
-        when(pointOfInterestRepository.findById(pointId)).thenReturn(Optional.empty());
-
-        mockMvc.perform(get("/pois/{id}", pointId))
+        mockMvc.perform(get("/pois/{id}", nonExistentId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.i18nKey").value("point_of_interest.not_found"))
                 .andExpect(jsonPath("$.message").value("Point of interest not found"));
-
-        verify(pointOfInterestRepository).findById(pointId);
     }
 
     @Test
-    public void testCreatePointOfInterest_ShouldReturnCreatedPointOfInterest() throws Exception {
-        PointOfInterestDTO pointOfInterestDTO = DtoFactory.createDto(PointOfInterestDTO.class,
-                Map.ofEntries(
-                        Map.entry("name", "Point d'intéret"),
-                        Map.entry("description", "Description du point d'intéret"),
-                        Map.entry("latitude", 47.2180438348419),
-                        Map.entry("longitude", -1.5549507712791397),
-                        Map.entry("categories", List.of(
-                                PointOfInterestCategoryEnum.MUST_SEE_SPOT.name(),
-                                PointOfInterestCategoryEnum.MONUMENT.name())
-                        ),
-                        Map.entry("status", StatusEnum.PUBLISHED.name()
-                        )
-                )
-        );
-
-        PointOfInterest createdPoi = this.createMockPOI();
-        PointOfInterestDto expectedResponse = new PointOfInterestDto(createdPoi, true);
-
-        when(pointOfInterestService.createPointOfInterest(any(PointOfInterestDTO.class))).thenReturn(expectedResponse);
+    void shouldReturn401_WhenCreatingPointOfInterestWithoutAuthentication() throws Exception {
+        PointOfInterestDTO pointOfInterestDTO = DtoFactory.createDto(PointOfInterestDTO.class, Map.of(
+                "name", "Nouveau POI",
+                "description", "Description du nouveau POI",
+                "latitude", Double.parseDouble("47.2180438348419"),
+                "longitude", Double.parseDouble("-1.5549507712791397"),
+                "categories", List.of(PointOfInterestCategoryEnum.ACTIVITY.name(), PointOfInterestCategoryEnum.RESTAURANT.name())
+        ));
 
         mockMvc.perform(post("/pois")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(pointOfInterestDTO)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                    .content(DtoFactory.toJson(pointOfInterestDTO)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldCreatePointOfInterest_WhenValidDataProvidedWithAuthentication() throws Exception {
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        PointOfInterestDTO pointOfInterestDTO = DtoFactory.createDto(PointOfInterestDTO.class, Map.of(
+                "name", "Nouveau POI",
+                "description", "Description du nouveau POI",
+                "latitude", Double.parseDouble("47.2180438348419"),
+                "longitude", Double.parseDouble("-1.5549507712791397"),
+                "categories", List.of(PointOfInterestCategoryEnum.ACTIVITY.name(), PointOfInterestCategoryEnum.RESTAURANT.name())
+        ));
+
+        mockMvc.perform(post("/pois")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(pointOfInterestDTO))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value(createdPoi.getName()))
-                .andExpect(jsonPath("$.description").value(createdPoi.getDescription()))
-                .andExpect(jsonPath("$.latitude").value(createdPoi.getLatitude()))
-                .andExpect(jsonPath("$.longitude").value(createdPoi.getLongitude()))
-                .andExpect(jsonPath("$.categories").isArray())
-                .andExpect(jsonPath("$.status").value(createdPoi.getStatus().toString()));
-
-        verify(pointOfInterestService).createPointOfInterest(any(PointOfInterestDTO.class));
+                .andExpect(jsonPath("$.name").value("Nouveau POI"))
+                .andExpect(jsonPath("$.description").value("Description du nouveau POI"))
+                .andExpect(jsonPath("$.latitude").value(47.2180438348419))
+                .andExpect(jsonPath("$.longitude").value(-1.5549507712791397))
+                .andExpect(jsonPath("$.categories").isArray());
     }
 
     @Test
-    public void testCreatePointOfInterest_ShouldReturn422WhenValidationFails() throws Exception {
-        PointOfInterestDTO invalidDTO = new PointOfInterestDTO();
+    void shouldReturn422_WhenCreatingPointOfInterestWithMissingName() throws Exception {
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        PointOfInterestDTO pointOfInterestDTO = DtoFactory.createDto(PointOfInterestDTO.class, Map.of(
+                "name", "Nouveau POI",
+                "description", "Description du nouveau POI",
+                "latitude", Double.parseDouble("47.2180438348419")
+        ));
 
         mockMvc.perform(post("/pois")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(invalidDTO)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(pointOfInterestDTO))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnprocessableContent());
+    }
+
+    // ---
+
+    @Test
+    void shouldReturn401_WhenUpdatingPointOfInterestWithoutAuthentication() throws Exception {
+        Long poiId = pointOfInterestRepository.findAll().getFirst().getId();
+
+        PointOfInterestDTO pointOfInterestDTO = DtoFactory.createDto(PointOfInterestDTO.class, Map.of(
+                "name", "POI Modifié",
+                "description", "Description modifiée",
+                "latitude", Double.parseDouble("47.2180438348419"),
+                "longitude", Double.parseDouble("-1.5549507712791397")
+        ));
+
+        mockMvc.perform(put("/administration/pois/{id}", poiId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(pointOfInterestDTO)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldReturn403_WhenUpdatingPointOfInterestAsNonAdmin() throws Exception {
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+        Long poiId = pointOfInterestRepository.findAll().getFirst().getId();
+
+        PointOfInterestDTO pointOfInterestDTO = DtoFactory.createDto(PointOfInterestDTO.class, Map.of(
+                "name", "POI Modifié",
+                "description", "Description modifiée",
+                "latitude", Double.parseDouble("47.2180438348419"),
+                "longitude", Double.parseDouble("-1.5549507712791397")
+        ));
+
+        mockMvc.perform(put("/administration/pois/{id}", poiId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(pointOfInterestDTO))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldUpdatePointOfInterest_WhenValidDataProvidedAsAdmin() throws Exception {
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
+        Long poiId = pointOfInterestRepository.findAll().getFirst().getId();
+
+        PointOfInterestDTO pointOfInterestDTO = DtoFactory.createDto(PointOfInterestDTO.class, Map.of(
+                "name", "POI Modifié",
+                "description", "Description modifiée",
+                "latitude", Double.parseDouble("47.2180438348419"),
+                "longitude", Double.parseDouble("-1.5549507712791397"),
+                "categories", List.of(PointOfInterestCategoryEnum.ACTIVITY.name())
+        ));
+
+        mockMvc.perform(put("/administration/pois/{id}", poiId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(pointOfInterestDTO))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(poiId))
+                .andExpect(jsonPath("$.name").value("POI Modifié"))
+                .andExpect(jsonPath("$.description").value("Description modifiée"))
+                .andExpect(jsonPath("$.latitude").value(47.2180438348419))
+                .andExpect(jsonPath("$.longitude").value(-1.5549507712791397));
+    }
+
+    @Test
+    void shouldReturn404_WhenUpdatingNonExistentPointOfInterest() throws Exception {
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
+        Long nonExistentId = 999999999L;
+
+        PointOfInterestDTO pointOfInterestDTO = DtoFactory.createDto(PointOfInterestDTO.class, Map.of(
+                "name", "POI Modifié",
+                "description", "Description modifiée",
+                "latitude", Double.parseDouble("47.2180438348419"),
+                "longitude", Double.parseDouble("-1.5549507712791397")
+        ));
+
+        mockMvc.perform(put("/administration/pois/{id}", nonExistentId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(pointOfInterestDTO))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.i18nKey").value("point_of_interest.not_found"))
+                .andExpect(jsonPath("$.message").value("Point of interest not found"));
+    }
+
+    @Test
+    void shouldReturn422_WhenUpdatingPointOfInterestWithMissingName() throws Exception {
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
+        Long poiId = pointOfInterestRepository.findAll().getFirst().getId();
+
+        PointOfInterestDTO pointOfInterestDTO = DtoFactory.createDto(PointOfInterestDTO.class, Map.of(
+                "description", "Description modifiée",
+                "latitude", Double.parseDouble("47.2180438348419"),
+                "longitude", Double.parseDouble("-1.5549507712791397")
+        ));
+
+        mockMvc.perform(put("/administration/pois/{id}", poiId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(pointOfInterestDTO))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isUnprocessableEntity());
     }
 
     @Test
-    public void testUpdatePointOfInterest_ShouldReturnUpdatedPointOfInterest() throws Exception {
-        UserDTO adminUser = createMockUser();
-        adminUser.setRoles(List.of(RoleEnum.ROLE_ADMIN));
+    void shouldReturn400_WhenUpdatingPointOfInterestWithInvalidCategory() throws Exception {
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
+        Long poiId = pointOfInterestRepository.findAll().getFirst().getId();
 
-        Long pointId = 1L;
-        PointOfInterestDTO pointOfInterestDTO = DtoFactory.createDto(PointOfInterestDTO.class,
-                Map.ofEntries(
-                        Map.entry("name", "Point d'intérêt modifié"),
-                        Map.entry("description", "Description modifiée"),
-                        Map.entry("categories", List.of(
-                                PointOfInterestCategoryEnum.BIVOUAC.name())
-                        ),
-                        Map.entry("status", StatusEnum.DRAFT.name())
-                )
-        );
+        PointOfInterestDTO pointOfInterestDTO = DtoFactory.createDto(PointOfInterestDTO.class, Map.of(
+                "name", "POI Modifié",
+                "description", "Description modifiée",
+                "latitude", Double.parseDouble("47.2180438348419"),
+                "longitude", Double.parseDouble("-1.5549507712791397"),
+                "categories", List.of("INVALID_CATEGORY")
+        ));
 
-        PointOfInterest existingPoi = this.createMockPOI();
-        PointOfInterest updatedPoi = this.createMockPOI();
-        updatedPoi.setName("Point d'intérêt modifié");
-        updatedPoi.setDescription("Description modifiée");
-
-        PointOfInterestDto expectedResponse = new PointOfInterestDto(updatedPoi, true);
-
-        when(pointOfInterestRepository.findById(pointId)).thenReturn(Optional.of(existingPoi));
-        when(pointOfInterestService.updatePointOfInterest(any(PointOfInterest.class), any(PointOfInterestDTO.class)))
-                .thenReturn(expectedResponse);
-
-        mockMvc.perform(put("/administration/pois/{id}", pointId)
+        mockMvc.perform(put("/administration/pois/{id}", poiId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .with(createAuthenticatedUser(adminUser))
-                        .content(objectMapper.writeValueAsString(pointOfInterestDTO)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value(updatedPoi.getName()))
-                .andExpect(jsonPath("$.description").value(updatedPoi.getDescription()))
-                .andExpect(jsonPath("$.latitude").value(updatedPoi.getLatitude()))
-                .andExpect(jsonPath("$.longitude").value(updatedPoi.getLongitude()))
-                .andExpect(jsonPath("$.categories").isArray())
-                .andExpect(jsonPath("$.status").value(updatedPoi.getStatus().toString()));
-
-
-        verify(pointOfInterestRepository).findById(pointId);
-        verify(pointOfInterestService).updatePointOfInterest(any(PointOfInterest.class), any(PointOfInterestDTO.class));
+                        .content(DtoFactory.toJson(pointOfInterestDTO))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.i18nKey").value("point_of_interest.category_invalid"));
     }
 
     @Test
-    public void testUpdatePointOfInterest_ShouldReturn404WhenNotFound() throws Exception {
-        UserDTO adminUser = createMockUser();
-        adminUser.setRoles(List.of(RoleEnum.ROLE_ADMIN));
+    void shouldReturn400_WhenUpdatingPointOfInterestWithInvalidStatus() throws Exception {
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
+        Long poiId = pointOfInterestRepository.findAll().getFirst().getId();
 
-        Long pointId = 999L;
-        PointOfInterestDTO pointOfInterestDTO = DtoFactory.createDto(PointOfInterestDTO.class,
-                Map.ofEntries(
-                        Map.entry("name", "Point d'intérêt modifié"),
-                        Map.entry("description", "Description modifiée")
-                )
-        );
+        PointOfInterestDTO pointOfInterestDTO = DtoFactory.createDto(PointOfInterestDTO.class, Map.of(
+                "name", "POI Modifié",
+                "description", "Description modifiée",
+                "latitude", Double.parseDouble("47.2180438348419"),
+                "longitude", Double.parseDouble("-1.5549507712791397"),
+                "status", "INVALID_STATUS"
+        ));
 
-        when(pointOfInterestRepository.findById(pointId)).thenReturn(Optional.empty());
-
-        mockMvc.perform(put("/administration/pois/{id}", pointId)
+        mockMvc.perform(put("/administration/pois/{id}", poiId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .with(createAuthenticatedUser(adminUser))
-                        .content(objectMapper.writeValueAsString(pointOfInterestDTO)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.i18nKey").value("point_of_interest.not_found"))
-                .andExpect(jsonPath("$.message").value("Point of interest not found"));
-
-        verify(pointOfInterestRepository).findById(pointId);
+                        .content(DtoFactory.toJson(pointOfInterestDTO))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.i18nKey").value("point_of_interest.status_invalid"));
     }
 
     @Test
-    public void testUpdatePointOfInterest_ShouldReturn422WhenValidationFails() throws Exception {
-        UserDTO adminUser = createMockUser();
-        adminUser.setRoles(List.of(RoleEnum.ROLE_ADMIN));
+    void shouldReturn401_WhenDeletingPointOfInterestWithoutAuthentication() throws Exception {
+        Long poiId = pointOfInterestRepository.findAll().getFirst().getId();
 
-        Long pointId = 1L;
-        PointOfInterestDTO invalidDTO = new PointOfInterestDTO();
-
-        mockMvc.perform(put("/administration/pois/{id}", pointId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .with(createAuthenticatedUser(adminUser))
-                        .content(objectMapper.writeValueAsString(invalidDTO)))
-                .andExpect(status().isUnprocessableEntity());
+        mockMvc.perform(delete("/administration/pois/{id}", poiId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
-    public void testDeletePointOfInterest_ShouldReturnSuccessMessage() throws Exception {
-        UserDTO adminUser = createMockUser();
-        adminUser.setRoles(List.of(RoleEnum.ROLE_ADMIN));
+    void shouldReturn403_WhenDeletingPointOfInterestAsNonAdmin() throws Exception {
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+        Long poiId = pointOfInterestRepository.findAll().getFirst().getId();
 
-        Long pointId = 1L;
-        PointOfInterest existingPoi = this.createMockPOI();
+        mockMvc.perform(delete("/administration/pois/{id}", poiId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isForbidden());
+    }
 
-        when(pointOfInterestRepository.findById(pointId)).thenReturn(Optional.of(existingPoi));
+    @Test
+    void shouldDeletePointOfInterest_WhenValidIdProvidedAsAdmin() throws Exception {
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
+        Long poiId = pointOfInterestRepository.findAll().getFirst().getId();
 
-        mockMvc.perform(delete("/administration/pois/{id}", pointId)
-                        .with(createAuthenticatedUser(adminUser)))
+        mockMvc.perform(delete("/administration/pois/{id}", poiId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.i18nKey").value("point_of_interest.deleted"))
                 .andExpect(jsonPath("$.message").value("Point of interest successfully deleted"));
-
-        verify(pointOfInterestRepository).findById(pointId);
-        verify(pointOfInterestService).deletePointOfInterest(existingPoi);
     }
 
     @Test
-    public void testDeletePointOfInterest_ShouldReturn404WhenNotFound() throws Exception {
-        UserDTO adminUser = createMockUser();
-        adminUser.setRoles(List.of(RoleEnum.ROLE_ADMIN));
+    void shouldReturn404_WhenDeletingNonExistentPointOfInterest() throws Exception {
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
+        Long nonExistentId = 999999999L;
 
-        Long pointId = 999L;
-
-        when(pointOfInterestRepository.findById(pointId)).thenReturn(Optional.empty());
-
-        mockMvc.perform(delete("/administration/pois/{id}", pointId)
-                        .with(createAuthenticatedUser(adminUser)))
+        mockMvc.perform(delete("/administration/pois/{id}", nonExistentId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.i18nKey").value("point_of_interest.not_found"))
                 .andExpect(jsonPath("$.message").value("Point of interest not found"));
-
-        verify(pointOfInterestRepository).findById(pointId);
-    }
-
-    private PointOfInterest createMockPOI() {
-        PointOfInterest poi = new PointOfInterest();
-        poi.setName("Test POI" + this.random.nextInt());
-        poi.setDescription("Test description");
-        poi.setLatitude(47.2180438348419);
-        poi.setLongitude(-1.5549507712791397);
-        poi.setCategories(List.of(PointOfInterestCategoryEnum.MUST_SEE_SPOT, PointOfInterestCategoryEnum.MONUMENT));
-        poi.setStatus(StatusEnum.PUBLISHED);
-        poi.setCreatedAt(LocalDateTime.now().minusDays(10));
-        poi.setUpdatedAt(LocalDateTime.now());
-        return poi;
-    }
-
-    private UserDTO createMockUser() {
-        UserDTO userDTO = new UserDTO();
-        userDTO.setId(1L);
-        userDTO.setFirstname("Firstname");
-        userDTO.setLastname("Lastname");
-        userDTO.setEmail("firstname.lastname@domain.tdl");
-        userDTO.setRoles(List.of(RoleEnum.ROLE_USER));
-        userDTO.setPermissions(List.of());
-        return userDTO;
-    }
-
-    private RequestPostProcessor createAuthenticatedUser(UserDTO user) {
-        List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
-                .map(Enum::name)
-                .map(SimpleGrantedAuthority::new)
-                .toList();
-        return SecurityMockMvcRequestPostProcessors.authentication(
-                new UsernamePasswordAuthenticationToken(user, null, authorities)
-        );
     }
 }

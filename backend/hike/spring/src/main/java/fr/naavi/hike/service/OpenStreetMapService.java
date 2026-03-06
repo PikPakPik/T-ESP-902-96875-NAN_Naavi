@@ -9,18 +9,14 @@ import java.util.Map;
 @Service
 public class OpenStreetMapService {
     private final RestClient restClient;
-    private static final String BASE_URL = "https://nominatim.openstreetmap.org";
 
     /**
      * Constructor for OpenStreetMapService.
      *
-     * @param restClientBuilder The rest client builder.
+     * @param nominatimRestClient The RestClient for Nominatim (with trace propagation).
      */
-    public OpenStreetMapService(RestClient.Builder restClientBuilder) {
-        this.restClient = restClientBuilder
-                .baseUrl(BASE_URL)
-                .defaultHeader("User-Agent", "Naavi-Trails/1.0")
-                .build();
+    public OpenStreetMapService(RestClient nominatimRestClient) {
+        this.restClient = nominatimRestClient;
     }
 
     /**

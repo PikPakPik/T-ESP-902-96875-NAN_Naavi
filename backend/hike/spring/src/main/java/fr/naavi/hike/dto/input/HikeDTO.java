@@ -2,14 +2,10 @@ package fr.naavi.hike.dto.input;
 
 import fr.naavi.core.validation.ValidationGroups;
 import fr.naavi.hike.enums.DifficultyEnum;
-import fr.naavi.hike.enums.SeasonEnum;
 import fr.naavi.hike.enums.StatusEnum;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-
-import java.util.List;
 
 public class HikeDTO {
     @Schema(description = "Nom de la randonnée", example = "Circuit de l'Oratoire au départ de saulges")
@@ -51,20 +47,14 @@ public class HikeDTO {
     @NotEmpty(groups = ValidationGroups.OnCreate.class)
     private String wkbWaypoints;
 
-    @Schema(description = "Distance de la randonnée en mètre", example = "3600")
-    private Integer distance;
+    @Schema(description = "Distance de la randonnée en kilomètres", example = "6.7")
+    private Double distance;
 
-    @Schema(description = "Temps moyen de la randonnée en seconde", example = "3600")
-    private Integer duration;
+    @Schema(description = "Temps moyen de la randonnée en minutes", example = "45")
+    private Double duration;
 
     @Schema(description = "Difficulté de la randonnée", example = "EASY", implementation = DifficultyEnum.class)
     private String difficulty;
-
-    @ArraySchema(schema = @Schema(
-            description = "Liste des saisons conseillé pour cette randonnée",
-            implementation = SeasonEnum.class)
-    )
-    private List<String> seasons;
 
     @Schema(description = "Statut de la randonnée", example = "PUBLISHED", implementation = StatusEnum.class)
     private String status;
@@ -105,20 +95,16 @@ public class HikeDTO {
         return wkbWaypoints;
     }
 
-    public Integer getDistance() {
+    public Double getDistance() {
         return distance;
     }
 
-    public Integer getDuration() {
+    public Double getDuration() {
         return duration;
     }
 
     public String getDifficulty() {
         return difficulty;
-    }
-
-    public List<String> getSeasons() {
-        return seasons;
     }
 
     public String getStatus() {

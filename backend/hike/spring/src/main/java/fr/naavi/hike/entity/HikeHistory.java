@@ -4,6 +4,7 @@ import fr.naavi.hike.entitylistener.HikeHistoryListener;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -23,7 +24,7 @@ public class HikeHistory {
     @Column(name = "user_id", nullable = false)
     private Long user;
 
-    @ManyToOne()
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "hike_id", nullable = false)
     private Hike hike;
 

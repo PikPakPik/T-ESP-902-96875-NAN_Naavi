@@ -1,0 +1,86 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "coordinates": [
+          [
+            -2.098573331633826,
+            47.114942522491894
+          ],
+          [
+            -2.0982332605956304,
+            47.11495156569091
+          ],
+          [
+            -2.0979959649107056,
+            47.11493816810464
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "gencomm": "ITIPDL044V500A6W",
+        "avis": null,
+        "carac": "Boucle",
+        "difficulte": "Facile",
+        "cat": [
+          "P\u00e9destre"
+        ],
+        "duree": 4.7,
+        "lineaire": 2.4797172,
+        "commune_nom": "Iss\u00e9",
+        "type_ffrp": "Circuit de Petite Randonn\u00e9e",
+        "classe": "SDR",
+        "usag_ped": 1,
+        "usag_equ": 0,
+        "usag_vtt": 0,
+        "usage_pmr": 0,
+        "geo_point_2d": {
+          "lon": -1.4487856725600043,
+          "lat": 47.59955069427051
+        },
+        "itidistance": 30.7,
+        "nomoffre": "L'ETANG DE BEAUMONT",
+        "descriptifsynthetique": "Pour les amoureux des espaces naturels, ce lieu est pour vous...",
+        "descriptif": "Qui aime la compagnie des oiseaux sera combl\u00e9. Cet \u00e9tang sauvage et am\u00e9nag\u00e9 est un site privil\u00e9gi\u00e9 pour l\u2019observation ornithologique.",
+        "itibalisage": "jaune",
+        "labels": null,
+        "itideniveledescente": null,
+        "itidenivelemontee": null,
+        "itifermeturetemporaire": null,
+        "itiarrivee": "ISSE",
+        "itidepart": "ISSE",
+        "nomgest": null,
+        "adresse1gest": null,
+        "adresse1suitegest": null,
+        "adresse2gest": null,
+        "adresse3gest": null,
+        "codepostal": "44520",
+        "commune": "ISSE",
+        "codeinseecommune": "44075",
+        "commtel": null,
+        "plateformeurl": null,
+        "videosurl": null,
+        "commweb": null,
+        "insee_com": "44075",
+        "updated": "2018-06-14T10:34:25+02:00",
+        "published": "2013-01-31T18:42:42+01:00",
+        "itilocodiffduree": "P\u00e9destre||Facile||||||30##VTT||Facile||||||",
+        "itipointinteret": null,
+        "siren_epci": "200072726",
+        "epci_nom": "Ch\u00e2teaubriant - Derval",
+        "alias": "ISSE : Etang de Beaumont",
+        "date_creat": null,
+        "delegation": "CHA",
+        "com_geo": "Iss\u00e9",
+        "epci_geo": "CC Ch\u00e2teaubriant-Derval",
+        "deleg_geo": "D\u00e9l\u00e9gation Ch\u00e2teaubriant",
+        "depart": null,
+        "arrivee": null,
+        "balisage": null,
+        "pdipr_date_inscription": null,
+        "pdipr_inscription": null
+      }
+    }]}

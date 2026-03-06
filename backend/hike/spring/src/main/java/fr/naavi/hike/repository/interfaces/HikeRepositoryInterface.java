@@ -11,5 +11,5 @@ public interface HikeRepositoryInterface {
      * @param geoPaginationDTO The pagination data.
      * @return The paginated hikes.
      */
-    PaginatorDTO<HikeDto> findAllHikeWithPagination(GeoPaginationDTO geoPaginationDTO);
+    PaginatorDTO<HikeDto> findAllHikeWithPagination(GeoPaginationDTO geoPaginationDTO, boolean includeAllStatus);
 }

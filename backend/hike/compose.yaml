@@ -14,6 +14,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/naavi_hike
       SPRING_MAIL_HOST: mailer
       SPRING_MAIL_PORT: 1025
+      SEQ_HOST: "seq-input-gelf"
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=naavi-network"
@@ -41,6 +42,17 @@ services:
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - 5433:5432
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8081:8080
+    depends_on:
+      - database
+    networks:
+      - default
+      - naavi-network
 
 volumes:
   postgres_data: {}

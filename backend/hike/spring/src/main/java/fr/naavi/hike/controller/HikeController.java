@@ -5,10 +5,12 @@ import fr.naavi.core.dto.ApiResponseDTO;
 import fr.naavi.core.dto.PaginationDTO;
 import fr.naavi.core.dto.PaginatorDTO;
 import fr.naavi.core.enums.RoleEnum;
+import fr.naavi.core.exception.children.NaaviBadRequestException;
 import fr.naavi.core.exception.children.NaaviForbiddenException;
 import fr.naavi.core.exception.children.NaaviNotFoundException;
 import fr.naavi.core.validation.ValidationGroups;
 import fr.naavi.hike.abstraction.AbstractController;
+import fr.naavi.hike.dto.input.FileMappingDTO;
 import fr.naavi.hike.dto.input.GeoPaginationDTO;
 import fr.naavi.hike.dto.input.HikeDTO;
 import fr.naavi.hike.dto.input.HikeHistoryDTO;
@@ -16,9 +18,11 @@ import fr.naavi.hike.dto.output.HikeDto;
 import fr.naavi.hike.dto.output.HikeHistoryDto;
 import fr.naavi.hike.entity.Hike;
 import fr.naavi.hike.entity.HikeHistory;
+import fr.naavi.hike.exception.FileImportException;
 import fr.naavi.hike.repository.HikeHistoryRepository;
 import fr.naavi.hike.repository.HikeRepository;
 import fr.naavi.hike.service.HikeService;
+import fr.naavi.hike.service.importer.FileImportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
@@ -31,6 +35,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -40,7 +45,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import tools.jackson.databind.ObjectMapper;
+
+import java.util.Map;
 
 @SecurityScheme(
         type = SecuritySchemeType.HTTP,
@@ -60,6 +70,112 @@ public class HikeController extends AbstractController {
 
     @Autowired
     private HikeService hikeService;
+
+    public HikeController(FileImportService fileImportService) {
+        this.fileImportService = fileImportService;
+    }
+
+    private final FileImportService fileImportService;
+
+    /**
+     * Endpoint to import hikes from files.
+     */
+    @Operation(
+            summary = "Importer des randonnées depuis un fichier",
+            description = "Permet à un administrateur d'importer des randonnées à partir d'un fichier CSV ou Excel avec un mapping personnalisé",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            tags = {"Administration"},
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Fichier à importer (CSV ou Excel) et mapping des colonnes",
+                    required = true,
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                            schema = @Schema(type = "object"),
+                            examples = @ExampleObject(
+                                    name = "Exemple de mapping",
+                                    value = "{\n"
+                                            + "  \"file\": \"<binary>\",\n"
+                                            + "  \"mapping\": {\n"
+                                            + "    \"mappings\": {\n"
+                                            + "      \"name\": { \"source\": \"Nom du circuit\" },\n"
+                                            + "      \"distance\": { \"source\": \"Distance (km)\", \"unit\": \"KILOMETERS\" },\n"
+                                            + "      \"duration\": { \"source\": \"Durée (min)\", \"unit\": \"HOURS\" },\n"
+                                            + "      \"location\": { \"source\": \"Commune\" },\n"
+                                            + "      \"difficulty\": {\n"
+                                            + "        \"source\": \"Difficulté\",\n"
+                                            + "        \"values\": {\n"
+                                            + "          \"Facile\": \"EASY\",\n"
+                                            + "          \"Moyen\": \"MEDIUM\",\n"
+                                            + "          \"Difficile\": \"HARD\"\n"
+                                            + "        }\n"
+                                            + "      },\n"
+                                            + "      \"startingPointLatitude\": { \"source\": \"Départ\" },\n"
+                                            + "}"
+                            )
+                    )
+            )
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Import réalisé avec succès.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"import.success\",\n"
+                                            + "  \"message\": \"Import completed successfully.\",\n"
+                                            + "  \"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Erreur lors du traitement du fichier",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"import.error\",\n"
+                                            + "  \"message\": \"An error occurred while processing the file.\",\n"
+                                            + "  \"extra\": {\n"
+                                            + "    \"message\": \"...\"\n"
+                                            + "  }\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
+            @ApiResponse(responseCode = "403", ref = "#/components/responses/AccessDeniedError"),
+    })
+    @PostMapping(
+            value = "/import/hike",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponseDTO importHike(
+            @RequestPart("file") MultipartFile file,
+            @RequestPart("mapping") String mappingJson
+    ) {
+        try {
+            FileMappingDTO mapping;
+            mapping = new ObjectMapper().readValue(mappingJson, FileMappingDTO.class);
+            fileImportService.importFile(file, mapping);
+        } catch (FileImportException e) {
+            throw new NaaviBadRequestException(
+                    "import.error",
+                    "An error occurred while processing the file.",
+                    Map.of(
+                       "message", e.getMessage()
+                    )
+            );
+        }
+
+        return new ApiResponseDTO("import.success", "Import completed successfully.");
+    }
 
     /**
      * Endpoint to retrieve all hikes.
@@ -86,7 +202,7 @@ public class HikeController extends AbstractController {
     @AuthenticationNotRequired
     @GetMapping("/hikes")
     public PaginatorDTO<HikeDto> hikes(@Valid @ModelAttribute GeoPaginationDTO geoPaginationDTO) {
-        return this.hikeRepository.findAllHikeWithPagination(geoPaginationDTO);
+        return this.hikeRepository.findAllHikeWithPagination(geoPaginationDTO, false);
     }
 
     /**
@@ -173,14 +289,6 @@ public class HikeController extends AbstractController {
                                             value = "{"
                                                     + "\"i18nKey\": \"hike.difficulty_invalid\","
                                                     + "\"message\": \"The difficulty '...' does not exist.\","
-                                                    + "\"extra\": null"
-                                                    + "}"
-                                    ),
-                                    @ExampleObject(
-                                            name = "If season is invalid",
-                                            value = "{"
-                                                    + "\"i18nKey\": \"hike.season_invalid\","
-                                                    + "\"message\": \"The season '...' does not exist.\","
                                                     + "\"extra\": null"
                                                     + "}"
                                     )
@@ -357,6 +465,36 @@ public class HikeController extends AbstractController {
     //////////////////////
     /// ADMINISTRATION ///
     //////////////////////
+
+    /**
+     * Endpoint to retrieve all hikes.
+     *
+     * @param geoPaginationDTO Pagination parameters.
+     * @return Paginator of hikes.
+     */
+    @Operation(
+            summary = "Rechercher des randonnées",
+            description = "Retourner la liste des randonnées (même les brouillons) avec des filtres de recherche",
+            tags = {"Administration"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Liste paginée des randonnées retournée avec succès.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = PaginatorDTO.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
+            @ApiResponse(responseCode = "403", ref = "#/components/responses/AccessDeniedError"),
+            @ApiResponse(responseCode = "422", ref = "#/components/responses/ValidationError"),
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/administration/hikes")
+    public PaginatorDTO<HikeDto> getHikes(@Valid @ModelAttribute GeoPaginationDTO geoPaginationDTO) {
+        return this.hikeRepository.findAllHikeWithPagination(geoPaginationDTO, true);
+    }
 
     /**
      * Endpoint to update a hike.
