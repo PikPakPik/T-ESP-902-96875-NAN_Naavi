@@ -5,9 +5,11 @@ import fr.naavi.core.dto.ApiResponseDTO;
 import fr.naavi.core.dto.PaginationDTO;
 import fr.naavi.core.dto.PaginatorDTO;
 import fr.naavi.core.enums.RoleEnum;
+import fr.naavi.core.enums.S3Enum;
 import fr.naavi.core.exception.children.NaaviBadRequestException;
 import fr.naavi.core.exception.children.NaaviForbiddenException;
 import fr.naavi.core.exception.children.NaaviNotFoundException;
+import fr.naavi.core.service.S3Service;
 import fr.naavi.core.validation.ValidationGroups;
 import fr.naavi.hike.abstraction.AbstractController;
 import fr.naavi.hike.dto.input.FileMappingDTO;
@@ -18,10 +20,13 @@ import fr.naavi.hike.dto.output.HikeDto;
 import fr.naavi.hike.dto.output.HikeHistoryDto;
 import fr.naavi.hike.entity.Hike;
 import fr.naavi.hike.entity.HikeHistory;
+import fr.naavi.hike.entity.Media;
 import fr.naavi.hike.exception.FileImportException;
 import fr.naavi.hike.repository.HikeHistoryRepository;
 import fr.naavi.hike.repository.HikeRepository;
+import fr.naavi.hike.repository.MediaRepository;
 import fr.naavi.hike.service.HikeService;
+import fr.naavi.hike.service.MediaService;
 import fr.naavi.hike.service.importer.FileImportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
@@ -38,19 +43,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import tools.jackson.databind.ObjectMapper;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 @SecurityScheme(
         type = SecuritySchemeType.HTTP,
@@ -66,16 +67,22 @@ public class HikeController extends AbstractController {
     private HikeRepository hikeRepository;
 
     @Autowired
+    private MediaRepository mediaRepository;
+
+    @Autowired
     private HikeHistoryRepository hikeHistoryRepository;
 
     @Autowired
     private HikeService hikeService;
 
-    public HikeController(FileImportService fileImportService) {
-        this.fileImportService = fileImportService;
-    }
+    @Autowired
+    private S3Service s3Service;
 
-    private final FileImportService fileImportService;
+    @Autowired
+    private MediaService mediaService;
+
+    @Autowired
+    private FileImportService fileImportService;
 
     /**
      * Endpoint to import hikes from files.
@@ -301,6 +308,154 @@ public class HikeController extends AbstractController {
     @PostMapping("/hikes")
     public HikeDto createHike(@RequestBody @Validated(ValidationGroups.OnCreate.class) HikeDTO hikeDto) {
         return this.hikeService.createHike(hikeDto);
+    }
+
+    /**
+     * Endpoint to upload a hike media.
+     *
+     * @param id Hike ID.
+     * @param file Image file.
+     * @return ApiResponseDTO
+     */
+    @Operation(
+            summary = "Uploader une image pour une randonnée",
+            description = "Permet à un membre d'uploader une image pour une randonnée spécifique en fonction de son ID",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            tags = {"Randonnée"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Image uploadée avec succès.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{"
+                                            + "\"i18nKey\": \"hike.image.uploaded\","
+                                            + "\"message\": \"The image was successfully uploaded.\","
+                                            + "\"extra\": null"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Bad request",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "If the file is too large",
+                                            value = "{"
+                                                    + "\"i18nKey\": \"hike.image.too_large\","
+                                                    + "\"message\": \"The file exceeds the maximum size of 5MB.\","
+                                                    + "\"extra\": null"
+                                                    + "}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "If the file name is invalid",
+                                            value = "{"
+                                                    + "\"i18nKey\": \"hike.image.invalid_file\","
+                                                    + "\"message\": \"The file is empty or invalid.\","
+                                                    + "\"extra\": null"
+                                                    + "}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "If the file format is invalid",
+                                            value = "{"
+                                                    + "\"i18nKey\": \"hike.image.invalid_file\","
+                                                    + "\"message\": \"Only image files are allowed.\","
+                                                    + "\"extra\": [\n"
+                                                    + "\"image/png\",\n"
+                                                    + "\"image/svg+xml\",\n"
+                                                    + "\"image/jpg\",\n"
+                                                    + "\"image/jpeg\",\n"
+                                                    + "\"image/heic\",\n"
+                                                    + "\"image/webp\"\n"
+                                                    + "],\n"
+                                                    + "}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "If there is an error during upload",
+                                            value = "{"
+                                                    + "\"i18nKey\": \"hike.image.failed_upload\","
+                                                    + "\"message\": \"Failed to upload the image. Please try again later.\","
+                                                    + "\"extra\": null"
+                                                    + "}"
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Not Found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{"
+                                            + "\"i18nKey\": \"hike.not_found\","
+                                            + "\"message\": \"Hike not found.\","
+                                            + "\"extra\": null"
+                                            + "}"
+                            )
+                    )
+            ),
+    })
+    @PostMapping("/hikes/{id}/images")
+    public ApiResponseDTO hikeUploadImage(@PathVariable Long id, @RequestParam("image") MultipartFile file) {
+        Hike hike = this.hikeRepository.findById(id)
+                .orElseThrow(() -> new NaaviNotFoundException("hike.not_found", "Hike not found"));
+
+        final long MAX_SIZE = 5 * 1024 * 1024L;
+        if (file.getSize() > MAX_SIZE) {
+            throw new NaaviBadRequestException(
+                    "hike.image.too_large",
+                    "The file exceeds the maximum size of 5MB."
+            );
+        }
+
+        String fileName = file.getOriginalFilename();
+        if (file.isEmpty() || fileName == null) {
+            throw new NaaviBadRequestException("hike.image.invalid_file", "The file is empty or invalid.");
+        }
+
+        String contentType = file.getContentType() != null ? file.getContentType().toLowerCase() : "";
+        Set<String> allowedContentTypes = Set.of(
+                "image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml", "image/heic"
+        );
+        if (!allowedContentTypes.contains(contentType)) {
+            throw new NaaviBadRequestException("hike.image.invalid_file", "Only image files are allowed.", allowedContentTypes);
+        }
+        String extension = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
+
+        try {
+            String toHash = fileName + "_" + System.currentTimeMillis();
+
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(toHash.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder();
+            for (byte b : digest) {
+                hex.append(String.format("%02x", b));
+            }
+            fileName = hex + "." + extension;
+
+            s3Service.upload(S3Enum.HIKES, file.getInputStream(), fileName, hike.getId().toString());
+            Media media = mediaService.save(this.getUser(), fileName);
+            hikeService.addMedia(hike, media);
+
+            return new ApiResponseDTO(
+                    "hike.image.uploaded",
+                    "The image was successfully uploaded."
+            );
+        } catch (Exception e) {
+            throw new NaaviBadRequestException(
+                    "hike.image.failed_upload",
+                    "Failed to upload the image. Please try again later."
+            );
+        }
     }
 
     /**
@@ -580,6 +735,107 @@ public class HikeController extends AbstractController {
     }
 
     /**
+     * Endpoint to delete a hike media.
+     *
+     * @param hikeId Hike ID.
+     * @param imageId Image ID.
+     * @return ApiResponseDTO
+     */
+    @Operation(
+            summary = "Supprimer une image d'une randonnée",
+            description = "Permet à un administrateur de supprimer une image d'une randonnée spécifique en fonction de son ID",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            tags = {"Administration"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Image supprimée avec succès.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{\n"
+                                            + "\"i18nKey\": \"hike.image.deleted\",\n"
+                                            + "\"message\": \"The image was successfully deleted.\",\n"
+                                            + "\"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Bad Request",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{\n"
+                                            + "\"i18nKey\": \"hike.image.not_linked\",\n"
+                                            + "\"message\": \"The media is not linked to this hike.\",\n"
+                                            + "\"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
+            @ApiResponse(responseCode = "403", ref = "#/components/responses/AccessDeniedError"),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Not Found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "If the hike is not found",
+                                            value = "{"
+                                                    + "\"i18nKey\": \"hike.not_found\","
+                                                    + "\"message\": \"Hike not found\","
+                                                    + "\"extra\": null"
+                                                    + "}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "If the media is not found",
+                                            value = "{"
+                                                    + "\"i18nKey\": \"media.not_found\","
+                                                    + "\"message\": \"Media not found\","
+                                                    + "\"extra\": null"
+                                                    + "}"
+                                    )
+                            }
+                    )
+            )
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/administration/hikes/{hikeId}/images/{imageId}")
+    public ApiResponseDTO hikeDeleteImage(@PathVariable Long hikeId, @PathVariable Long imageId) {
+        Hike hike = this.hikeRepository.findById(hikeId)
+                .orElseThrow(() -> new NaaviNotFoundException("hike.not_found", "Hike not found"));
+
+        Media media = this.mediaRepository.findById(imageId)
+                .orElseThrow(() -> new NaaviNotFoundException("media.not_found", "Media not found"));
+
+        boolean linked = hike.getImages().stream()
+                .anyMatch(m -> m.getId().equals(media.getId()));
+
+        if (!linked) {
+            throw new NaaviBadRequestException(
+                    "hike.image.not_linked",
+                    "The media is not linked to this hike."
+            );
+        }
+
+        s3Service.delete(S3Enum.HIKES, media.getFilename(), hike.getId().toString());
+        hikeService.deleteMedia(hike, media);
+        mediaService.delete(media);
+
+        return new ApiResponseDTO(
+                "hike.image.deleted",
+                "The image was successfully deleted."
+        );
+    }
+
+    /**
      * Endpoint to delete a hike.
      *
      * @param id Hike ID.
@@ -623,6 +879,12 @@ public class HikeController extends AbstractController {
     public ApiResponseDTO deleteHike(@PathVariable Long id) {
         Hike hike = this.hikeRepository.findById(id)
                 .orElseThrow(() -> new NaaviNotFoundException("hike.not_found", "Hike not found"));
+
+        for (Media media : new HashSet<>(hike.getImages())) {
+            s3Service.delete(S3Enum.HIKES, media.getFilename(), hike.getId().toString());
+            hikeService.deleteMedia(hike, media);
+            mediaService.delete(media);
+        }
 
         this.hikeService.deleteHike(hike);
 

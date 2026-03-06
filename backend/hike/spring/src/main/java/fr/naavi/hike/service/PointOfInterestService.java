@@ -3,6 +3,7 @@ package fr.naavi.hike.service;
 import fr.naavi.core.exception.children.NaaviBadCredentialsException;
 import fr.naavi.hike.dto.input.PointOfInterestDTO;
 import fr.naavi.hike.dto.output.PointOfInterestDto;
+import fr.naavi.hike.entity.Media;
 import fr.naavi.hike.entity.PointOfInterest;
 import fr.naavi.hike.enums.PointOfInterestCategoryEnum;
 import fr.naavi.hike.enums.StatusEnum;
@@ -98,6 +99,28 @@ public class PointOfInterestService {
      */
     public void deletePointOfInterest(PointOfInterest pointOfInterest) {
         this.pointOfInterestRepository.delete(pointOfInterest);
+    }
+
+    /**
+     * Add a media to a point of interest.
+     *
+     * @param poi The point of interest to add the media to.
+     * @param media The media to add.
+     */
+    public void addMedia(PointOfInterest poi, Media media) {
+        poi.getImages().add(media);
+        this.pointOfInterestRepository.save(poi);
+    }
+
+    /**
+     * Delete a media from a hike.
+     *
+     * @param poi The point of interest to add the media to.
+     * @param media The media to delete.
+     */
+    public void deleteMedia(PointOfInterest poi, Media media) {
+        poi.getImages().remove(media);
+        this.pointOfInterestRepository.save(poi);
     }
 
     /**

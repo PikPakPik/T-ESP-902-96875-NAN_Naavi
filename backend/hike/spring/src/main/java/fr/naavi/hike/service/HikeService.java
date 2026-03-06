@@ -7,6 +7,7 @@ import fr.naavi.hike.dto.input.HikeHistoryDTO;
 import fr.naavi.hike.dto.output.HikeDto;
 import fr.naavi.hike.entity.Hike;
 import fr.naavi.hike.entity.HikeHistory;
+import fr.naavi.hike.entity.Media;
 import fr.naavi.hike.enums.DifficultyEnum;
 import fr.naavi.hike.enums.SourceEnum;
 import fr.naavi.hike.enums.StatusEnum;
@@ -151,6 +152,28 @@ public class HikeService {
      */
     public void deleteHike(Hike hike) {
         this.hikeRepository.delete(hike);
+    }
+
+    /**
+     * Add a media to a hike.
+     *
+     * @param hike The hike to add the media to.
+     * @param media The media to add.
+     */
+    public void addMedia(Hike hike, Media media) {
+        hike.getImages().add(media);
+        this.hikeRepository.save(hike);
+    }
+
+    /**
+     * Delete a media from a hike.
+     *
+     * @param hike The hike to delete the media from.
+     * @param media The media to delete.
+     */
+    public void deleteMedia(Hike hike, Media media) {
+        hike.getImages().remove(media);
+        this.hikeRepository.save(hike);
     }
 
     /**

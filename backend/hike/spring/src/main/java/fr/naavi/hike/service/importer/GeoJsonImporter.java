@@ -20,6 +20,12 @@ public class GeoJsonImporter extends AbstractHikeImporter implements FileImporte
 
     private final ObjectMapper objectMapper;
 
+    /**
+     * Constructor for GeoJsonImporter.
+     *
+     * @param objectMapper ObjectMapper for parsing GeoJSON files
+     * @param hikeRepository HikeRepository for saving imported hikes
+     */
     public GeoJsonImporter(
             ObjectMapper objectMapper,
             HikeRepository hikeRepository
@@ -28,11 +34,23 @@ public class GeoJsonImporter extends AbstractHikeImporter implements FileImporte
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * Checks if the importer supports the given content type.
+     *
+     * @param contentType The content type of the file to be imported
+     * @return True if the content type is supported, false otherwise
+     */
     @Override
     public boolean supports(String contentType) {
         return contentType.contains("geo+json") || contentType.contains("application/json");
     }
 
+    /**
+     * Imports data from a GeoJSON file. The method reads the GeoJSON file, extracts the features, and processes each feature as a record using the provided mapping.
+     *
+     * @param file The GeoJSON file to import
+     * @param mapping The mapping configuration to apply to the imported data
+     */
     @Override
     public void importData(MultipartFile file, FileMappingDTO mapping) {
         try {

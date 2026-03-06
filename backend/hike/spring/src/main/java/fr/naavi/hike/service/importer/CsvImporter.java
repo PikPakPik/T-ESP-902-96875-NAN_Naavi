@@ -23,16 +23,34 @@ public class CsvImporter extends AbstractHikeImporter implements FileImporter {
 
     private final ObjectMapper objectMapper;
 
+    /**
+     * Constructor for CsvImporter.
+     *
+     * @param hikeRepository the repository to manage hike data
+     * @param objectMapper the object mapper to convert CSV records to JSON
+     */
     public CsvImporter(HikeRepository hikeRepository, ObjectMapper objectMapper) {
         super(hikeRepository);
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * Checks if the importer supports the given content type.
+     *
+     * @param contentType The content type of the file to be imported
+     * @return True if the content type is supported, false otherwise
+     */
     @Override
     public boolean supports(String contentType) {
         return contentType.contains("csv");
     }
 
+    /**
+     * Imports data from a CSV file. The method reads the CSV file, converts each record to a JSON node, and then processes the records using the provided mapping.
+     *
+     * @param file the CSV file to import
+     * @param mapping the mapping configuration to apply to the imported data
+     */
     @Override
     public void importData(MultipartFile file, FileMappingDTO mapping) {
         try {

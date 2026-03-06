@@ -1,13 +1,17 @@
 package fr.naavi.hike.controller;
 
+import fr.naavi.core.enums.S3Enum;
 import fr.naavi.core.exception.GlobalExceptionHandler;
+import fr.naavi.core.service.S3Service;
 import fr.naavi.hike.configuration.CacheConfigurationTest;
 import fr.naavi.hike.dto.input.HikeDTO;
 import fr.naavi.hike.dto.input.HikeHistoryDTO;
 import fr.naavi.hike.entity.Hike;
+import fr.naavi.hike.entity.Media;
 import fr.naavi.hike.enums.SourceEnum;
 import fr.naavi.hike.repository.HikeHistoryRepository;
 import fr.naavi.hike.repository.HikeRepository;
+import fr.naavi.hike.repository.MediaRepository;
 import fr.naavi.hike.seeder.HikeHistorySeeder;
 import fr.naavi.hike.seeder.HikeSeeder;
 import fr.naavi.hike.seeder.UserSeeder;
@@ -15,11 +19,14 @@ import fr.naavi.hike.utils.AuthenticationManagerUtil;
 import fr.naavi.hike.utils.DtoFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.context.ActiveProfiles;
@@ -27,16 +34,14 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -64,11 +69,23 @@ public class HikeControllerTest {
     @Autowired
     private HikeHistoryRepository hikeHistoryRepository;
 
+    @Autowired
+    private MediaRepository mediaRepository;
+
     @MockitoBean
     private AuthenticationManager authenticationManager;
 
+    @MockitoBean
+    private S3Service s3Service;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @BeforeEach
     void setUp() {
+        jdbcTemplate.execute("DELETE FROM hikes_images");
+
+        mediaRepository.deleteAll();
         hikeHistoryRepository.deleteAll();
         hikeSeeder.seedHikes();
         userSeeder.seedUsers();
@@ -135,6 +152,94 @@ public class HikeControllerTest {
                 .andExpect(jsonPath("$.i18nKey").value("hike.not_found"))
                 .andExpect(jsonPath("$.message").value("Hike not found"))
                 .andExpect(jsonPath("$.extra").doesNotExist());
+    }
+
+    @Test
+    void shouldUploadImage_WithUnauthenticatedUser_ReturnsUnauthorized() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
+
+        MockMultipartFile image = new MockMultipartFile(
+                "image", "photo.png", "image/png", "fake-image-content".getBytes()
+        );
+
+        mockMvc.perform(multipart("/hikes/{id}/images", hike.getId()).file(image))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldUploadImage_WithEmptyFile_ReturnsBadRequest() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
+        UsernamePasswordAuthenticationToken authToken = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        MockMultipartFile image = new MockMultipartFile(
+                "image", "photo.png", "image/png", new byte[0]
+        );
+
+        mockMvc.perform(multipart("/hikes/{id}/images", hike.getId())
+                        .file(image)
+                        .with(authentication(authToken)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.i18nKey").value("hike.image.invalid_file"))
+                .andExpect(jsonPath("$.message").value("The file is empty or invalid."));
+    }
+
+    @Test
+    void shouldUploadImage_WithInvalidContentType_ReturnsBadRequest() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
+        UsernamePasswordAuthenticationToken authToken = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        MockMultipartFile image = new MockMultipartFile(
+                "image", "document.pdf", "application/pdf", "fake-pdf-content".getBytes()
+        );
+
+        mockMvc.perform(multipart("/hikes/{id}/images", hike.getId())
+                        .file(image)
+                        .with(authentication(authToken)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.i18nKey").value("hike.image.invalid_file"))
+                .andExpect(jsonPath("$.message").value("Only image files are allowed."));
+    }
+
+    @Test
+    void shouldUploadImage_WithValidFile_ReturnsSuccess() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
+        UsernamePasswordAuthenticationToken authToken = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        MockMultipartFile image = new MockMultipartFile(
+                "image", "photo.png", "image/png", "fake-image-content".getBytes()
+        );
+
+        mockMvc.perform(multipart("/hikes/{id}/images", hike.getId())
+                        .file(image)
+                        .with(authentication(authToken)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.i18nKey").value("hike.image.uploaded"))
+                .andExpect(jsonPath("$.message").value("The image was successfully uploaded."));
+    }
+
+    @Test
+    void shouldUploadImage_WhenS3Fails_ReturnsBadRequest() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
+        UsernamePasswordAuthenticationToken authToken = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        Mockito.doThrow(new RuntimeException("S3 unavailable"))
+                .when(s3Service).upload(Mockito.any(S3Enum.class), Mockito.any(), Mockito.anyString(), Mockito.any());
+
+        MockMultipartFile image = new MockMultipartFile(
+                "image", "photo.png", "image/png", "fake-image-content".getBytes()
+        );
+
+        mockMvc.perform(multipart("/hikes/{id}/images", hike.getId())
+                        .file(image)
+                        .with(authentication(authToken)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.i18nKey").value("hike.image.failed_upload"))
+                .andExpect(jsonPath("$.message").value("Failed to upload the image. Please try again later."));
     }
 
     @Test
@@ -759,5 +864,103 @@ public class HikeControllerTest {
                 .andExpect(jsonPath("$.extra").isMap())
                 .andExpect(jsonPath("$.extra.latitude").value("must not be null"))
                 .andExpect(jsonPath("$.extra.longitude").value("must not be null"));
+    }
+
+    @Test
+    @Transactional
+    void shouldDeleteImage_WithAdmin_WhenHikeAndMediaExist() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
+
+        Media media = new Media();
+        media.setFilename("test-image.jpg");
+        media.setUser(UserSeeder.ADMIN.getId());
+        media = mediaRepository.save(media);
+        hike.getImages().add(media);
+        hikeRepository.save(hike);
+
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
+
+        mockMvc.perform(delete("/administration/hikes/{hikeId}/images/{imageId}", hike.getId(), media.getId())
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.i18nKey").value("hike.image.deleted"))
+                .andExpect(jsonPath("$.message").value("The image was successfully deleted."));
+    }
+
+    @Test
+    void shouldReturnNotFound_WhenHikeDoesNotExistOnDeleteImage() throws Exception {
+        Long nonExistentHikeId = 999999999L;
+        Long anyImageId = 1L;
+
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
+
+        mockMvc.perform(delete("/administration/hikes/{hikeId}/images/{imageId}", nonExistentHikeId, anyImageId)
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.i18nKey").value("hike.not_found"))
+                .andExpect(jsonPath("$.message").value("Hike not found"))
+                .andExpect(jsonPath("$.extra").doesNotExist());
+    }
+
+    @Test
+    @Transactional
+    void shouldReturnNotFound_WhenMediaDoesNotExistOnDeleteImage() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
+        Long nonExistentMediaId = 999999999L;
+
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
+
+        mockMvc.perform(delete("/administration/hikes/{hikeId}/images/{imageId}", hike.getId(), nonExistentMediaId)
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.i18nKey").value("media.not_found"))
+                .andExpect(jsonPath("$.message").value("Media not found"))
+                .andExpect(jsonPath("$.extra").doesNotExist());
+    }
+
+    @Test
+    @Transactional
+    void shouldReturnBadRequest_WhenMediaIsNotLinkedToHike() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
+
+        Media media = new Media();
+        media.setFilename("unlinked-image.jpg");
+        media.setUser(UserSeeder.ADMIN.getId());
+        media = mediaRepository.save(media);
+
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
+
+        mockMvc.perform(delete("/administration/hikes/{hikeId}/images/{imageId}", hike.getId(), media.getId())
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.i18nKey").value("hike.image.not_linked"))
+                .andExpect(jsonPath("$.message").value("The media is not linked to this hike."));
+    }
+
+    @Test
+    void shouldReturnUnauthorized_WhenDeleteImageWithoutAuthentication() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
+
+        mockMvc.perform(delete("/administration/hikes/{hikeId}/images/{imageId}", hike.getId(), 1L))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Unauthorized access. You must be authenticated to access this resource."));
+    }
+
+    @Test
+    void shouldReturnForbidden_WhenUserDeletesImageWithoutAdminRole() throws Exception {
+        Hike hike = hikeRepository.findAll().getFirst();
+
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        mockMvc.perform(delete("/administration/hikes/{hikeId}/images/{imageId}", hike.getId(), 1L)
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Access denied. You do not have the necessary permissions to access this resource"));
     }
 }

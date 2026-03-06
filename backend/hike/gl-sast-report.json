@@ -2994,14 +2994,14 @@
       }
     ],
     "type": "sast",
-    "start_time": "2026-03-06T17:57:11",
-    "end_time": "2026-03-06T17:57:32",
+    "start_time": "2026-03-06T17:58:10",
+    "end_time": "2026-03-06T17:58:39",
     "status": "success",
     "observability": {
       "events": [
         {
           "event": "collect_sast_scan_metrics_from_pipeline",
-          "property": "d795c26f-fd3e-4c90-b409-6aaffb7bf74b",
+          "property": "835192ba-a4c4-4480-b9a6-35172c359cbb",
           "label": "semgrep",
           "value": 0,
           "version": "6.15.1",
@@ -3009,12 +3009,151 @@
           "override_count": 0,
           "passthrough_count": 0,
           "custom_exclude_path_count": 0,
-          "time_s": 21,
-          "file_count": 74
+          "time_s": 28,
+          "file_count": 79
         }
       ]
     }
   },
   "version": "15.2.2",
-  "vulnerabilities": []
+  "vulnerabilities": [
+    {
+      "id": "04cec044d4d7fc033d2cef9001e01c85ee64986ae8198ecbb0bcc3640b53a062",
+      "category": "sast",
+      "name": "Use of a broken or risky cryptographic algorithm (SHA1/MD5)",
+      "description": "The application was found using an insecure or risky digest or signature algorithm. Both MD5\nand SHA1 hash algorithms have been found to be vulnerable to producing collisions.\nThis means\nthat two different values, when hashed, can lead to the same hash value. If the application is\ntrying\nto use these hash methods for storing passwords, then it is recommended to switch to a\npassword hashing\nalgorithm such as Argon2id or PBKDF2.\nstrongly recommended that a standard Digest algorithm be chosen instead as implementing\na digest by hand is error-prone.\n\nExample of creating a SHA-384 hash:\n```\n// Create a MessageDigest using the SHA-384 algorithm\nMessageDigest sha384Digest = MessageDigest.getInstance(\"SHA-384\");\n// Call update with your data\nsha384Digest.update(input);\n// Only call digest once all data has been fed into the update sha384digest instance\nbyte[] output = sha384Digest.digest();\n// output base64 encoded version of the hash\nSystem.out.println(\"hash: \" + Base64.getEncoder().encodeToString(output));\n```\n\nFor more information on secure password storage see OWASP:\nhttps://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html\n",
+      "cve": "semgrep_id:find_sec_bugs.WEAK_MESSAGE_DIGEST_MD5-1.WEAK_MESSAGE_DIGEST_SHA1-1:437:437",
+      "severity": "Medium",
+      "scanner": {
+        "id": "semgrep",
+        "name": "Semgrep"
+      },
+      "location": {
+        "file": "spring/src/main/java/fr/naavi/hike/controller/HikeController.java",
+        "start_line": 437
+      },
+      "identifiers": [
+        {
+          "type": "semgrep_id",
+          "name": "find_sec_bugs.WEAK_MESSAGE_DIGEST_MD5-1.WEAK_MESSAGE_DIGEST_SHA1-1",
+          "value": "find_sec_bugs.WEAK_MESSAGE_DIGEST_MD5-1.WEAK_MESSAGE_DIGEST_SHA1-1"
+        },
+        {
+          "type": "cwe",
+          "name": "CWE-327",
+          "value": "327",
+          "url": "https://cwe.mitre.org/data/definitions/327.html"
+        },
+        {
+          "type": "owasp",
+          "name": "A04:2021 - Insecure Design",
+          "value": "A04:2021"
+        },
+        {
+          "type": "owasp",
+          "name": "A6:2017 - Security Misconfiguration",
+          "value": "A6:2017"
+        },
+        {
+          "type": "find_sec_bugs_type",
+          "name": "Find Security Bugs-WEAK_MESSAGE_DIGEST_MD5",
+          "value": "WEAK_MESSAGE_DIGEST_MD5"
+        },
+        {
+          "type": "find_sec_bugs_type",
+          "name": "Find Security Bugs-WEAK_MESSAGE_DIGEST_SHA1",
+          "value": "WEAK_MESSAGE_DIGEST_SHA1"
+        }
+      ],
+      "tracking": {
+        "type": "source",
+        "items": [
+          {
+            "file": "spring/src/main/java/fr/naavi/hike/controller/HikeController.java",
+            "line_start": 437,
+            "line_end": 437,
+            "signatures": [
+              {
+                "algorithm": "scope_offset_compressed",
+                "value": "spring/src/main/java/fr/naavi/hike/controller/HikeController.java|HikeController[0]|ApiResponseDTO[1]:112"
+              },
+              {
+                "algorithm": "scope_offset",
+                "value": "spring/src/main/java/fr/naavi/hike/controller/HikeController.java|HikeController[0]|ApiResponseDTO[1]:117"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "ebc2d37f32d1d76d358c3b1d52eda6ec19fece792a8aebf75b3d761e8777d834",
+      "category": "sast",
+      "name": "Use of a broken or risky cryptographic algorithm (SHA1/MD5)",
+      "description": "The application was found using an insecure or risky digest or signature algorithm. Both MD5\nand SHA1 hash algorithms have been found to be vulnerable to producing collisions.\nThis means\nthat two different values, when hashed, can lead to the same hash value. If the application is\ntrying\nto use these hash methods for storing passwords, then it is recommended to switch to a\npassword hashing\nalgorithm such as Argon2id or PBKDF2.\nstrongly recommended that a standard Digest algorithm be chosen instead as implementing\na digest by hand is error-prone.\n\nExample of creating a SHA-384 hash:\n```\n// Create a MessageDigest using the SHA-384 algorithm\nMessageDigest sha384Digest = MessageDigest.getInstance(\"SHA-384\");\n// Call update with your data\nsha384Digest.update(input);\n// Only call digest once all data has been fed into the update sha384digest instance\nbyte[] output = sha384Digest.digest();\n// output base64 encoded version of the hash\nSystem.out.println(\"hash: \" + Base64.getEncoder().encodeToString(output));\n```\n\nFor more information on secure password storage see OWASP:\nhttps://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html\n",
+      "cve": "semgrep_id:find_sec_bugs.WEAK_MESSAGE_DIGEST_MD5-1.WEAK_MESSAGE_DIGEST_SHA1-1:319:319",
+      "severity": "Medium",
+      "scanner": {
+        "id": "semgrep",
+        "name": "Semgrep"
+      },
+      "location": {
+        "file": "spring/src/main/java/fr/naavi/hike/controller/PointOfInterestController.java",
+        "start_line": 319
+      },
+      "identifiers": [
+        {
+          "type": "semgrep_id",
+          "name": "find_sec_bugs.WEAK_MESSAGE_DIGEST_MD5-1.WEAK_MESSAGE_DIGEST_SHA1-1",
+          "value": "find_sec_bugs.WEAK_MESSAGE_DIGEST_MD5-1.WEAK_MESSAGE_DIGEST_SHA1-1"
+        },
+        {
+          "type": "cwe",
+          "name": "CWE-327",
+          "value": "327",
+          "url": "https://cwe.mitre.org/data/definitions/327.html"
+        },
+        {
+          "type": "owasp",
+          "name": "A04:2021 - Insecure Design",
+          "value": "A04:2021"
+        },
+        {
+          "type": "owasp",
+          "name": "A6:2017 - Security Misconfiguration",
+          "value": "A6:2017"
+        },
+        {
+          "type": "find_sec_bugs_type",
+          "name": "Find Security Bugs-WEAK_MESSAGE_DIGEST_MD5",
+          "value": "WEAK_MESSAGE_DIGEST_MD5"
+        },
+        {
+          "type": "find_sec_bugs_type",
+          "name": "Find Security Bugs-WEAK_MESSAGE_DIGEST_SHA1",
+          "value": "WEAK_MESSAGE_DIGEST_SHA1"
+        }
+      ],
+      "tracking": {
+        "type": "source",
+        "items": [
+          {
+            "file": "spring/src/main/java/fr/naavi/hike/controller/PointOfInterestController.java",
+            "line_start": 319,
+            "line_end": 319,
+            "signatures": [
+              {
+                "algorithm": "scope_offset_compressed",
+                "value": "spring/src/main/java/fr/naavi/hike/controller/PointOfInterestController.java|PointOfInterestController[0]|ApiResponseDTO[0]:112"
+              },
+              {
+                "algorithm": "scope_offset",
+                "value": "spring/src/main/java/fr/naavi/hike/controller/PointOfInterestController.java|PointOfInterestController[0]|ApiResponseDTO[0]:117"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

@@ -1,5 +1,6 @@
 package fr.naavi.hike.dto.output;
 
+import fr.naavi.core.enums.S3Enum;
 import fr.naavi.hike.entity.Hike;
 import fr.naavi.hike.enums.DifficultyEnum;
 import fr.naavi.hike.enums.SourceEnum;
@@ -7,6 +8,7 @@ import fr.naavi.hike.enums.StatusEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Schema(description = "Informations sur une randonnée")
 public class HikeDto {
@@ -58,6 +60,9 @@ public class HikeDto {
     @Schema(description = "Source de la ranndonnée", implementation = SourceEnum.class)
     private final SourceEnum source;
 
+    @Schema(description = "Liste des images de la randonnée")
+    private final List<MediaDto> images;
+
     @Schema(description = "Date de création de la randonnée", example = "2024-06-01T12:00:00")
     private final LocalDateTime createdAt;
 
@@ -87,6 +92,9 @@ public class HikeDto {
         this.difficulty = hike.getDifficulty();
         this.source = hike.getSource();
         this.status = hike.getStatus();
+        this.images = hike.getImages().stream()
+                .map(media -> new MediaDto(media, false, S3Enum.HIKES.toString()))
+                .toList();
         this.createdAt = hike.getCreatedAt();
         this.updatedAt = hike.getUpdatedAt();
     }
@@ -153,6 +161,10 @@ public class HikeDto {
 
     public StatusEnum getStatus() {
         return status;
+    }
+
+    public List<MediaDto> getImages() {
+        return images;
     }
 
     public LocalDateTime getCreatedAt() {
