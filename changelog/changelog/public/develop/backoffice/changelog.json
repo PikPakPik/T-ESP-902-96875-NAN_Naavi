@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.0.1-dev",
+    "date": "2025-02-27",
+    "entries": [
+      { "type": "feature", "text": "Changelog backoffice DEV - test version 0.0.1" },
+      { "type": "feature", "text": "Tests du changelog en environnement de développement" },
+      { "type": "fix", "text": "Vérification des URLs dev.naavi-trails.fr/changelog" },
+      { "type": "improvement", "text": "Documentation du format JSON" }
+    ]
+  }
+]

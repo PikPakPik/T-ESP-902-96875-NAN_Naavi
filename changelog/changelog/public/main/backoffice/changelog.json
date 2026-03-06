@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.0.1",
+    "date": "2025-02-27",
+    "entries": [
+      { "type": "feature", "text": "Changelog backoffice - test version 0.0.1" },
+      { "type": "feature", "text": "Page Notes de version accessible depuis le menu" },
+      { "type": "fix", "text": "Correction de l'affichage des entrées" },
+      { "type": "improvement", "text": "Mise en forme des types (feature, fix, etc.)" }
+    ]
+  }
+]

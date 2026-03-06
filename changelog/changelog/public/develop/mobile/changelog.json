@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.0.1-dev",
+    "date": "2025-02-27",
+    "title": "Changelog mobile DEV - test version 0.0.1",
+    "entries": [
+      { "type": "feature", "text": "Changelog mobile DEV - test version 0.0.1" },
+      { "type": "feature", "text": "Builds de développement avec notes de sprint" },
+      { "type": "fix", "text": "Test du flux changelog en environnement dev" },
+      { "type": "improvement", "text": "Validation du proxy NPM vers GitLab Pages" }
+    ]
+  }
+]

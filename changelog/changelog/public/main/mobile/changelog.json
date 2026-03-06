@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.0.1",
+    "date": "2025-02-27",
+    "title": "Changelog mobile - test version 0.0.1",
+    "entries": [
+      { "type": "feature", "text": "Changelog mobile - test version 0.0.1" },
+      { "type": "feature", "text": "Affichage des notes de version au démarrage" },
+      { "type": "fix", "text": "Correction du chargement du changelog" },
+      { "type": "improvement", "text": "Amélioration de l'expérience utilisateur" }
+    ]
+  }
+]
