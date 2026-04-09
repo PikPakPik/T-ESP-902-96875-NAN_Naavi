@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.naavi.hike.entitylistener.HikeListener;
 import fr.naavi.hike.enums.DifficultyEnum;
 import fr.naavi.hike.enums.SourceEnum;
+import fr.naavi.hike.enums.VisibilityEnum;
+import fr.naavi.hike.enums.ReactionEnum;
 import fr.naavi.hike.enums.StatusEnum;
 import jakarta.persistence.*;
 import lombok.Data;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -64,6 +64,12 @@ public class Hike {
     @Enumerated(EnumType.STRING)
     private SourceEnum source;
 
+    @Column(name = "user_id")
+    private Long userId;
+
+    @Enumerated(EnumType.STRING)
+    private VisibilityEnum visibility;
+
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
 
@@ -74,10 +80,23 @@ public class Hike {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "hike", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonIgnore
     private List<HikeHistory> histories = new ArrayList<>();
 
     @ManyToMany(targetEntity = Media.class)
     private List<Media> images = new ArrayList<>();
+
+    @OneToMany(mappedBy = "hike", fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonIgnore
+    private List<HikeReaction> reactions = new ArrayList<>();
+
+    @Transient
+    public long getLikesCount() {
+        return reactions.stream().filter(r -> r.getReaction() == ReactionEnum.LIKE).count();
+    }
+
+    @Transient
+    public long getDislikesCount() {
+        return reactions.stream().filter(r -> r.getReaction() == ReactionEnum.DISLIKE).count();
+    }
 }

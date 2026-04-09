@@ -125,6 +125,7 @@ public class HikeSeeder {
         hike.setLocation("Unknown");
         hike.setDifficulty(difficulty);
         hike.setSource(SourceEnum.COMMUNITY);
+        hike.setUserId(1L);
         hike.setStatus(status);
         hike.setWkbGeometry(null);
         hike.setWkbWaypoints(null);

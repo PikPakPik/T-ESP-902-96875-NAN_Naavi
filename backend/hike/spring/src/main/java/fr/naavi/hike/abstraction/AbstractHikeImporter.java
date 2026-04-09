@@ -61,7 +61,9 @@ public abstract class AbstractHikeImporter {
                 }
 
                 JsonNode rawValue = getNestedValue(record, def.getSource());
-                if (rawValue == null || rawValue.isNull()) continue;
+                if (rawValue == null || rawValue.isNull()) {
+                    continue;
+                }
 
                 try {
                     applyMapping(hike, hikeField, def, rawValue);
@@ -116,6 +118,12 @@ public abstract class AbstractHikeImporter {
         }
     }
 
+    /**
+     * Vérifie si un champ de Hike supporte les unités, en fonction de sa nature (ex: distance et duration supportent les unités, mais pas name ou difficulty)
+     *
+     * @param field Le champ de Hike à vérifier (ex: "distance", "duration", "name", "difficulty", etc.)
+     * @return true si le champ supporte les unités, false sinon
+     */
     protected boolean supportsUnit(String field) {
         return "distance".equals(field) || "duration".equals(field);
     }
@@ -263,8 +271,9 @@ public abstract class AbstractHikeImporter {
      *
      * @param enumType Le type d'enum à parser (ex: DifficultyEnum.class)
      * @param value La valeur à appliquer, déjà convertie en string (ex: "5.2" pour distance, "EASY" pour difficulty, etc.)
-     * @return L'instance de l'enum correspondante, ou null si la valeur n'est pas valide
      * @param <E> Le type d'enum
+     * @return L'instance de l'enum correspondante, ou null si la valeur n'est pas valide
+     * @throws fr.naavi.hike.exception.FileImportException Si la valeur n'est pas une constante valide de l'enum
      */
     protected <E extends Enum<E>> E parseEnum(Class<E> enumType, String value) {
         try {
@@ -322,7 +331,9 @@ public abstract class AbstractHikeImporter {
         String[] parts = path.split("\\.");
         JsonNode current = node;
         for (String part : parts) {
-            if (current == null) return null;
+            if (current == null) {
+                return null;
+            }
             current = current.get(part);
         }
         return current;

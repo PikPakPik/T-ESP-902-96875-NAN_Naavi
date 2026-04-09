@@ -12,6 +12,7 @@ import fr.naavi.core.exception.children.NaaviNotFoundException;
 import fr.naavi.core.service.S3Service;
 import fr.naavi.core.validation.ValidationGroups;
 import fr.naavi.hike.abstraction.AbstractController;
+import fr.naavi.hike.dto.UserDTO;
 import fr.naavi.hike.dto.input.FileMappingDTO;
 import fr.naavi.hike.dto.input.GeoPaginationDTO;
 import fr.naavi.hike.dto.input.HikeDTO;
@@ -21,8 +22,11 @@ import fr.naavi.hike.dto.output.HikeHistoryDto;
 import fr.naavi.hike.entity.Hike;
 import fr.naavi.hike.entity.HikeHistory;
 import fr.naavi.hike.entity.Media;
+import fr.naavi.hike.enums.ReactionEnum;
+import fr.naavi.hike.enums.VisibilityEnum;
 import fr.naavi.hike.exception.FileImportException;
 import fr.naavi.hike.repository.HikeHistoryRepository;
+import fr.naavi.hike.repository.HikeReactionRepository;
 import fr.naavi.hike.repository.HikeRepository;
 import fr.naavi.hike.repository.MediaRepository;
 import fr.naavi.hike.service.HikeService;
@@ -39,7 +43,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -63,125 +66,36 @@ import java.util.Set;
 )
 @RestController
 public class HikeController extends AbstractController {
-    @Autowired
-    private HikeRepository hikeRepository;
-
-    @Autowired
-    private MediaRepository mediaRepository;
-
-    @Autowired
-    private HikeHistoryRepository hikeHistoryRepository;
-
-    @Autowired
-    private HikeService hikeService;
-
-    @Autowired
-    private S3Service s3Service;
-
-    @Autowired
-    private MediaService mediaService;
-
-    @Autowired
-    private FileImportService fileImportService;
+    private final HikeRepository hikeRepository;
+    private final HikeReactionRepository hikeReactionRepository;
+    private final MediaRepository mediaRepository;
+    private final HikeHistoryRepository hikeHistoryRepository;
+    private final HikeService hikeService;
+    private final S3Service s3Service;
+    private final MediaService mediaService;
+    private final FileImportService fileImportService;
 
     /**
-     * Endpoint to import hikes from files.
+     * Constructor for HikeController.
      */
-    @Operation(
-            summary = "Importer des randonnées depuis un fichier",
-            description = "Permet à un administrateur d'importer des randonnées à partir d'un fichier CSV ou Excel avec un mapping personnalisé",
-            security = @SecurityRequirement(name = "bearerAuth"),
-            tags = {"Administration"},
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Fichier à importer (CSV ou Excel) et mapping des colonnes",
-                    required = true,
-                    content = @Content(
-                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-                            schema = @Schema(type = "object"),
-                            examples = @ExampleObject(
-                                    name = "Exemple de mapping",
-                                    value = "{\n"
-                                            + "  \"file\": \"<binary>\",\n"
-                                            + "  \"mapping\": {\n"
-                                            + "    \"mappings\": {\n"
-                                            + "      \"name\": { \"source\": \"Nom du circuit\" },\n"
-                                            + "      \"distance\": { \"source\": \"Distance (km)\", \"unit\": \"KILOMETERS\" },\n"
-                                            + "      \"duration\": { \"source\": \"Durée (min)\", \"unit\": \"HOURS\" },\n"
-                                            + "      \"location\": { \"source\": \"Commune\" },\n"
-                                            + "      \"difficulty\": {\n"
-                                            + "        \"source\": \"Difficulté\",\n"
-                                            + "        \"values\": {\n"
-                                            + "          \"Facile\": \"EASY\",\n"
-                                            + "          \"Moyen\": \"MEDIUM\",\n"
-                                            + "          \"Difficile\": \"HARD\"\n"
-                                            + "        }\n"
-                                            + "      },\n"
-                                            + "      \"startingPointLatitude\": { \"source\": \"Départ\" },\n"
-                                            + "}"
-                            )
-                    )
-            )
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Import réalisé avec succès.",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(
-                                    implementation = ApiResponseDTO.class,
-                                    example = "{\n"
-                                            + "  \"i18nKey\": \"import.success\",\n"
-                                            + "  \"message\": \"Import completed successfully.\",\n"
-                                            + "  \"extra\": null\n"
-                                            + "}"
-                            )
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Erreur lors du traitement du fichier",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(
-                                    implementation = ApiResponseDTO.class,
-                                    example = "{\n"
-                                            + "  \"i18nKey\": \"import.error\",\n"
-                                            + "  \"message\": \"An error occurred while processing the file.\",\n"
-                                            + "  \"extra\": {\n"
-                                            + "    \"message\": \"...\"\n"
-                                            + "  }\n"
-                                            + "}"
-                            )
-                    )
-            ),
-            @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
-            @ApiResponse(responseCode = "403", ref = "#/components/responses/AccessDeniedError"),
-    })
-    @PostMapping(
-            value = "/import/hike",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-    )
-    @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponseDTO importHike(
-            @RequestPart("file") MultipartFile file,
-            @RequestPart("mapping") String mappingJson
+    public HikeController(
+            HikeRepository hikeRepository,
+            HikeReactionRepository hikeReactionRepository,
+            MediaRepository mediaRepository,
+            HikeHistoryRepository hikeHistoryRepository,
+            HikeService hikeService,
+            S3Service s3Service,
+            MediaService mediaService,
+            FileImportService fileImportService
     ) {
-        try {
-            FileMappingDTO mapping;
-            mapping = new ObjectMapper().readValue(mappingJson, FileMappingDTO.class);
-            fileImportService.importFile(file, mapping);
-        } catch (FileImportException e) {
-            throw new NaaviBadRequestException(
-                    "import.error",
-                    "An error occurred while processing the file.",
-                    Map.of(
-                       "message", e.getMessage()
-                    )
-            );
-        }
-
-        return new ApiResponseDTO("import.success", "Import completed successfully.");
+        this.hikeRepository = hikeRepository;
+        this.hikeReactionRepository = hikeReactionRepository;
+        this.mediaRepository = mediaRepository;
+        this.hikeHistoryRepository = hikeHistoryRepository;
+        this.hikeService = hikeService;
+        this.s3Service = s3Service;
+        this.mediaService = mediaService;
+        this.fileImportService = fileImportService;
     }
 
     /**
@@ -251,9 +165,24 @@ public class HikeController extends AbstractController {
     @AuthenticationNotRequired
     @GetMapping("/hikes/{id}")
     public HikeDto getHike(@PathVariable Long id) {
-        return this.hikeRepository.findById(id)
-                .map(hike -> new HikeDto(hike, true))
+        Hike hike = this.hikeRepository.findById(id)
                 .orElseThrow(() -> new NaaviNotFoundException("hike.not_found", "Hike not found"));
+
+        if (VisibilityEnum.PRIVATE.equals(hike.getVisibility())) {
+            UserDTO user = this.getUser();
+            boolean isAdminOrModerator =
+                    this.isGranted(RoleEnum.ROLE_ADMIN) || this.isGranted(RoleEnum.ROLE_MODERATOR);
+            boolean isOwner = user != null && hike.getUserId() != null && hike.getUserId().equals(user.getId());
+
+            if (!(isAdminOrModerator || isOwner)) {
+                throw new NaaviForbiddenException(
+                        "hike.forbidden",
+                        "You are not allowed to access this hike."
+                );
+            }
+        }
+
+        return new HikeDto(hike, true);
     }
 
     /**
@@ -307,7 +236,74 @@ public class HikeController extends AbstractController {
     })
     @PostMapping("/hikes")
     public HikeDto createHike(@RequestBody @Validated(ValidationGroups.OnCreate.class) HikeDTO hikeDto) {
-        return this.hikeService.createHike(hikeDto);
+        return this.hikeService.createHike(this.getUser(), hikeDto);
+    }
+
+    /**
+     * Endpoint to update a hike by its ID.
+     * Allows the hike owner, admin or moderator to update hike metadata.
+     *
+     * @param id Hike ID.
+     * @param hikeDto Hike fields to update.
+     * @return Updated hike.
+     */
+    @Operation(
+            summary = "Mettre à jour une randonnée par son ID",
+            description = "Permet au créateur (ou admin/modérateur) de mettre à jour les informations d'une randonnée",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            tags = {"Randonnée"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Informations de la randonnée mises à jour",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = HikeDto.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
+            @ApiResponse(responseCode = "403", ref = "#/components/responses/AccessDeniedError"),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Randonnée non trouvé",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{\n"
+                                            + "\"i18nKey\": \"hike.not_found\",\n"
+                                            + "\"message\": \"Hike not found\",\n"
+                                            + "\"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "422", ref = "#/components/responses/ValidationError")
+    })
+    @PutMapping("/hikes/{id}")
+    public HikeDto updateOwnHike(
+            @PathVariable Long id,
+            @RequestBody @Validated(ValidationGroups.OnUpdate.class) HikeDTO hikeDto
+    ) {
+        Hike hike = this.hikeRepository.findById(id)
+                .orElseThrow(() -> new NaaviNotFoundException("hike.not_found", "Hike not found"));
+
+        UserDTO user = this.getUser();
+        boolean isAdminOrModerator = this.isGranted(RoleEnum.ROLE_ADMIN)
+                || this.isGranted(RoleEnum.ROLE_MODERATOR);
+        boolean isOwner = user != null
+                && hike.getUserId() != null
+                && hike.getUserId().equals(user.getId());
+
+        if (!(isAdminOrModerator || isOwner)) {
+            throw new NaaviForbiddenException(
+                    "hike.forbidden",
+                    "You are not allowed to edit this hike."
+            );
+        }
+
+        return this.hikeService.updateHike(hike, hikeDto);
     }
 
     /**
@@ -487,6 +483,78 @@ public class HikeController extends AbstractController {
     }
 
     /**
+     * Endpoint to get all hikes created by the authenticated user.
+     *
+     * @param paginationDTO Pagination parameters.
+     * @return The paginated hikes.
+     */
+    @Operation(
+            summary = "Mes randonnées",
+            description = "Retourne toutes les randonnées créées par l'utilisateur connecté.",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            tags = {"Randonnée"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Randonnées de l'utilisateur",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = PaginatorDTO.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError")
+    })
+    @GetMapping("/hikes/mine")
+    public PaginatorDTO<HikeDto> getMyHikes(@Valid @ModelAttribute PaginationDTO paginationDTO) {
+        return this.hikeRepository.findAllByUserIdWithPagination(paginationDTO, this.getUser().getId());
+    }
+
+    /**
+     * Endpoint to soft-delete a hike owned by the authenticated user.
+     * Sets the hike status to DELETED — history entries are preserved.
+     *
+     * @param id Hike ID.
+     * @return ApiResponseDTO
+     */
+    @Operation(
+            summary = "Supprimer une randonnée",
+            description = "Suppression logique d'une randonnée par son propriétaire. L'historique des utilisateurs est conservé.",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            tags = {"Randonnée"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Randonnée supprimée",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ApiResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
+            @ApiResponse(responseCode = "403", description = "Forbidden — not the owner"),
+            @ApiResponse(responseCode = "404", description = "Hike not found")
+    })
+    @DeleteMapping("/hikes/{id}")
+    public ApiResponseDTO deleteOwnHike(@PathVariable Long id) {
+        Hike hike = this.hikeRepository.findById(id)
+                .orElseThrow(() -> new NaaviNotFoundException("hike.not_found", "Hike not found"));
+
+        UserDTO user = this.getUser();
+        boolean isOwner = user != null
+                && hike.getUserId() != null
+                && hike.getUserId().equals(user.getId());
+
+        if (!isOwner) {
+            throw new NaaviForbiddenException("hike.forbidden", "You are not allowed to delete this hike.");
+        }
+
+        this.hikeService.softDeleteHike(hike);
+        return new ApiResponseDTO("hike.deleted", "Hike successfully deleted.");
+    }
+
+    /**
      * Endpoint to save the history of a user.
      *
      * @param hikeHistoryDTO History to save.
@@ -617,9 +685,271 @@ public class HikeController extends AbstractController {
         return new ApiResponseDTO("hike.history.success", "The hike has been successfully deleted.");
     }
 
+    /**
+     * Endpoint to add/remove like to a hike.
+     *
+     * @param id Hike ID.
+     * @return ApiResponseDTO
+     */
+    @Operation(
+            summary = "Ajouter/retirer un like à une randonnée",
+            description = "Permet à un membre d'ajouter ou retirer un like à une randonnée spécifique en fonction de son ID",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            tags = {"Randonnée"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Success",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "If the like was added",
+                                            value = "{"
+                                                    + "\"i18nKey\": \"hike.like.added\","
+                                                    + "\"message\": \"The like was successfully added.\","
+                                                    + "\"extra\": null"
+                                                    + "}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "If the like was removed",
+                                            value = "{"
+                                                    + "\"i18nKey\": \"hike.like.removed\","
+                                                    + "\"message\": \"Your reaction was removed to like.\","
+                                                    + "\"extra\": null"
+                                                    + "}"
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Not Found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{"
+                                            + "\"i18nKey\": \"hike.not_found\","
+                                            + "\"message\": \"Hike not found.\","
+                                            + "\"extra\": null"
+                                            + "}"
+                            )
+                    )
+            )
+    })
+    @PostMapping("/hikes/{id}/like")
+    public ApiResponseDTO likeHike(@PathVariable Long id) {
+        Hike hike = this.hikeRepository.findById(id)
+                .orElseThrow(() -> new NaaviNotFoundException("hike.not_found", "Hike not found"));
+
+        boolean hasLiked = hikeReactionRepository.existsByUserAndHikeAndReaction(
+                this.getUser().getId(),
+                hike.getId(),
+                ReactionEnum.LIKE
+        );
+
+        if (hasLiked) {
+            hikeService.removeReaction(hike, this.getUser(), ReactionEnum.LIKE);
+            return new ApiResponseDTO(
+                    "hike.like.removed",
+                    "Your reaction was removed to like."
+            );
+        }
+
+        hikeService.addReaction(hike, this.getUser(), ReactionEnum.LIKE);
+        return new ApiResponseDTO(
+                "hike.like.added",
+                "The like was successfully added."
+        );
+    }
+
+    /**
+     * Endpoint to add/remove dislike to a hike.
+     *
+     * @param id Hike ID.
+     * @return ApiResponseDTO
+     */
+    @Operation(
+            summary = "Ajouter/retirer un dislike à une randonnée",
+            description = "Permet à un membre d'ajouter ou retirer un dislike à une randonnée spécifique en fonction de son ID",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            tags = {"Randonnée"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Success",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "If the dislike was added",
+                                            value = "{"
+                                                    + "\"i18nKey\": \"hike.dislike.added\","
+                                                    + "\"message\": \"The dislike was successfully added.\","
+                                                    + "\"extra\": null"
+                                                    + "}"
+                                    ),
+                                    @ExampleObject(
+                                            name = "If the dislike was removed",
+                                            value = "{"
+                                                    + "\"i18nKey\": \"hike.dislike.removed\","
+                                                    + "\"message\": \"Your reaction was removed to dislike.\","
+                                                    + "\"extra\": null"
+                                                    + "}"
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Not Found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{"
+                                            + "\"i18nKey\": \"hike.not_found\","
+                                            + "\"message\": \"Hike not found.\","
+                                            + "\"extra\": null"
+                                            + "}"
+                            )
+                    )
+            )
+    })
+    @PostMapping("/hikes/{id}/dislike")
+    public ApiResponseDTO dislikeHike(@PathVariable Long id) {
+        Hike hike = this.hikeRepository.findById(id)
+                .orElseThrow(() -> new NaaviNotFoundException("hike.not_found", "Hike not found"));
+
+        boolean hasDisliked = hikeReactionRepository.existsByUserAndHikeAndReaction(
+                getUser().getId(),
+                hike.getId(),
+                ReactionEnum.DISLIKE
+        );
+
+        if (hasDisliked) {
+            hikeService.removeReaction(hike, getUser(), ReactionEnum.DISLIKE);
+            return new ApiResponseDTO(
+                    "hike.dislike.removed",
+                    "Your reaction was removed to dislike."
+            );
+        }
+
+        hikeService.addReaction(hike, getUser(), ReactionEnum.DISLIKE);
+        return new ApiResponseDTO(
+                "hike.dislike.added",
+                "The dislike was successfully added."
+        );
+    }
+
     //////////////////////
     /// ADMINISTRATION ///
     //////////////////////
+
+    /**
+     * Endpoint to import hikes from files.
+     */
+    @Operation(
+            summary = "Importer des randonnées depuis un fichier",
+            description = "Permet à un administrateur d'importer des randonnées à partir d'un fichier CSV ou Excel avec un mapping personnalisé",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            tags = {"Administration"},
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Fichier à importer (CSV ou Excel) et mapping des colonnes",
+                    required = true,
+                    content = @Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                            schema = @Schema(type = "object"),
+                            examples = @ExampleObject(
+                                    name = "Exemple de mapping",
+                                    value = "{\n"
+                                            + "  \"file\": \"<binary>\",\n"
+                                            + "  \"mapping\": {\n"
+                                            + "    \"mappings\": {\n"
+                                            + "      \"name\": { \"source\": \"Nom du circuit\" },\n"
+                                            + "      \"distance\": { \"source\": \"Distance (km)\", \"unit\": \"KILOMETERS\" },\n"
+                                            + "      \"duration\": { \"source\": \"Durée (min)\", \"unit\": \"HOURS\" },\n"
+                                            + "      \"location\": { \"source\": \"Commune\" },\n"
+                                            + "      \"difficulty\": {\n"
+                                            + "        \"source\": \"Difficulté\",\n"
+                                            + "        \"values\": {\n"
+                                            + "          \"Facile\": \"EASY\",\n"
+                                            + "          \"Moyen\": \"MEDIUM\",\n"
+                                            + "          \"Difficile\": \"HARD\"\n"
+                                            + "        }\n"
+                                            + "      },\n"
+                                            + "      \"startingPointLatitude\": { \"source\": \"Départ\" },\n"
+                                            + "}"
+                            )
+                    )
+            )
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Import réalisé avec succès.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"import.success\",\n"
+                                            + "  \"message\": \"Import completed successfully.\",\n"
+                                            + "  \"extra\": null\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Erreur lors du traitement du fichier",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = ApiResponseDTO.class,
+                                    example = "{\n"
+                                            + "  \"i18nKey\": \"import.error\",\n"
+                                            + "  \"message\": \"An error occurred while processing the file.\",\n"
+                                            + "  \"extra\": {\n"
+                                            + "    \"message\": \"...\"\n"
+                                            + "  }\n"
+                                            + "}"
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
+            @ApiResponse(responseCode = "403", ref = "#/components/responses/AccessDeniedError"),
+    })
+    @PostMapping(
+            value = "/import/hike",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponseDTO importHike(
+            @RequestPart("file") MultipartFile file,
+            @RequestPart("mapping") String mappingJson
+    ) {
+        try {
+            FileMappingDTO mapping;
+            mapping = new ObjectMapper().readValue(mappingJson, FileMappingDTO.class);
+            fileImportService.importFile(file, mapping);
+        } catch (FileImportException e) {
+            throw new NaaviBadRequestException(
+                    "import.error",
+                    "An error occurred while processing the file.",
+                    Map.of(
+                            "message", e.getMessage()
+                    )
+            );
+        }
+
+        return new ApiResponseDTO("import.success", "Import completed successfully.");
+    }
 
     /**
      * Endpoint to retrieve all hikes.

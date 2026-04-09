@@ -1,6 +1,6 @@
 package fr.naavi.hike.seeder;
 
-import fr.naavi.hike.repository.PointOfInterestRepository;
+import fr.naavi.hike.repository.MapElementRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,22 +13,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @SpringBootTest
 @ActiveProfiles("ci")
 @TestPropertySource(locations = "classpath:application-ci.properties")
-public class PointOfInterestSeederTest {
+public class MapElementSeederTest {
     @Autowired
-    private PointOfInterestRepository pointOfInterestRepository;
+    private MapElementRepository mapElementRepository;
 
     @Autowired
-    private PointOfInterestSeeder pointOfInterestSeeder;
+    private MapElementSeeder mapElementRepositorySeeder;
 
     @BeforeEach
     void setUp() {
-        pointOfInterestRepository.deleteAll();
-        pointOfInterestSeeder.seedPointsOfInterest();
+        mapElementRepository.deleteAll();
+        mapElementRepositorySeeder.seedMapElements();
     }
 
     @Test
     void seedPointsOfInterest_shouldSavePointsOfInterest() {
-        long count = pointOfInterestRepository.count();
-        assertEquals(PointOfInterestSeeder.COORDINATES.size() + PointOfInterestSeeder.EXTRA_COORDINATES.size(), count);
+        long count = mapElementRepository.count();
+        assertEquals(MapElementSeeder.COORDINATES.size() + MapElementSeeder.EXTRA_COORDINATES.size(), count);
     }
 }

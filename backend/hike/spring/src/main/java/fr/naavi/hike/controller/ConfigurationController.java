@@ -2,9 +2,10 @@ package fr.naavi.hike.controller;
 
 import fr.naavi.core.annotation.AuthenticationNotRequired;
 import fr.naavi.hike.enums.DifficultyEnum;
-import fr.naavi.hike.enums.PointOfInterestCategoryEnum;
+import fr.naavi.hike.enums.MapElementEnum;
 import fr.naavi.hike.enums.SourceEnum;
 import fr.naavi.hike.enums.StatusEnum;
+import fr.naavi.hike.enums.VisibilityEnum;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -44,6 +45,10 @@ public class ConfigurationController {
                                             + "  \"sources\": ["
                                             + "    \"OFFICIAL\""
                                             + "  ],\n"
+                                            + "  \"map_element_categories\": ["
+                                            + "  \"visibilities\": ["
+                                            + "    \"PUBLIC\""
+                                            + "  ],\n"
                                             + "  \"point_of_interest_categories\": ["
                                             + "    \"MUST_SEE_SPOT\""
                                             + "  ]\n"
@@ -59,7 +64,7 @@ public class ConfigurationController {
                 "difficulties", DifficultyEnum.values(),
                 "status", StatusEnum.values(),
                 "sources", SourceEnum.values(),
-                "point_of_interest_categories", PointOfInterestCategoryEnum.values()
-        );
+                "map_element_categories", MapElementEnum.values(),
+                "visibilities", VisibilityEnum.values());
     }
 }

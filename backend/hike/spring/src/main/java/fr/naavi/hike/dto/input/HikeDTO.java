@@ -2,7 +2,9 @@ package fr.naavi.hike.dto.input;
 
 import fr.naavi.core.validation.ValidationGroups;
 import fr.naavi.hike.enums.DifficultyEnum;
+import fr.naavi.hike.enums.SourceEnum;
 import fr.naavi.hike.enums.StatusEnum;
+import fr.naavi.hike.enums.VisibilityEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -59,6 +61,15 @@ public class HikeDTO {
     @Schema(description = "Statut de la randonnée", example = "PUBLISHED", implementation = StatusEnum.class)
     private String status;
 
+    @Schema(description = "Source de la randonnée", example = "COMMUNITY", implementation = SourceEnum.class)
+    private String source;
+
+    @Schema(description = "Identifiant utilisateur propriétaire (requis si source=COMMUNITY)", example = "12")
+    private Long userId;
+
+    @Schema(description = "Visibilité de la randonnée", example = "PUBLIC", implementation = VisibilityEnum.class)
+    private String visibility;
+
     public String getName() {
         return name;
     }
@@ -109,5 +120,17 @@ public class HikeDTO {
 
     public String getStatus() {
         return status;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public String getVisibility() {
+        return visibility;
     }
 }

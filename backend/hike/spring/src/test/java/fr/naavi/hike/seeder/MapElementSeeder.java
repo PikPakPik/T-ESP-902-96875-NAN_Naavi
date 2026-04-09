@@ -1,9 +1,10 @@
 package fr.naavi.hike.seeder;
 
-import fr.naavi.hike.entity.PointOfInterest;
-import fr.naavi.hike.enums.PointOfInterestCategoryEnum;
+import fr.naavi.hike.entity.MapElement;
+import fr.naavi.hike.enums.DifficultyEnum;
 import fr.naavi.hike.enums.StatusEnum;
-import fr.naavi.hike.repository.PointOfInterestRepository;
+import fr.naavi.hike.enums.TypeMapElementEnum;
+import fr.naavi.hike.repository.MapElementRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.test.context.ActiveProfiles;
@@ -16,9 +17,10 @@ import java.util.concurrent.ThreadLocalRandom;
 @Component
 @ActiveProfiles("ci")
 @TestPropertySource(locations = "classpath:application-ci.properties")
-public class PointOfInterestSeeder {
+public class MapElementSeeder {
+
     @Autowired
-    private PointOfInterestRepository pointOfInterestRepository;
+    private MapElementRepository mapElementRepository;
 
     public static final List<String> COORDINATES = List.of(
             "Forêt de Fontainebleau,48.4183572,2.4707593",
@@ -49,66 +51,63 @@ public class PointOfInterestSeeder {
             "Source de la Loire,45.0000,3.5000",
             "Col de la Vanoise,45.3200,6.8167",
             "Gorges du Tarn,44.3000,3.5000",
-            "e vue (Cap Fréhel,48.6511,-2.3989",
+            "Cap Fréhel,48.6511,-2.3989",
             "Massif des Vosges,48.0000,7.0000",
             "Port de Nice,43.7034,7.2663",
             "Source du Lot,44.6000,2.0000",
             "Île de Ré,46.1833,-1.3600"
     );
 
-    public void seedPointsOfInterest() {
-        pointOfInterestRepository.deleteAll();
+    public void seedMapElements() {
+        mapElementRepository.deleteAll();
 
-        List<PointOfInterest> pointsOfInterest = new ArrayList<>();
+        List<MapElement> mapElements = new ArrayList<>();
+        TypeMapElementEnum[] types = {TypeMapElementEnum.POINT_OF_INTEREST, TypeMapElementEnum.ALERT};
         StatusEnum[] status = {StatusEnum.DRAFT, StatusEnum.UNPUBLISHED};
 
-        for (String coordinate : COORDINATES) {
-            String[] coords = coordinate.split(",");
-            PointOfInterestCategoryEnum[] values = PointOfInterestCategoryEnum.values();
-            int idx = ThreadLocalRandom.current().nextInt(values.length);
-
-            PointOfInterest pointOfInterest = this.createPointOfInterest(
+        // Seed main coordinates
+        for (int i = 0; i < COORDINATES.size(); i++) {
+            String[] coords = COORDINATES.get(i).split(",");
+            MapElement mapElement = this.createMapElement(
                     coords[0],
                     Double.parseDouble(coords[1]),
                     Double.parseDouble(coords[2]),
-                    List.of(values[idx]),
+                    types[i % types.length],
                     StatusEnum.PUBLISHED
             );
-            pointsOfInterest.add(pointOfInterest);
+            mapElements.add(mapElement);
         }
 
+        // Seed extra coordinates
         for (int i = 0; i < EXTRA_COORDINATES.size(); i++) {
             String[] coords = EXTRA_COORDINATES.get(i).split(",");
-            PointOfInterestCategoryEnum[] values = PointOfInterestCategoryEnum.values();
-            int idx = ThreadLocalRandom.current().nextInt(values.length);
-
-            PointOfInterest pointOfInterest = this.createPointOfInterest(
+            MapElement mapElement = this.createMapElement(
                     coords[0],
                     Double.parseDouble(coords[1]),
                     Double.parseDouble(coords[2]),
-                    List.of(values[idx]),
+                    types[i % types.length],
                     status[i % status.length]
             );
-            pointsOfInterest.add(pointOfInterest);
+            mapElements.add(mapElement);
         }
 
-        pointOfInterestRepository.saveAll(pointsOfInterest);
+        mapElementRepository.saveAll(mapElements);
     }
 
-    private PointOfInterest createPointOfInterest(
+    private MapElement createMapElement(
             String name,
             Double latitude,
             Double longitude,
-            List<PointOfInterestCategoryEnum> categories,
+            TypeMapElementEnum type,
             StatusEnum status
     ) {
-        PointOfInterest pointOfInterest = new PointOfInterest();
-        pointOfInterest.setName(name);
-        pointOfInterest.setDescription("Description du POI");
-        pointOfInterest.setLatitude(latitude);
-        pointOfInterest.setLongitude(longitude);
-        pointOfInterest.setCategories(categories);
-        pointOfInterest.setStatus(status);
-        return pointOfInterest;
+        MapElement mapElement = new MapElement();
+        mapElement.setName(name);
+        mapElement.setDescription("Description du point sur la carte");
+        mapElement.setLatitude(latitude);
+        mapElement.setLongitude(longitude);
+        mapElement.setType(type);
+        mapElement.setStatus(status);
+        return mapElement;
     }
 }

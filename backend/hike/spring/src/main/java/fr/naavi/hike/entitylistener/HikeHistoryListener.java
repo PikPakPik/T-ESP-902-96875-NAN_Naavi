@@ -11,6 +11,8 @@ public class HikeHistoryListener {
      */
     @PrePersist
     protected void onCreate(HikeHistory hikeHistory) {
-        hikeHistory.setCreatedAt(LocalDateTime.now());
+        if (hikeHistory.getCreatedAt() == null) {
+            hikeHistory.setCreatedAt(LocalDateTime.now());
+        }
     }
 }

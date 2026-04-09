@@ -6,7 +6,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class GeoPaginationDTO extends PaginationDTO {
     @Schema(description = "Latitude de la position de référence", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull
@@ -26,44 +30,4 @@ public class GeoPaginationDTO extends PaginationDTO {
 
     @Schema(description = "Difficulté de la randonnée", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private DifficultyEnum difficulty;
-
-    public Double getLatitude() {
-        return latitude;
-    }
-
-    public void setLatitude(Double latitude) {
-        this.latitude = latitude;
-    }
-
-    public Double getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(Double longitude) {
-        this.longitude = longitude;
-    }
-
-    public Integer getRadius() {
-        return radius;
-    }
-
-    public void setRadius(Integer radius) {
-        this.radius = radius;
-    }
-
-    public Integer getDistance() {
-        return distance;
-    }
-
-    public void setDistance(Integer distance) {
-        this.distance = distance;
-    }
-
-    public DifficultyEnum getDifficulty() {
-        return difficulty;
-    }
-
-    public void setDifficulty(DifficultyEnum difficulty) {
-        this.difficulty = difficulty;
-    }
 }

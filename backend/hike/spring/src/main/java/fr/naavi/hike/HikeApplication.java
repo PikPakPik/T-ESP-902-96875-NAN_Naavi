@@ -17,8 +17,8 @@ import org.springframework.cache.annotation.EnableCaching;
                         description = "Points d'accès pour la gestion des randonnées"
                 ),
                 @Tag(
-                        name = "Point d'intérêt",
-                        description = "Points d'accès pour la gestion des points d'intérêt"
+                        name = "MapElement",
+                        description = "Points d'accès pour la gestion des points d'intérêt et signalements"
                 ),
                 @Tag(
                         name = "Service",

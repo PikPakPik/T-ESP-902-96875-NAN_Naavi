@@ -34,6 +34,13 @@ public class HikeHistoryRepositoryImpl implements HikeHistoryRepositoryInterface
         query.where(cb.equal(hikeHistory.get("user"), userId));
         countQuery.where(cb.equal(countRoot.get("user"), userId));
 
+        // Tri stable : les entrées les plus récentes en premier (sans ORDER BY,
+        // LIMIT renvoie des lignes non déterministes et la dernière synchro peut
+        // ne pas contenir la rando qu'on vient d'enregistrer).
+        query.orderBy(
+                cb.desc(hikeHistory.get("createdAt")),
+                cb.desc(hikeHistory.get("id")));
+
         Long totalItems = entityManager.createQuery(countQuery).getSingleResult();
 
         int page = paginationDTO.getPage();

@@ -5,6 +5,7 @@ import fr.naavi.hike.entity.Hike;
 import fr.naavi.hike.enums.DifficultyEnum;
 import fr.naavi.hike.enums.SourceEnum;
 import fr.naavi.hike.enums.StatusEnum;
+import fr.naavi.hike.enums.VisibilityEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -60,8 +61,20 @@ public class HikeDto {
     @Schema(description = "Source de la ranndonnée", implementation = SourceEnum.class)
     private final SourceEnum source;
 
+    @Schema(description = "Identifiant utilisateur propriétaire (null pour une randonnée officielle)", example = "12")
+    private final Long userId;
+
+    @Schema(description = "Visibilité de la randonnée", example = "PUBLIC", implementation = VisibilityEnum.class)
+    private final VisibilityEnum visibility;
+
     @Schema(description = "Liste des images de la randonnée")
     private final List<MediaDto> images;
+
+    @Schema(description = "Nombre de likes", example = "10")
+    protected final Long likes;
+
+    @Schema(description = "Nombre de dislikes", example = "2")
+    protected final Long dislikes;
 
     @Schema(description = "Date de création de la randonnée", example = "2024-06-01T12:00:00")
     private final LocalDateTime createdAt;
@@ -91,10 +104,14 @@ public class HikeDto {
         this.location = hike.getLocation();
         this.difficulty = hike.getDifficulty();
         this.source = hike.getSource();
+        this.userId = hike.getUserId();
+        this.visibility = hike.getVisibility();
         this.status = hike.getStatus();
         this.images = hike.getImages().stream()
-                .map(media -> new MediaDto(media, false, S3Enum.HIKES.toString()))
+                .map(media -> new MediaDto(media, false, S3Enum.HIKES, hike.getId()))
                 .toList();
+        this.likes = hike.getLikesCount();
+        this.dislikes = hike.getDislikesCount();
         this.createdAt = hike.getCreatedAt();
         this.updatedAt = hike.getUpdatedAt();
     }
@@ -157,6 +174,14 @@ public class HikeDto {
 
     public SourceEnum getSource() {
         return source;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public VisibilityEnum getVisibility() {
+        return visibility;
     }
 
     public StatusEnum getStatus() {
