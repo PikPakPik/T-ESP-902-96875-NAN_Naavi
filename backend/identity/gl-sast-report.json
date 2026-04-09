@@ -7,7 +7,7 @@
       "vendor": {
         "name": "GitLab"
       },
-      "version": "6.15.1"
+      "version": "6.18.0"
     },
     "scanner": {
       "id": "semgrep",
@@ -2994,22 +2994,22 @@
       }
     ],
     "type": "sast",
-    "start_time": "2026-03-06T18:06:11",
-    "end_time": "2026-03-06T18:06:32",
+    "start_time": "2026-04-09T09:47:01",
+    "end_time": "2026-04-09T09:47:14",
     "status": "success",
     "observability": {
       "events": [
         {
           "event": "collect_sast_scan_metrics_from_pipeline",
-          "property": "c18d4f8b-adc1-4f38-bfc1-1941e7a260ec",
+          "property": "46652c19-6b22-4d77-9606-8e6b622960a5",
           "label": "semgrep",
           "value": 0,
-          "version": "6.15.1",
+          "version": "6.18.0",
           "exit_code": 0,
           "override_count": 0,
           "passthrough_count": 0,
           "custom_exclude_path_count": 0,
-          "time_s": 21,
+          "time_s": 13,
           "file_count": 73
         }
       ]

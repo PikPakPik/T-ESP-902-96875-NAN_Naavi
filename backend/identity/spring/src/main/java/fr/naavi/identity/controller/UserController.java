@@ -89,7 +89,7 @@ public class UserController extends AbstractController {
     })
     @GetMapping("/user")
     public UserDto user() {
-        return new UserDto(this.getUser(), false);
+        return new UserDto(this.getUser(), true);
     }
 
     /**
@@ -149,7 +149,7 @@ public class UserController extends AbstractController {
         User user = this.userService.updateUser(this.getUser().getId(), userDto, false);
         Authorization authorization = this.authorizationService.createAuthorizationForUpdateOldEmail(user, userDto);
         this.mailerService.sendEmailChangeOldEmailConfirmation(authorization);
-        return new UserDto(user, false);
+        return new UserDto(user, true);
     }
 
     @Operation(
