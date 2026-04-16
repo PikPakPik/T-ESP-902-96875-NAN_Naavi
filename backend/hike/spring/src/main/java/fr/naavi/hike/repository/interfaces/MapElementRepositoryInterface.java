@@ -3,6 +3,7 @@ package fr.naavi.hike.repository.interfaces;
 import fr.naavi.core.dto.PaginatorDTO;
 import fr.naavi.hike.dto.input.GeoPaginationDTO;
 import fr.naavi.hike.dto.output.MapElementDto;
+import fr.naavi.hike.dto.input.PointOfInterestAdministrationPaginationDTO;
 import fr.naavi.hike.entity.MapElement;
 import fr.naavi.hike.enums.TypeMapElementEnum;
 
@@ -21,6 +22,11 @@ public interface MapElementRepositoryInterface {
             GeoPaginationDTO geoPaginationDTO,
             TypeMapElementEnum type,
             boolean includeAllStatus
+    );
+
+    PaginatorDTO<MapElement> findAllAdministrationWithPagination(
+            PointOfInterestAdministrationPaginationDTO paginationDTO,
+            TypeMapElementEnum type
     );
 
     /**

@@ -2994,14 +2994,14 @@
       }
     ],
     "type": "sast",
-    "start_time": "2026-04-09T09:47:48",
-    "end_time": "2026-04-09T09:48:11",
+    "start_time": "2026-04-16T07:20:28",
+    "end_time": "2026-04-16T07:20:51",
     "status": "success",
     "observability": {
       "events": [
         {
           "event": "collect_sast_scan_metrics_from_pipeline",
-          "property": "e8fc5ef6-1921-4454-bd9a-1b4adad87761",
+          "property": "63e9c5fd-b698-4231-a2e0-020cd7849e1f",
           "label": "semgrep",
           "value": 0,
           "version": "6.18.0",
@@ -3009,8 +3009,8 @@
           "override_count": 0,
           "passthrough_count": 0,
           "custom_exclude_path_count": 0,
-          "time_s": 22,
-          "file_count": 92
+          "time_s": 23,
+          "file_count": 93
         }
       ]
     }
@@ -3087,11 +3087,11 @@
       }
     },
     {
-      "id": "d9ebbff20e8e07721081718ad4a57c9480132a940f938f953cc18278bae4b16f",
+      "id": "731ed72be178f4c988f9e05b23fdebf321fc7f00317d40255d4884d04ba774c0",
       "category": "sast",
       "name": "Use of a broken or risky cryptographic algorithm (SHA1/MD5)",
       "description": "The application was found using an insecure or risky digest or signature algorithm. Both MD5\nand SHA1 hash algorithms have been found to be vulnerable to producing collisions.\nThis means\nthat two different values, when hashed, can lead to the same hash value. If the application is\ntrying\nto use these hash methods for storing passwords, then it is recommended to switch to a\npassword hashing\nalgorithm such as Argon2id or PBKDF2.\nstrongly recommended that a standard Digest algorithm be chosen instead as implementing\na digest by hand is error-prone.\n\nExample of creating a SHA-384 hash:\n```\n// Create a MessageDigest using the SHA-384 algorithm\nMessageDigest sha384Digest = MessageDigest.getInstance(\"SHA-384\");\n// Call update with your data\nsha384Digest.update(input);\n// Only call digest once all data has been fed into the update sha384digest instance\nbyte[] output = sha384Digest.digest();\n// output base64 encoded version of the hash\nSystem.out.println(\"hash: \" + Base64.getEncoder().encodeToString(output));\n```\n\nFor more information on secure password storage see OWASP:\nhttps://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html\n",
-      "cve": "semgrep_id:find_sec_bugs.WEAK_MESSAGE_DIGEST_MD5-1.WEAK_MESSAGE_DIGEST_SHA1-1:348:348",
+      "cve": "semgrep_id:find_sec_bugs.WEAK_MESSAGE_DIGEST_MD5-1.WEAK_MESSAGE_DIGEST_SHA1-1:350:350",
       "severity": "Medium",
       "scanner": {
         "id": "semgrep",
@@ -3099,7 +3099,7 @@
       },
       "location": {
         "file": "spring/src/main/java/fr/naavi/hike/controller/MapElementController.java",
-        "start_line": 348
+        "start_line": 350
       },
       "identifiers": [
         {
@@ -3139,8 +3139,8 @@
         "items": [
           {
             "file": "spring/src/main/java/fr/naavi/hike/controller/MapElementController.java",
-            "line_start": 348,
-            "line_end": 348,
+            "line_start": 350,
+            "line_end": 350,
             "signatures": [
               {
                 "algorithm": "scope_offset_compressed",

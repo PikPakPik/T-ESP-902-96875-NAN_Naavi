@@ -11,6 +11,7 @@ import fr.naavi.core.validation.ValidationGroups;
 import fr.naavi.hike.abstraction.AbstractController;
 import fr.naavi.hike.dto.input.GeoPaginationDTO;
 import fr.naavi.hike.dto.input.MapElementDTO;
+import fr.naavi.hike.dto.input.PointOfInterestAdministrationPaginationDTO;
 import fr.naavi.hike.dto.output.MapElementDto;
 import fr.naavi.hike.entity.MapElement;
 import fr.naavi.hike.entity.Media;
@@ -40,6 +41,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @SecurityScheme(
@@ -214,7 +216,7 @@ public class MapElementController extends AbstractController {
         MapElement element = new MapElement();
         element.setType(TypeMapElementEnum.valueOf(dto.getType()));
 
-        MapElement saved = mapElementService.save(element, dto, TypeMapElementEnum.valueOf(dto.getType()));
+        MapElement saved = mapElementService.save(element, dto, TypeMapElementEnum.valueOf(dto.getType()), getUser());
         return new MapElementDto(saved, true);
     }
 
@@ -549,6 +551,42 @@ public class MapElementController extends AbstractController {
     /// ADMINISTRATION ///
     //////////////////////
 
+    @Operation(
+            summary = "Lister les points d'intérêt pour le backoffice",
+            description = "Retourne les points d'intérêt avec tous les statuts pour la modération backoffice",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            tags = {"Administration"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Liste paginée des points d'intérêt",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = PaginatorDTO.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError"),
+            @ApiResponse(responseCode = "403", ref = "#/components/responses/AccessDeniedError"),
+            @ApiResponse(responseCode = "422", ref = "#/components/responses/ValidationError")
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/administration/pois")
+    public PaginatorDTO<MapElementDto> administrationPointsOfInterest(
+            @Valid @ModelAttribute PointOfInterestAdministrationPaginationDTO paginationDTO
+    ) {
+        PaginatorDTO<MapElement> paginator = this.mapElementRepository.findAllAdministrationWithPagination(
+                paginationDTO,
+                TypeMapElementEnum.POINT_OF_INTEREST
+        );
+
+        List<MapElementDto> dtos = paginator.getItems().stream()
+                .map(element -> new MapElementDto(element, true))
+                .toList();
+
+        return PaginatorDTO.of(dtos, paginator.getTotalItems(), paginationDTO);
+    }
+
     /**
      * Endpoint to retrieve all hikes.
      *
@@ -622,7 +660,7 @@ public class MapElementController extends AbstractController {
                         "Map element not found"
                 ));
 
-        MapElement updated = mapElementService.save(element, dto, TypeMapElementEnum.valueOf(dto.getType()));
+        MapElement updated = mapElementService.save(element, dto, TypeMapElementEnum.valueOf(dto.getType()), getUser());
         return new MapElementDto(updated, true);
     }
 

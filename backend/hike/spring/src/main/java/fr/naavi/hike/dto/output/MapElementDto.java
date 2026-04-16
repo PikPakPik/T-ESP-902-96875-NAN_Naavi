@@ -3,6 +3,7 @@ package fr.naavi.hike.dto.output;
 import fr.naavi.core.enums.S3Enum;
 import fr.naavi.hike.entity.MapElement;
 import fr.naavi.hike.enums.MapElementEnum;
+import fr.naavi.hike.enums.SourceEnum;
 import fr.naavi.hike.enums.TypeMapElementEnum;
 import fr.naavi.hike.enums.StatusEnum;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -46,6 +47,12 @@ public class MapElementDto {
     @Schema(description = "Type de l'élément", example = "POINT_OF_INTEREST")
     protected final TypeMapElementEnum type;
 
+    @Schema(description = "Source de l'élément", example = "COMMUNITY", implementation = SourceEnum.class)
+    protected final SourceEnum source;
+
+    @Schema(description = "Identifiant utilisateur propriétaire (null pour un élément officiel)", example = "12")
+    protected final Long userId;
+
     @ArraySchema(schema = @Schema(
             description = "Liste des catégories de l'élément",
             implementation = MapElementEnum.class)
@@ -78,6 +85,8 @@ public class MapElementDto {
         this.createdAt = element.getCreatedAt();
         this.updatedAt = element.getUpdatedAt();
         this.type = element.getType();
+        this.source = element.getSource();
+        this.userId = element.getUserId();
         this.categories = element.getCategories();
         this.likes = element.getLikesCount();
         this.dislikes = element.getDislikesCount();

@@ -10,6 +10,7 @@ import fr.naavi.hike.entity.Media;
 import fr.naavi.hike.enums.MapElementEnum;
 import fr.naavi.hike.enums.TypeMapElementEnum;
 import fr.naavi.hike.repository.MapElementReactionRepository;
+import fr.naavi.hike.enums.SourceEnum;
 import fr.naavi.hike.repository.MapElementRepository;
 import fr.naavi.hike.repository.MediaRepository;
 import fr.naavi.hike.seeder.MapElementSeeder;
@@ -294,7 +295,31 @@ public class MapElementControllerTest {
                 .andExpect(jsonPath("$.description").value("Description du nouveau POI"))
                 .andExpect(jsonPath("$.latitude").value(47.2180438348419))
                 .andExpect(jsonPath("$.longitude").value(-1.5549507712791397))
+                .andExpect(jsonPath("$.source").value("COMMUNITY"))
+                .andExpect(jsonPath("$.userId").value(UserSeeder.USER.getId()))
                 .andExpect(jsonPath("$.categories").isArray());
+    }
+
+    @Test
+    void shouldReturn400_WhenCreatingMapElementWithStatusProvided() throws Exception {
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        MapElementDTO mapElementDTO = DtoFactory.createDto(MapElementDTO.class, Map.of(
+                "name", "Nouveau POI",
+                "description", "Description du nouveau POI",
+                "latitude", Double.parseDouble("47.2180438348419"),
+                "longitude", Double.parseDouble("-1.5549507712791397"),
+                "type", "POINT_OF_INTEREST",
+                "status", "PUBLISHED"
+        ));
+
+        mockMvc.perform(post("/mapElement")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(mapElementDTO))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.i18nKey").value("map_element.status_not_allowed_on_create"));
     }
 
     @Test
@@ -305,6 +330,26 @@ public class MapElementControllerTest {
                 "description", "Description du nouveau POI",
                 "type","POINT_OF_INTEREST",
                 "latitude", Double.parseDouble("47.2180438348419")
+        ));
+
+        mockMvc.perform(post("/mapElement")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(mapElementDTO))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnprocessableContent());
+    }
+
+    @Test
+    void shouldReturn422_WhenCreatingMapElementWithInvalidLatitude() throws Exception {
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        MapElementDTO mapElementDTO = DtoFactory.createDto(MapElementDTO.class, Map.of(
+                "name", "Nouveau POI",
+                "description", "Description du nouveau POI",
+                "latitude", Double.parseDouble("147.2180438348419"),
+                "longitude", Double.parseDouble("-1.5549507712791397"),
+                "type", "POINT_OF_INTEREST"
         ));
 
         mockMvc.perform(post("/mapElement")
@@ -332,6 +377,30 @@ public class MapElementControllerTest {
                         .content(DtoFactory.toJson(mapElementDTO)))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldReturn403_WhenListingPointOfInterestAdministrationAsNonAdmin() throws Exception {
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.USER);
+
+        mockMvc.perform(get("/administration/pois")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldListDraftPointOfInterest_WhenFilteringAdministrationByStatusAsAdmin() throws Exception {
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
+
+        mockMvc.perform(get("/administration/pois")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("status", "DRAFT")
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items").isArray());
     }
 
     @Test
@@ -384,6 +453,30 @@ public class MapElementControllerTest {
     }
 
     @Test
+    void shouldUpdateMapElementSourceAndOwner_WhenValidDataProvidedAsAdmin() throws Exception {
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
+        Long elementId = mapElementRepository.findAll().getFirst().getId();
+
+        MapElementDTO mapElementDTO = DtoFactory.createDto(MapElementDTO.class, Map.of(
+                "name", "POI Officiel",
+                "description", "Description officielle",
+                "latitude", Double.parseDouble("47.2180438348419"),
+                "longitude", Double.parseDouble("-1.5549507712791397"),
+                "type", "POINT_OF_INTEREST",
+                "source", SourceEnum.OFFICIAL.name()
+        ));
+
+        mockMvc.perform(put("/administration/mapElement/{id}", elementId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(mapElementDTO))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.source").value("OFFICIAL"))
+                .andExpect(jsonPath("$.userId").doesNotExist());
+    }
+
+    @Test
     void shouldReturn404_WhenUpdatingNonExistentMapElement() throws Exception {
         UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
         Long nonExistentId = 999999999L;
@@ -416,6 +509,26 @@ public class MapElementControllerTest {
                 "latitude", Double.parseDouble("47.2180438348419"),
                 "longitude", Double.parseDouble("-1.5549507712791397"),
                 "type","POINT_OF_INTEREST"
+        ));
+
+        mockMvc.perform(put("/administration/mapElement/{id}", elementId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(DtoFactory.toJson(mapElementDTO))
+                        .with(authentication(auth)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isUnprocessableEntity());
+    }
+
+    @Test
+    void shouldReturn422_WhenUpdatingMapElementWithMissingLatitude() throws Exception {
+        UsernamePasswordAuthenticationToken auth = AuthenticationManagerUtil.mockAuthenticationManager(authenticationManager, UserSeeder.ADMIN);
+        Long elementId = mapElementRepository.findAll().getFirst().getId();
+
+        MapElementDTO mapElementDTO = DtoFactory.createDto(MapElementDTO.class, Map.of(
+                "name", "POI Modifié",
+                "description", "Description modifiée",
+                "longitude", Double.parseDouble("-1.5549507712791397"),
+                "type", "POINT_OF_INTEREST"
         ));
 
         mockMvc.perform(put("/administration/mapElement/{id}", elementId)

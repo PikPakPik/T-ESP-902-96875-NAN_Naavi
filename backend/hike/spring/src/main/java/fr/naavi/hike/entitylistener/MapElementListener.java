@@ -1,6 +1,7 @@
 package fr.naavi.hike.entitylistener;
 
 import fr.naavi.hike.entity.MapElement;
+import fr.naavi.hike.enums.SourceEnum;
 import fr.naavi.hike.enums.StatusEnum;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -17,6 +18,7 @@ public class MapElementListener {
         if (mapElement.getStatus() == null) {
             mapElement.setStatus(StatusEnum.DRAFT);
         }
+        validateSourceAndOwner(mapElement);
     }
 
     /**
@@ -25,5 +27,16 @@ public class MapElementListener {
     @PreUpdate
     protected void onUpdate(MapElement mapElement) {
         mapElement.setUpdatedAt(LocalDateTime.now());
+        validateSourceAndOwner(mapElement);
+    }
+
+    private void validateSourceAndOwner(MapElement mapElement) {
+        if (mapElement.getSource() == SourceEnum.OFFICIAL && mapElement.getUserId() != null) {
+            throw new IllegalStateException("Official map elements cannot have an owner user.");
+        }
+
+        if (mapElement.getSource() == SourceEnum.COMMUNITY && mapElement.getUserId() == null) {
+            throw new IllegalStateException("Community map elements require an owner user id.");
+        }
     }
 }

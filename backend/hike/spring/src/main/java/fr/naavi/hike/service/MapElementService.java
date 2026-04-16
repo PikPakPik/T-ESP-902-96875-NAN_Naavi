@@ -1,6 +1,8 @@
 package fr.naavi.hike.service;
 
 import fr.naavi.core.exception.children.NaaviBadCredentialsException;
+import fr.naavi.core.exception.children.NaaviBadRequestException;
+import fr.naavi.core.enums.RoleEnum;
 import fr.naavi.hike.composite.MapElementReactionId;
 import fr.naavi.hike.dto.UserDTO;
 import fr.naavi.hike.dto.input.MapElementDTO;
@@ -9,6 +11,7 @@ import fr.naavi.hike.entity.MapElementReaction;
 import fr.naavi.hike.entity.Media;
 import fr.naavi.hike.enums.MapElementEnum;
 import fr.naavi.hike.enums.ReactionEnum;
+import fr.naavi.hike.enums.SourceEnum;
 import fr.naavi.hike.enums.StatusEnum;
 import fr.naavi.hike.enums.TypeMapElementEnum;
 import fr.naavi.hike.repository.MapElementReactionRepository;
@@ -39,13 +42,38 @@ public class MapElementService {
      * @param element The map element to save (can be new or existing).
      * @param dto The DTO containing the data to update.
      * @param type The expected type of the map element.
+     * @param currentUser The authenticated user.
      * @return The saved map element.
      */
-    public MapElement save(MapElement element, MapElementDTO dto, TypeMapElementEnum type) {
-        if (element.getId() != null) {
+    public MapElement save(MapElement element, MapElementDTO dto, TypeMapElementEnum type, UserDTO currentUser) {
+        boolean isCreate = element.getId() == null;
+        boolean isAdminOrModerator = currentUser != null
+                && currentUser.getRoles() != null
+                && currentUser.getRoles().stream().anyMatch(
+                role -> role == RoleEnum.ROLE_ADMIN || role == RoleEnum.ROLE_MODERATOR
+        );
+
+        if (!isCreate) {
             isValidType(element, type);
         } else {
             element.setType(type);
+            if (dto.getStatus() != null) {
+                throw new NaaviBadRequestException(
+                        "map_element.status_not_allowed_on_create",
+                        "The status is managed by the backoffice validation workflow."
+                );
+            }
+            boolean createForSelf = !isAdminOrModerator
+                    || ((dto.getSource() == null || dto.getSource().isBlank()) && dto.getUserId() == null);
+
+            if (createForSelf) {
+                applySourceAndOwner(element, null, null, currentUser, true);
+            } else {
+                applySourceAndOwner(element, dto.getSource(), dto.getUserId(), currentUser, false);
+            }
+        }
+        if (!isCreate && (dto.getSource() != null || dto.getUserId() != null)) {
+            applySourceAndOwner(element, dto.getSource(), dto.getUserId(), currentUser, false);
         }
         mapCommonFields(element, dto);
 
@@ -101,12 +129,6 @@ public class MapElementService {
         }
     }
 
-    /**
-     * Check if the category is valid.
-     *
-     * @param category The category to check.
-     * @return True if the category is valid, false otherwise.
-     */
     protected boolean isValidCategory(String category) {
         try {
             MapElementEnum.valueOf(category);
@@ -118,13 +140,6 @@ public class MapElementService {
             );
         }
     }
-
-    /**
-     * Check if the type of the map element is valid.
-     *
-     * @param element The map element to check.
-     * @param expectedType The expected type of the map element.
-     */
     protected void isValidType(MapElement element, TypeMapElementEnum expectedType) {
         if (element.getType() != expectedType) {
             throw new NaaviBadCredentialsException(
@@ -132,6 +147,53 @@ public class MapElementService {
                     "Expected type " + expectedType + " but found " + element.getType()
             );
         }
+    }
+
+    protected void applySourceAndOwner(
+            MapElement element,
+            String source,
+            Long userId,
+            UserDTO currentUser,
+            boolean isCreate
+    ) {
+        SourceEnum targetSource;
+
+        if (isCreate) {
+            targetSource = SourceEnum.COMMUNITY;
+            userId = currentUser != null ? currentUser.getId() : userId;
+        } else if (source == null || source.isBlank()) {
+            targetSource = userId == null ? SourceEnum.OFFICIAL : SourceEnum.COMMUNITY;
+        } else {
+            try {
+                targetSource = SourceEnum.valueOf(source);
+            } catch (IllegalArgumentException e) {
+                throw new NaaviBadCredentialsException(
+                        "map_element.source_invalid",
+                        "The source '" + source + "' does not exist."
+                );
+            }
+        }
+
+        if (targetSource == SourceEnum.COMMUNITY && userId == null && currentUser != null) {
+            userId = currentUser.getId();
+        }
+
+        if (targetSource == SourceEnum.OFFICIAL && userId != null) {
+            throw new NaaviBadCredentialsException(
+                    "map_element.source_user_incompatible",
+                    "Official map elements cannot have an owner user."
+            );
+        }
+
+        if (targetSource == SourceEnum.COMMUNITY && userId == null) {
+            throw new NaaviBadCredentialsException(
+                    "map_element.user_required",
+                    "Community map elements require an owner user id."
+            );
+        }
+
+        element.setSource(targetSource);
+        element.setUserId(targetSource == SourceEnum.COMMUNITY ? userId : null);
     }
 
 

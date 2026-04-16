@@ -5,6 +5,7 @@ import fr.naavi.hike.converter.MapElementCategoryConverter;
 import fr.naavi.hike.entitylistener.MapElementListener;
 import fr.naavi.hike.enums.MapElementEnum;
 import fr.naavi.hike.enums.ReactionEnum;
+import fr.naavi.hike.enums.SourceEnum;
 import fr.naavi.hike.enums.StatusEnum;
 import fr.naavi.hike.enums.TypeMapElementEnum;
 import jakarta.persistence.*;
@@ -43,6 +44,12 @@ public class MapElement {
     @Column
     @Enumerated(EnumType.STRING)
     private TypeMapElementEnum type;
+
+    @Enumerated(EnumType.STRING)
+    private SourceEnum source;
+
+    @Column(name = "user_id")
+    private Long userId;
 
     @Column(columnDefinition = "text")
     @Convert(converter = MapElementCategoryConverter.class)

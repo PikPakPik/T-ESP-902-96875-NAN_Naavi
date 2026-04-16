@@ -2,8 +2,10 @@ package fr.naavi.hike.repository.impl;
 
 import fr.naavi.core.dto.PaginationDTO;
 import fr.naavi.core.dto.PaginatorDTO;
+import fr.naavi.core.exception.children.NaaviBadCredentialsException;
 import fr.naavi.hike.dto.input.GeoPaginationDTO;
 import fr.naavi.hike.dto.output.MapElementDto;
+import fr.naavi.hike.dto.input.PointOfInterestAdministrationPaginationDTO;
 import fr.naavi.hike.entity.MapElement;
 import fr.naavi.hike.entity.MapElementReaction;
 import fr.naavi.hike.enums.ReactionEnum;
@@ -182,6 +184,86 @@ public class MapElementRepositoryImpl implements MapElementRepositoryInterface {
                 ));
 
         return cb.coalesce(subquery, 0L);
+    }
+
+    @Override
+    public PaginatorDTO<MapElement> findAllAdministrationWithPagination(
+            PointOfInterestAdministrationPaginationDTO paginationDTO,
+            TypeMapElementEnum type
+    ) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<MapElement> query = cb.createQuery(MapElement.class);
+        Root<MapElement> mapElement = query.from(MapElement.class);
+        mapElement.fetch("images", JoinType.LEFT);
+        query.select(mapElement).distinct(true);
+
+        CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
+        Root<MapElement> countRoot = countQuery.from(MapElement.class);
+        countQuery.select(cb.countDistinct(countRoot));
+
+        List<Predicate> predicates = new ArrayList<>();
+        List<Predicate> countPredicates = new ArrayList<>();
+
+        predicates.add(cb.equal(mapElement.get("type"), type));
+        countPredicates.add(cb.equal(countRoot.get("type"), type));
+
+        String searchQuery = paginationDTO.getQuery();
+        if (searchQuery != null && !searchQuery.isEmpty()) {
+            String likePattern = "%" + searchQuery + "%";
+            predicates.add(cb.like(mapElement.get("name"), likePattern));
+            countPredicates.add(cb.like(countRoot.get("name"), likePattern));
+        }
+
+        String status = paginationDTO.getStatus();
+        if (status != null && !status.isBlank()) {
+            StatusEnum statusEnum;
+            try {
+                statusEnum = StatusEnum.valueOf(status);
+            } catch (IllegalArgumentException e) {
+                throw new NaaviBadCredentialsException(
+                        "point_of_interest.status_invalid",
+                        "The status '" + status + "' does not exist."
+                );
+            }
+
+            predicates.add(cb.equal(mapElement.get("status"), statusEnum));
+            countPredicates.add(cb.equal(countRoot.get("status"), statusEnum));
+        }
+
+        query.where(cb.and(predicates.toArray(new Predicate[0])));
+        countQuery.where(cb.and(countPredicates.toArray(new Predicate[0])));
+
+        Long totalItems = entityManager.createQuery(countQuery).getSingleResult();
+
+        List<String> allowedFields = List.of("name", "status", "createdat", "updatedat");
+        String orderField = paginationDTO.getOrderField();
+        String order = paginationDTO.getOrder();
+        if (orderField != null && allowedFields.contains(orderField)) {
+            String entityField = switch (orderField) {
+                case "createdat" -> "createdAt";
+                case "updatedat" -> "updatedAt";
+                default -> orderField;
+            };
+
+            if (PointOfInterestAdministrationPaginationDTO.ORDER_DESC.equalsIgnoreCase(order)) {
+                query.orderBy(cb.desc(mapElement.get(entityField)));
+            } else {
+                query.orderBy(cb.asc(mapElement.get(entityField)));
+            }
+        } else {
+            query.orderBy(cb.desc(mapElement.get("createdAt")));
+        }
+
+        int page = paginationDTO.getPage();
+        int limit = paginationDTO.getLimit();
+        int offset = (page - 1) * limit;
+
+        List<MapElement> entities = entityManager.createQuery(query)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList();
+
+        return PaginatorDTO.of(entities, totalItems.intValue(), paginationDTO);
     }
 
     @Override
