@@ -35,6 +35,7 @@ interface HikesConfigurationState {
   difficulties: string[];
   status: string[];
   sources: string[];
+  visibilities: string[];
   seasons: string[];
 }
 
@@ -56,6 +57,7 @@ export const HikesStore = signalStore(
     difficulties: [],
     status: [],
     sources: [],
+    visibilities: [],
     seasons: [],
   }),
   withState<UserLocationState>({
@@ -176,10 +178,11 @@ export const HikesStore = signalStore(
       try {
         const config = await lastValueFrom(hikesService.getConfigurations());
         patchState(store, {
-          difficulties: config.difficulties,
-          status: config.status,
-          sources: config.sources,
-          seasons: config.seasons,
+          difficulties: config?.difficulties ?? [],
+          status: config?.status ?? [],
+          sources: config?.sources ?? [],
+          visibilities: config?.visibilities ?? [],
+          seasons: config?.seasons ?? [],
         });
       } catch (error: unknown) {
         console.error('Failed to load configurations:', error);

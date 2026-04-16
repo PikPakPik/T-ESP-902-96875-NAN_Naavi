@@ -6,6 +6,7 @@ import { signal } from '@angular/core';
 import { POI } from '@web/shared/models/settings';
 import { TranslateModule } from '@ngx-translate/core';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { UsersService } from '@web/users/data-access';
 
 describe('PoisContainer', () => {
   let component: PoisContainer;
@@ -19,6 +20,7 @@ describe('PoisContainer', () => {
     description: 'A test POI',
     types: ['RESTAURANT'],
     photos: [],
+    images: [],
     latitude: 48.8566,
     longitude: 2.3522,
     comment: 'Test comment',
@@ -35,13 +37,15 @@ describe('PoisContainer', () => {
       page: signal(1),
       limit: signal(20),
       totalPages: signal(1),
-      latitude: signal(null),
-      longitude: signal(null),
+      pendingApprovalCount: signal(1),
+      selectedStatus: signal(null),
       delete: jest.fn(),
+      update: jest.fn().mockResolvedValue(undefined),
       getPOIs: jest.fn().mockResolvedValue(undefined),
+      loadPendingApprovalCount: jest.fn().mockResolvedValue(undefined),
       setPage: jest.fn(),
       setLimit: jest.fn(),
-      setDefaultLocation: jest.fn(),
+      setSelectedStatus: jest.fn(),
     };
 
     const routerMock = {
@@ -53,6 +57,10 @@ describe('PoisContainer', () => {
       providers: [
         { provide: POIsStore, useValue: poisStoreMock },
         { provide: Router, useValue: routerMock },
+        {
+          provide: UsersService,
+          useValue: { getUserById: jest.fn() },
+        },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
@@ -95,6 +103,7 @@ describe('PoisContainer', () => {
       description: 'A test POI 2',
       types: ['CAFE'],
       photos: [],
+      images: [],
       latitude: 48.8566,
       longitude: 2.3522,
       comment: 'Test comment 2',
@@ -110,41 +119,81 @@ describe('PoisContainer', () => {
     expect(poisStore.delete).toHaveBeenCalledWith(mockPOI2.id);
   });
 
-  it('should open location search when onLocationSearch is called', () => {
-    // Mock the locationSearchComponent
-    component.locationSearchComponent = {
-      open: jest.fn(),
-    } as any;
-    component.onLocationSearch();
-    expect(component.locationSearchComponent.open).toHaveBeenCalled();
-  });
-
-  it('should search by location', async () => {
-    const params = { latitude: 50.123, longitude: 3.456, radius: 25 };
-    await component.onSearchByLocation(params);
-
-    expect(poisStore.setDefaultLocation).toHaveBeenCalledWith(50.123, 3.456);
-    expect(poisStore.getPOIs).toHaveBeenCalledWith({
-      latitude: 50.123,
-      longitude: 3.456,
-      radius: 25,
+  it('should approve a POI', async () => {
+    await component.onApprovePOI(mockPOI);
+    expect(poisStore.update).toHaveBeenCalledWith({
+      id: mockPOI.id,
+      name: mockPOI.name,
+      description: mockPOI.description,
+      categories: mockPOI.types,
+      latitude: mockPOI.latitude,
+      longitude: mockPOI.longitude,
+      comment: mockPOI.comment,
+      source: mockPOI.source,
+      userId: undefined,
+      createdAt: mockPOI.createdAt.toISOString(),
+      updatedAt: mockPOI.updatedAt.toISOString(),
+      status: 'PUBLISHED',
     });
+    expect(poisStore.loadPendingApprovalCount).toHaveBeenCalled();
   });
 
-  it('should clear location search', async () => {
-    await component.onClearLocationSearch();
+  it('should reject a POI', async () => {
+    await component.onRejectPOI(mockPOI);
+    expect(poisStore.update).toHaveBeenCalledWith({
+      id: mockPOI.id,
+      name: mockPOI.name,
+      description: mockPOI.description,
+      categories: mockPOI.types,
+      latitude: mockPOI.latitude,
+      longitude: mockPOI.longitude,
+      comment: mockPOI.comment,
+      source: mockPOI.source,
+      userId: undefined,
+      createdAt: mockPOI.createdAt.toISOString(),
+      updatedAt: mockPOI.updatedAt.toISOString(),
+      status: 'UNPUBLISHED',
+    });
+    expect(poisStore.loadPendingApprovalCount).toHaveBeenCalled();
     expect(poisStore.getPOIs).toHaveBeenCalled();
   });
 
-  it('should set Paris default location and reload POIs', async () => {
-    await component.onSetParisDefault();
-    expect(poisStore.setDefaultLocation).toHaveBeenCalledWith(48.8566, 2.3522);
-    expect(poisStore.getPOIs).toHaveBeenCalled();
+  it('should keep community owner data in moderation payload', async () => {
+    const communityPoi = new POI({
+      id: '9',
+      name: 'Community POI',
+      description: 'A test community POI',
+      source: 'COMMUNITY',
+      userId: '17',
+      types: ['CAFE'],
+      photos: [],
+      images: [],
+      latitude: 48.8566,
+      longitude: 2.3522,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      status: 'DRAFT',
+    });
+
+    await component.onApprovePOI(communityPoi);
+
+    expect(poisStore.update).toHaveBeenCalledWith({
+      id: communityPoi.id,
+      name: communityPoi.name,
+      description: communityPoi.description,
+      categories: communityPoi.types,
+      latitude: communityPoi.latitude,
+      longitude: communityPoi.longitude,
+      comment: communityPoi.comment,
+      source: 'COMMUNITY',
+      userId: '17',
+      createdAt: communityPoi.createdAt.toISOString(),
+      updatedAt: communityPoi.updatedAt.toISOString(),
+      status: 'PUBLISHED',
+    });
   });
 
   it('should handle page change with location', async () => {
-    poisStore.latitude = signal(48.8566);
-    poisStore.longitude = signal(2.3522);
     const event = { page: 2, rows: 20 };
 
     await component.onPageChange(event);
@@ -154,30 +203,23 @@ describe('PoisContainer', () => {
     expect(poisStore.getPOIs).toHaveBeenCalledWith({
       page: 2,
       limit: 20,
-      latitude: 48.8566,
-      longitude: 2.3522,
-      radius: 20,
+      status: undefined,
     });
   });
 
-  it('should handle page change without location', async () => {
-    poisStore.latitude = signal(null);
-    poisStore.longitude = signal(null);
-    const event = { page: 2, rows: 20 };
+  it('should keep selected status on page change when a filter is active', async () => {
+    poisStore.selectedStatus = signal('DRAFT');
 
-    await component.onPageChange(event);
+    await component.onPageChange({ page: 3, rows: 10 });
 
-    expect(poisStore.setPage).toHaveBeenCalledWith(2);
-    expect(poisStore.setLimit).toHaveBeenCalledWith(20);
     expect(poisStore.getPOIs).toHaveBeenCalledWith({
-      page: 2,
-      limit: 20,
+      page: 3,
+      limit: 10,
+      status: 'DRAFT',
     });
   });
 
-  it('should handle search change with location', async () => {
-    poisStore.latitude = signal(48.8566);
-    poisStore.longitude = signal(2.3522);
+  it('should handle search change', async () => {
     poisStore.limit = signal(20);
 
     await component.onSearchChange('test query');
@@ -187,30 +229,25 @@ describe('PoisContainer', () => {
       page: 1,
       limit: 20,
       query: 'test query',
-      latitude: 48.8566,
-      longitude: 2.3522,
-      radius: 20,
+      status: undefined,
     });
   });
 
-  it('should handle search change without location', async () => {
-    poisStore.latitude = signal(null);
-    poisStore.longitude = signal(null);
+  it('should keep selected status on search change when a filter is active', async () => {
     poisStore.limit = signal(20);
+    poisStore.selectedStatus = signal('DRAFT');
 
     await component.onSearchChange('test query');
 
-    expect(poisStore.setPage).toHaveBeenCalledWith(1);
     expect(poisStore.getPOIs).toHaveBeenCalledWith({
       page: 1,
       limit: 20,
       query: 'test query',
+      status: 'DRAFT',
     });
   });
 
   it('should handle empty search query', async () => {
-    poisStore.latitude = signal(null);
-    poisStore.longitude = signal(null);
     poisStore.limit = signal(20);
 
     await component.onSearchChange('   ');
@@ -219,6 +256,35 @@ describe('PoisContainer', () => {
       page: 1,
       limit: 20,
       query: undefined,
+      status: undefined,
+    });
+  });
+
+  it('should change status filter', async () => {
+    poisStore.limit = signal(20);
+
+    await component.onStatusFilterChange('DRAFT');
+
+    expect(poisStore.setSelectedStatus).toHaveBeenCalledWith('DRAFT');
+    expect(poisStore.setPage).toHaveBeenCalledWith(1);
+    expect(poisStore.getPOIs).toHaveBeenCalledWith({
+      page: 1,
+      limit: 20,
+      status: 'DRAFT',
+    });
+  });
+
+  it('should reset status filter to all', async () => {
+    poisStore.limit = signal(20);
+
+    await component.onStatusFilterChange(null);
+
+    expect(poisStore.setSelectedStatus).toHaveBeenCalledWith(null);
+    expect(poisStore.setPage).toHaveBeenCalledWith(1);
+    expect(poisStore.getPOIs).toHaveBeenCalledWith({
+      page: 1,
+      limit: 20,
+      status: undefined,
     });
   });
 });

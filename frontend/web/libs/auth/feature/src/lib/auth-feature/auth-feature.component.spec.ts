@@ -57,6 +57,8 @@ describe('AuthFeatureComponent', () => {
       getUser: jest.fn().mockResolvedValue(undefined),
       forgotPassword: jest.fn().mockResolvedValue(undefined),
       logout: jest.fn().mockResolvedValue(undefined),
+      currentUser: jest.fn().mockResolvedValue(undefined),
+      clearError: jest.fn(),
       user: signal(null),
       pending: signal(false),
       error: signal(null),

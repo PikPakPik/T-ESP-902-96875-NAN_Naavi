@@ -1,6 +1,6 @@
 import { Component, inject, signal, effect, computed } from '@angular/core';
 
-import { form, Field, required } from '@angular/forms/signals';
+import { form, required } from '@angular/forms/signals';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -8,7 +8,6 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { CardModule } from 'primeng/card';
 import { SelectModule } from 'primeng/select';
-import { MultiSelectModule } from 'primeng/multiselect';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
@@ -23,8 +22,7 @@ import {
   HikeDetailStore,
   getDifficultyTranslationKey,
   getStatusTranslationKey,
-  getSourceTranslationKey,
-  getSeasonTranslationKey,
+  getVisibilityTranslationKey,
 } from '@web/hikes/data-access';
 import { Coordinate, Hike } from '@web/shared/models/settings';
 import { PanelModule } from 'primeng/panel';
@@ -35,6 +33,8 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { LngLat, type Marker } from 'mapbox-gl';
 import { TooltipModule } from 'primeng/tooltip';
+import { lastValueFrom } from 'rxjs';
+import { UsersService } from '@web/users/data-access';
 
   // Form data model
   interface HikeFormData {
@@ -43,20 +43,19 @@ import { TooltipModule } from 'primeng/tooltip';
     difficulty: string;
     status: string;
     source: string;
-    seasons: string[];
+    visibility: string;
+    userId: string | null;
   }
 @Component({
   selector: 'hike-upsert',
   standalone: true,
   imports: [
-    Field,
     FormsModule,
     ButtonModule,
     InputTextModule,
     TextareaModule,
     CardModule,
     SelectModule,
-    MultiSelectModule,
     InputNumberModule,
     ToastModule,
     MapComponent,
@@ -77,6 +76,7 @@ export class HikeUpsertComponent {
   #mapboxService = inject(MapboxService);
   #hikesStore = inject(HikesStore);
   #hikeDetailStore = inject(HikeDetailStore);
+  #usersService = inject(UsersService);
   #messageService = inject(MessageService);
   #translateService = inject(TranslateService);
 
@@ -88,8 +88,11 @@ export class HikeUpsertComponent {
   location = signal('');
   difficulty = signal('');
   status = signal('DRAFT');
-  source = signal('');
-  seasons = signal<string[]>([]);
+  source = signal('OFFICIAL');
+  visibility = signal('PUBLIC');
+  selectedUserId = signal<string | null>(null);
+  usersOptions = signal<Array<{ label: string; value: string }>>([]);
+  ownerDisplay = signal('Officielle');
 
   // Modèle Signal Forms pour la validation
   hikeFormModel = signal<HikeFormData>({
@@ -97,8 +100,9 @@ export class HikeUpsertComponent {
     location: '',
     difficulty: '',
     status: 'DRAFT',
-    source: '',
-    seasons: [],
+    source: 'OFFICIAL',
+    visibility: 'PUBLIC',
+    userId: null,
   });
 
   hikeForm = form(this.hikeFormModel, (schemaPath) => {
@@ -117,9 +121,12 @@ export class HikeUpsertComponent {
         difficulty: this.difficulty(),
         status: this.status(),
         source: this.source(),
-        seasons: this.seasons(),
+        visibility: this.visibility(),
+        userId: this.selectedUserId(),
       }));
     });
+
+    void this.loadUsersOptions();
 
     // The store automatically loads the hike via onInit hook when id is in route params
     effect(() => {
@@ -146,9 +153,9 @@ export class HikeUpsertComponent {
   // Computed pour savoir si on peut ajouter des waypoints
   canAddWaypoint = computed(() => this.waypoints().length < this.MAX_WAYPOINTS);
 
-  // Configuration options from store
+  // Configuration options from store (defensive: handle undefined before loadConfigurations)
   difficulties = computed(() => {
-    const difficulties = this.#hikesStore.difficulties();
+    const difficulties = this.#hikesStore.difficulties() ?? [];
     return difficulties.map((difficulty) => ({
       label: getDifficultyTranslationKey(difficulty),
       value: difficulty,
@@ -156,7 +163,7 @@ export class HikeUpsertComponent {
   });
 
   statusOptions = computed(() => {
-    const statuses = this.#hikesStore.status();
+    const statuses = this.#hikesStore.status() ?? [];
     return statuses.map((status) => ({
       label: getStatusTranslationKey(status),
       value: status,
@@ -164,25 +171,32 @@ export class HikeUpsertComponent {
   });
 
   sourceOptions = computed(() => {
-    const sources = this.#hikesStore.sources();
-    return sources.map((source) => ({
-      label: getSourceTranslationKey(source),
+    const sources = this.#hikesStore.sources() ?? [];
+    const values = sources.length > 0 ? sources : ['OFFICIAL', 'COMMUNITY'];
+    return values.map((source) => ({
+      label: source,
       value: source,
     }));
   });
 
-  seasonOptions = computed(() => {
-    const seasons = this.#hikesStore.seasons();
-    return seasons.map((season) => ({
-      label: getSeasonTranslationKey(season),
-      value: season,
+  isCommunitySource = computed(
+    () => this.source().toUpperCase() === 'COMMUNITY'
+  );
+
+  visibilityOptions = computed(() => {
+    const visibilities = this.#hikesStore.visibilities();
+    const values = visibilities.length > 0
+      ? visibilities
+      : ['PUBLIC', 'PRIVATE', 'UNLISTED'];
+    const filteredValues = this.source().toUpperCase() === 'OFFICIAL'
+      ? values.filter((visibility) => visibility !== 'PRIVATE')
+      : values;
+
+    return filteredValues.map((visibility) => ({
+      label: getVisibilityTranslationKey(visibility),
+      value: visibility,
     }));
   });
-
-  // Méthode helper pour traduire une saison (utilisée dans le template)
-  getSeasonTranslationKey(season: string): string {
-    return getSeasonTranslationKey(season);
-  }
 
   // Map configuration
   mapStyle = 'mapbox://styles/mapbox/outdoors-v12';
@@ -213,8 +227,13 @@ export class HikeUpsertComponent {
         this.location.set(hike.location || '');
         this.difficulty.set(hike.difficulty);
         this.status.set(hike.status || 'DRAFT');
-        this.source.set(hike.source || '');
-        this.seasons.set(hike.seasons || []);
+        this.source.set(
+          hike.source || (hike.userId ? 'COMMUNITY' : 'OFFICIAL')
+        );
+        this.visibility.set(hike.visibility || 'PUBLIC');
+        const normalizedUserId = this.normalizeUserId(hike.userId);
+        this.selectedUserId.set(normalizedUserId);
+        await this.loadOwnerDisplay(normalizedUserId, hike.source);
         this.distance.set(hike.distance);
         this.elevationGain.set(hike.elevationGain || 0);
         this.elevationLoss.set(hike.elevationLoss || 0);
@@ -589,7 +608,8 @@ export class HikeUpsertComponent {
       difficulty: this.difficulty(),
       status: this.status(),
       source: this.source(),
-      seasons: this.seasons(),
+      visibility: this.visibility(),
+      userId: this.selectedUserId(),
     });
 
     const nameField = this.hikeForm.name();
@@ -600,13 +620,24 @@ export class HikeUpsertComponent {
       return;
     }
 
+    if (this.isCommunitySource() && !this.selectedUserId()) {
+      this.#messageService.add({
+        severity: 'warn',
+        summary: this.#translateService.instant('COMMON.WARNING'),
+        detail: 'Veuillez sélectionner un utilisateur pour une randonnée communauté.',
+      });
+      return;
+    }
+
+    const source = this.source().toUpperCase();
     const hikeData = {
       id: this.hikeId() || Date.now().toString(),
       name: this.name(),
       difficulty: this.difficulty(),
       status: this.status(),
-      source: this.source() || undefined,
-      seasons: this.seasons().length > 0 ? this.seasons() : undefined,
+      visibility: this.visibility(),
+      source,
+      userId: source === 'COMMUNITY' ? this.selectedUserId() || undefined : undefined,
       distance: this.distance(),
       coordinates: this.coordinates(),
       waypoints: this.waypoints(),
@@ -657,5 +688,121 @@ export class HikeUpsertComponent {
 
   cancel() {
     this.#router.navigate(['/backoffice/hikes']);
+  }
+
+  private async loadOwnerDisplay(
+    userId: string | null | undefined,
+    source?: string
+  ) {
+    const normalizedUserId = this.normalizeUserId(userId);
+
+    if (!normalizedUserId) {
+      this.ownerDisplay.set(
+        (source || '').toUpperCase() === 'COMMUNITY'
+          ? 'Communauté'
+          : 'Officielle'
+      );
+      return;
+    }
+
+    try {
+      const owner = await lastValueFrom(
+        this.#usersService.getUserById(normalizedUserId)
+      );
+      const lastname = (owner.lastname || '').trim();
+      const firstname = (owner.firstname || '').trim();
+      const fullName = `${lastname.toUpperCase()} ${firstname}`.trim();
+
+      this.ownerDisplay.set(
+        fullName.length > 0
+          ? `(#${owner.id}) ${fullName}`
+          : `(#${owner.id})`
+      );
+    } catch {
+      this.ownerDisplay.set(`(#${normalizedUserId}) Utilisateur introuvable`);
+    }
+  }
+
+  async onSourceChange(value: string | null) {
+    const normalized = (value || 'OFFICIAL').toUpperCase();
+    this.source.set(normalized);
+
+    if (normalized === 'OFFICIAL') {
+      this.selectedUserId.set(null);
+      this.ownerDisplay.set('Officielle');
+      if (this.visibility().toUpperCase() === 'PRIVATE') {
+        this.visibility.set('PUBLIC');
+      }
+      return;
+    }
+
+    const selected = this.normalizeUserId(this.selectedUserId());
+    if (!selected) {
+      this.ownerDisplay.set('Communauté');
+      return;
+    }
+
+    await this.onOwnerUserChange(selected);
+  }
+
+  async onOwnerUserChange(userId: string | null) {
+    const normalizedUserId = this.normalizeUserId(userId);
+    this.selectedUserId.set(normalizedUserId);
+
+    if (!normalizedUserId) {
+      this.ownerDisplay.set('Communauté');
+      return;
+    }
+
+    try {
+      const owner = await lastValueFrom(
+        this.#usersService.getUserById(normalizedUserId)
+      );
+      const lastname = (owner.lastname || '').trim();
+      const firstname = (owner.firstname || '').trim();
+      const fullName = `${lastname.toUpperCase()} ${firstname}`.trim();
+
+      this.ownerDisplay.set(
+        fullName.length > 0
+          ? `(#${owner.id}) ${fullName}`
+          : `(#${owner.id})`
+      );
+    } catch {
+      this.ownerDisplay.set(`(#${normalizedUserId}) Utilisateur introuvable`);
+    }
+  }
+
+  private async loadUsersOptions() {
+    try {
+      const response = await lastValueFrom(
+        this.#usersService.getUsers({ page: 1, limit: 200 })
+      );
+
+      this.usersOptions.set(
+        response.usersInstances.map((user) => ({
+          value: String(user.id),
+          label: `(#${user.id}) ${user.lastname.toUpperCase()} ${user.firstname}`,
+        }))
+      );
+    } catch {
+      this.usersOptions.set([]);
+    }
+  }
+
+  private normalizeUserId(userId: string | null | undefined): string | null {
+    if (userId === null || userId === undefined) {
+      return null;
+    }
+
+    const normalized = String(userId).trim();
+    if (
+      normalized.length === 0 ||
+      normalized.toLowerCase() === 'null' ||
+      normalized.toLowerCase() === 'undefined'
+    ) {
+      return null;
+    }
+
+    return normalized;
   }
 }

@@ -63,7 +63,7 @@ export class HikesService {
     }
 
     return this.#http
-      .get<PaginatedHikesResponse>(`${this.#apiUrl}hike/hikes`, { params })
+      .get<PaginatedHikesResponse>(`${this.#apiUrl}hike/administration/hikes`, { params })
       .pipe(
         map((response) => {
           return {
@@ -246,8 +246,9 @@ export class HikesService {
       duration: durationInSeconds,
       difficulty: hike.difficulty,
       status: hike.status || 'PUBLISHED',
+      visibility: hike.visibility || 'PUBLIC',
       source: hike.source,
-      seasons: hike.seasons || [],
+      userId: hike.userId,
     };
   }
 

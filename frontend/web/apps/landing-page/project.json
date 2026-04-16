@@ -44,7 +44,34 @@
               "type": "anyComponentStyle"
             }
           ],
-          "outputHashing": "all"
+          "outputHashing": "all",
+          "fileReplacements": [
+            {
+              "replace": "apps/landing-page/src/environments/environment.ts",
+              "with": "apps/landing-page/src/environments/environment.prod.ts"
+            }
+          ]
+        },
+        "develop": {
+          "budgets": [
+            {
+              "maximumError": "5mb",
+              "maximumWarning": "2mb",
+              "type": "initial"
+            },
+            {
+              "maximumError": "70kb",
+              "maximumWarning": "6kb",
+              "type": "anyComponentStyle"
+            }
+          ],
+          "outputHashing": "all",
+          "fileReplacements": [
+            {
+              "replace": "apps/landing-page/src/environments/environment.ts",
+              "with": "apps/landing-page/src/environments/environment.dev.ts"
+            }
+          ]
         },
         "development": {
           "optimization": false,

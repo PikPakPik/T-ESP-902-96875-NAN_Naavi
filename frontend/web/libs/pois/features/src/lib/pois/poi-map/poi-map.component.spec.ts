@@ -19,6 +19,7 @@ describe('PoiMapComponent', () => {
     fixture.componentRef.setInput('latitude', 48.8566);
     fixture.componentRef.setInput('longitude', 2.3522);
     fixture.componentRef.setInput('poiId', 'test-poi-1');
+    fixture.componentRef.setInput('category', 'WATER');
 
     // Don't call detectChanges() to avoid rendering mapbox-gl components
   });
@@ -42,6 +43,14 @@ describe('PoiMapComponent', () => {
     expect(center).toEqual([2.3522, 48.8566]);
     expect(center[0]).toBe(component.longitude());
     expect(center[1]).toBe(component.latitude());
+  });
+
+  it('should return the Flutter marker icon path from the category', () => {
+    expect(component.getMarkerIconPath()).toBe('/assets/icons/poi/water.png');
+  });
+
+  it('should use category icon markers by default', () => {
+    expect(component.useCategoryIcon()).toBe(true);
   });
 
   it('should update GeoJSON when inputs change', () => {

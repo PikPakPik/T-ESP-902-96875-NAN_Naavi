@@ -1,6 +1,6 @@
 import { Component, inject, signal, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { form, Field, required, email } from '@angular/forms/signals';
+import { form, required, email, FormField } from '@angular/forms/signals';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -9,9 +9,13 @@ import { CardModule } from 'primeng/card';
 import { SelectModule } from 'primeng/select';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import { TooltipModule } from 'primeng/tooltip';
+import { ImageModule } from 'primeng/image';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { UsersStore } from '@web/users/data-access';
 import { User, Role, Status } from '@web/shared/models/settings';
+import { IMAGES_BASE_URL } from '@web/shared/http-client';
 import { DividerModule } from 'primeng/divider';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
@@ -28,7 +32,6 @@ interface UserUpsertData {
   standalone: true,
   imports: [
     CommonModule,
-    Field,
     FormsModule,
     ButtonModule,
     InputTextModule,
@@ -36,10 +39,14 @@ interface UserUpsertData {
     SelectModule,
     MultiSelectModule,
     ToastModule,
+    TooltipModule,
+    ImageModule,
+    ConfirmDialogModule,
     DividerModule,
     TranslateModule,
-  ],
-  providers: [MessageService],
+    FormField
+],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './user-upsert.component.html',
   styleUrl: './user-upsert.component.scss',
 })
@@ -49,6 +56,8 @@ export class UserUpsertComponent {
   #usersStore = inject(UsersStore);
   #messageService = inject(MessageService);
   #translateService = inject(TranslateService);
+  #confirmationService = inject(ConfirmationService);
+  #imagesBaseUrl = inject(IMAGES_BASE_URL, { optional: true });
 
   // Form data
   userModel = signal<UserUpsertData>({
@@ -69,6 +78,7 @@ export class UserUpsertComponent {
   isEditMode = signal(false);
   userId = signal<string | null>(null);
   submitted = signal(false);
+  profilePicture = signal<string | null>(null);
 
   // Options - ROLE_USER est ajouté automatiquement, ne pas l'afficher
   roleOptions = computed(() => {
@@ -92,6 +102,15 @@ export class UserUpsertComponent {
   email = computed(() => this.userModel().email);
   selectedRoles = computed(() => this.userModel().selectedRoles);
   status = computed(() => this.userModel().status);
+
+  profilePictureUrl = computed(() => {
+    const path = this.profilePicture();
+    const base = this.#imagesBaseUrl?.trim().replace(/\/$/, '') ?? '';
+    if (!path || !base) return null;
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    const cleanPath = path.replace(/^\//, '');
+    return `${base}/${cleanPath}`;
+  });
 
   onRolesChange(selectedRoles: Role[]) {
     this.userModel.update((model) => ({
@@ -138,6 +157,7 @@ export class UserUpsertComponent {
       if (user) {
         this.isEditMode.set(true);
         this.userId.set(user.id);
+        this.profilePicture.set(user.profilePicture ?? null);
         this.userModel.set({
           firstname: user.firstname,
           lastname: user.lastname,
@@ -247,5 +267,32 @@ export class UserUpsertComponent {
 
   cancel() {
     this.#router.navigate(['/backoffice/users']);
+  }
+
+  async deleteProfilePicture() {
+    const id = this.userId();
+    if (!id) return;
+    this.#confirmationService.confirm({
+      message: this.#translateService.instant('USER.CONFIRM.DELETE_PROFILE_PICTURE'),
+      header: this.#translateService.instant('COMMON.CONFIRM') || 'Confirm',
+      icon: 'pi pi-exclamation-triangle',
+      accept: async () => {
+        try {
+          await this.#usersStore.deleteProfilePicture(id);
+          this.profilePicture.set(null);
+          this.#messageService.add({
+            severity: 'success',
+            summary: this.#translateService.instant('COMMON.SUCCESS'),
+            detail: this.#translateService.instant('USER.SUCCESS.PROFILE_PICTURE_DELETED'),
+          });
+        } catch (error) {
+          this.#messageService.add({
+            severity: 'error',
+            summary: this.#translateService.instant('COMMON.ERROR'),
+            detail: this.#translateService.instant('USER.ERROR.DELETE_PROFILE_PICTURE_FAILED'),
+          });
+        }
+      },
+    });
   }
 }

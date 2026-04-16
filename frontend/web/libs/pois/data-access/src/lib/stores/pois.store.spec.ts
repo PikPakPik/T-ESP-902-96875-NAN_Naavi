@@ -14,6 +14,7 @@ describe('POIsStore', () => {
     description: 'A test POI',
     categories: ['RESTAURANT'],
     photos: [],
+    images: [],
     latitude: 48.8566,
     longitude: 2.3522,
     comment: 'Test comment',
@@ -26,16 +27,16 @@ describe('POIsStore', () => {
 
   beforeEach(() => {
     const poisServiceMock = {
-      getPOIs: jest.fn(),
       searchPOIs: jest.fn(),
       getPOIById: jest.fn(),
       addPOI: jest.fn(),
       updatePOI: jest.fn(),
       deletePOI: jest.fn(),
+      getPendingApprovalCount: jest.fn(() => of(0)),
       getConfigurations: jest.fn(() =>
         of({
           point_of_interest_categories: ['RESTAURANT', 'HOTEL'],
-          status: ['ACTIVE', 'INACTIVE'],
+          status: ['DRAFT', 'PUBLISHED', 'UNPUBLISHED'],
         })
       ),
     } as unknown as jest.Mocked<POIsService>;
@@ -87,6 +88,28 @@ describe('POIsStore', () => {
       expect(store.isPending()).toBe(false);
       expect(store.error()).toBeTruthy();
     });
+
+    it('should use selected status when no explicit status is provided', async () => {
+      poisService.searchPOIs.mockReturnValue(
+        of({
+          items: [mockIDBPOI],
+          poisInstances: [mockPOI],
+          totalItems: 1,
+          currentPage: 1,
+          limit: 20,
+          totalPages: 1,
+          nextPage: null,
+          previousPage: null,
+        })
+      );
+
+      store.setSelectedStatus('DRAFT');
+      await store.getPOIs();
+
+      expect(poisService.searchPOIs).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'DRAFT' })
+      );
+    });
   });
 
   describe('getPOIById', () => {
@@ -107,6 +130,25 @@ describe('POIsStore', () => {
 
       expect(result).toBeUndefined();
       expect(store.error()).toBeTruthy();
+    });
+
+    it('should not re-add POI already present in store', async () => {
+      poisService.getPOIById.mockReturnValue(of(mockPOI));
+      await store.create(mockPOI);
+
+      await store.getPOIById('1');
+
+      expect(store.entities()).toHaveLength(1);
+    });
+
+    it('should fulfill without adding entity when POI is undefined', async () => {
+      poisService.getPOIById.mockReturnValue(of(undefined as unknown as POI));
+
+      const result = await store.getPOIById('404');
+
+      expect(result).toBeUndefined();
+      expect(store.isPending()).toBe(false);
+      expect(store.entities()).toHaveLength(0);
     });
   });
 
@@ -144,6 +186,7 @@ describe('POIsStore', () => {
         description: 'A test POI',
         types: ['RESTAURANT'],
         photos: [],
+        images: [],
         latitude: 48.8566,
         longitude: 2.3522,
         comment: 'Test comment',
@@ -212,85 +255,35 @@ describe('POIsStore', () => {
     });
   });
 
-  describe('setDefaultLocation', () => {
-    it('should set default location', () => {
-      store.setDefaultLocation(48.8566, 2.3522);
-      expect(store.latitude()).toBe(48.8566);
-      expect(store.longitude()).toBe(2.3522);
+  describe('setSelectedStatus', () => {
+    it('should set selected status', () => {
+      store.setSelectedStatus('DRAFT');
+      expect(store.selectedStatus()).toBe('DRAFT');
     });
   });
 
-  describe('getUserLocation', () => {
-    beforeEach(() => {
-      // S'assurer que navigator existe
-      if (typeof global.navigator === 'undefined') {
-        (global as any).navigator = {};
-      }
+  describe('loadPendingApprovalCount', () => {
+    it('should load pending approval count', async () => {
+      poisService.getPendingApprovalCount.mockReturnValue(of(4));
+
+      await store.loadPendingApprovalCount();
+
+      expect(store.pendingApprovalCount()).toBe(4);
     });
 
-    it('should handle geolocation success', (done) => {
-      const mockPosition = {
-        coords: {
-          latitude: 50.0,
-          longitude: 3.0,
-        },
-      };
+    it('should handle errors when loading pending approval count', async () => {
+      const consoleErrorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => undefined);
 
-      const mockGeolocation = {
-        getCurrentPosition: jest.fn((success) => {
-          // Appeler success de manière synchrone
-          success(mockPosition);
-        }),
-      };
+      poisService.getPendingApprovalCount.mockReturnValue(
+        throwError(() => 'count error')
+      );
 
-      Object.defineProperty(global.navigator, 'geolocation', {
-        value: mockGeolocation,
-        writable: true,
-        configurable: true,
-      });
+      await store.loadPendingApprovalCount();
 
-      store.getUserLocation().then(() => {
-        expect(store.latitude()).toBe(50.0);
-        expect(store.longitude()).toBe(3.0);
-        done();
-      });
-    });
-
-    it('should handle geolocation error', (done) => {
-      const mockGeolocation = {
-        getCurrentPosition: jest.fn((success, error) => {
-          error(new Error('Geolocation error'));
-        }),
-      };
-      Object.defineProperty(global.navigator, 'geolocation', {
-        value: mockGeolocation,
-        writable: true,
-        configurable: true,
-      });
-
-      store.getUserLocation().then(() => {
-        expect(store.latitude()).toBeNull();
-        expect(store.longitude()).toBeNull();
-        done();
-      });
-    });
-
-    it('should handle missing geolocation', (done) => {
-      // S'assurer que navigator existe
-      if (typeof global.navigator === 'undefined') {
-        (global as any).navigator = {};
-      }
-      Object.defineProperty(global.navigator, 'geolocation', {
-        value: undefined,
-        writable: true,
-        configurable: true,
-      });
-
-      store.getUserLocation().then(() => {
-        expect(store.latitude()).toBeNull();
-        expect(store.longitude()).toBeNull();
-        done();
-      });
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -299,7 +292,7 @@ describe('POIsStore', () => {
       poisService.getConfigurations.mockReturnValue(
         of({
           point_of_interest_categories: ['RESTAURANT', 'HOTEL'],
-          status: ['ACTIVE', 'INACTIVE'],
+          status: ['DRAFT', 'PUBLISHED', 'UNPUBLISHED'],
         })
       );
 
@@ -309,7 +302,7 @@ describe('POIsStore', () => {
         'RESTAURANT',
         'HOTEL',
       ]);
-      expect(store.status()).toEqual(['ACTIVE', 'INACTIVE']);
+      expect(store.status()).toEqual(['DRAFT', 'PUBLISHED', 'UNPUBLISHED']);
     });
 
     it('should handle errors when loading configurations', async () => {

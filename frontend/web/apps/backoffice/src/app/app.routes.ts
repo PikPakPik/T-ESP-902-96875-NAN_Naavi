@@ -11,6 +11,7 @@ import {
   HikeDetailComponent,
   HikesContainer,
   HikeUpsertContainer,
+  HikeImportContainer,
 } from '@web/hikes/feature';
 import { ProfileContainer } from '@web/profile/features';
 import { PoisContainer, PoiUpsertContainer } from '@web/pois/features';
@@ -71,6 +72,10 @@ export const appRoutes: Route[] = [
           {
             path: 'edit/:id',
             component: HikeUpsertContainer,
+          },
+          {
+            path: 'import',
+            component: HikeImportContainer,
           },
           {
             path: ':id',

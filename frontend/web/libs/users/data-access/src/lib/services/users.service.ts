@@ -98,6 +98,12 @@ export class UsersService {
       `${this.#apiUrl}identity/administration/users/${id}`
     );
   }
+
+  deleteProfilePicture(userId: string): Observable<void> {
+    return this.#http.delete<void>(
+      `${this.#apiUrl}identity/administration/users/${userId}/profile-picture`
+    );
+  }
   resetPassword(user: User): Observable<void> {
     return this.#http
       .post<void>(`${this.#apiUrl}identity/forgot-password`, {

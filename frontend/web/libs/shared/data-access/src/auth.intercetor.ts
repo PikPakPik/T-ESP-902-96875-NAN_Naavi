@@ -42,6 +42,15 @@ export function authInterceptor(
         if (isAuthOrRefresh) {
           return throwError(() => error);
         }
+        // FormData/Blob body cannot be replayed on retry - skip refresh+retry
+        const body = req.body;
+        if (
+          body instanceof FormData ||
+          body instanceof Blob ||
+          (typeof File !== 'undefined' && body instanceof File)
+        ) {
+          return throwError(() => error);
+        }
 
         const refreshToken = getCookie(REFRESH_TOKEN_COOKIE);
         if (!refreshToken) {

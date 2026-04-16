@@ -4,7 +4,9 @@
 
 export const environment = {
   production: false,
-  api_url: 'https://localhost/api/v1/',
+  api_url: 'https://backoffice.localhost/api/v1/',
+  /** Base URL for S3/MinIO images (profile pictures). Override via VITE_IMAGES_BASE_URL in .env */
+  images_base_url: 'https://s3.naavi.local/naavi-images',
   mock: false,
 };
 

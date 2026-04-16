@@ -23,7 +23,11 @@ import { AuthStore } from '@web/auth/data-access';
 import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { TurnstileService } from '@web/shared/util';
+import {
+  TurnstileService,
+  getCookie,
+  ACCESS_TOKEN_COOKIE,
+} from '@web/shared/util';
 
 @Component({
   selector: 'web-auth-feature',
@@ -186,6 +190,14 @@ export class AuthFeatureComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnInit(): void {
+    // Clear any stale error from previous session (e.g. after logout)
+    this.#store.clearError();
+    // Si déjà connecté (token en cookie), charger l'utilisateur pour déclencher la redirection
+    if (getCookie(ACCESS_TOKEN_COOKIE)) {
+      this.#store.currentUser().catch(() => {
+        /* token invalide - rester sur login */
+      });
+    }
     // Wait for Turnstile script to load
     this.waitForTurnstile();
   }

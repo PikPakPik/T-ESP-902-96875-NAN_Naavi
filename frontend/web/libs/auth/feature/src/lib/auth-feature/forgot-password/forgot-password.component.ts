@@ -1,6 +1,6 @@
 import { Component, inject, output, signal } from '@angular/core';
 
-import { form, Field, required, email } from '@angular/forms/signals';
+import { form, FormField, required, email } from '@angular/forms/signals';
 import { Button } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { AutoFocus } from 'primeng/autofocus';
@@ -12,7 +12,7 @@ interface ForgotPasswordData {
 
 @Component({
   selector: 'forgot-password',
-  imports: [Field, Button, InputText, AutoFocus],
+  imports: [FormField, Button, InputText, AutoFocus],
   templateUrl: './forgot-password.component.html',
   styleUrl: './forgot-password.component.scss',
 })

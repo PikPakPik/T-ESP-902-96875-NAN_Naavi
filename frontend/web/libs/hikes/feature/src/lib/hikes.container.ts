@@ -28,6 +28,7 @@ import {
       (deleteSelectedHikes)="onDeleteSelectedHikes($event)"
       (viewDetails)="onViewDetails($event)"
       (newHike)="onNewHike()"
+      (importHikes)="onImportHikes()"
       (locationSearch)="onLocationSearch()"
       (setParisDefault)="onSetParisDefault()"
       (pageChange)="onPageChange($event)"
@@ -100,6 +101,10 @@ export class HikesContainer {
 
   onNewHike() {
     this.#router.navigate(['/backoffice/hikes/new']);
+  }
+
+  onImportHikes() {
+    this.#router.navigate(['/backoffice/hikes/import']);
   }
 
   onLocationSearch() {

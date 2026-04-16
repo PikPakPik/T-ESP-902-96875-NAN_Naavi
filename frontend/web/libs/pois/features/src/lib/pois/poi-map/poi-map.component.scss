@@ -8,3 +8,18 @@
   width: 100%;
   height: 100%;
 }
+
+.poi-marker-icon {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.poi-marker-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #f97316;
+  border: 3px solid #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}

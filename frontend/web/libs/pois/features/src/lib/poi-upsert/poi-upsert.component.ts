@@ -8,18 +8,21 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { CardModule } from 'primeng/card';
 import { SelectModule } from 'primeng/select';
-import { MultiSelectModule } from 'primeng/multiselect';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { MapComponent, MarkerComponent } from 'ngx-mapbox-gl';
 import {
   POIsStore,
+  getPOICategoryIconPath,
   getPOICategoryTranslationKey,
   getPOIStatusTranslationKey,
 } from '@web/pois/data-access';
 import { IDB_POI } from '@web/shared/models/settings';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { UsersService } from '@web/users/data-access';
+import { lastValueFrom } from 'rxjs';
+import { POI } from '@web/shared/models/settings';
 
 @Component({
   selector: 'poi-upsert',
@@ -32,7 +35,6 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
     TextareaModule,
     CardModule,
     SelectModule,
-    MultiSelectModule,
     InputNumberModule,
     ChipModule,
     ToastModule,
@@ -50,6 +52,7 @@ export class PoiUpsertComponent {
   #poisStore = inject(POIsStore);
   #messageService = inject(MessageService);
   #translateService = inject(TranslateService);
+  #usersService = inject(UsersService);
 
   // Form data
   name = signal('');
@@ -60,6 +63,10 @@ export class PoiUpsertComponent {
   latitude = signal(45.764);
   longitude = signal(4.8357);
   status = signal('DRAFT');
+  source = signal('OFFICIAL');
+  selectedUserId = signal<string | null>(null);
+  usersOptions = signal<Array<{ label: string; value: string }>>([]);
+  ownerDisplay = signal('Officielle');
   isEditMode = signal(false);
   poiId = signal<string | null>(null);
 
@@ -85,6 +92,19 @@ export class PoiUpsertComponent {
     }));
   });
 
+  sourceOptions = computed(() => {
+    const sources = this.#poisStore.sources() ?? [];
+    const values = sources.length > 0 ? sources : ['OFFICIAL', 'COMMUNITY'];
+    return values.map((source) => ({
+      label: source,
+      value: source,
+    }));
+  });
+
+  isCommunitySource = computed(
+    () => this.source().toUpperCase() === 'COMMUNITY'
+  );
+
   // Méthode helper pour traduire une catégorie (utilisée dans le template)
   getCategoryTranslationKey(category: string): string {
     return getPOICategoryTranslationKey(category);
@@ -95,7 +115,21 @@ export class PoiUpsertComponent {
     return getPOIStatusTranslationKey(status);
   }
 
+  getSelectedCategory(): string | null {
+    return this.types()[0] ?? null;
+  }
+
+  getSelectedCategoryIconPath(): string {
+    return getPOICategoryIconPath(this.getSelectedCategory());
+  }
+
+  getCategoryIconPath(category: string | null | undefined): string {
+    return getPOICategoryIconPath(category);
+  }
+
   constructor() {
+    void this.loadUsersOptions();
+
     effect(() => {
       const id = this.#route.snapshot.params['id'];
       if (id) {
@@ -128,6 +162,10 @@ export class PoiUpsertComponent {
         this.latitude.set(poi.latitude);
         this.longitude.set(poi.longitude);
         this.status.set(poi.status || 'DRAFT');
+        this.source.set(poi.source || (poi.userId ? 'COMMUNITY' : 'OFFICIAL'));
+        const normalizedUserId = this.normalizeUserId(poi.userId);
+        this.selectedUserId.set(normalizedUserId);
+        await this.loadOwnerDisplay(normalizedUserId, poi.source);
         this.updateMapCenter();
       }
     } catch (error) {
@@ -158,6 +196,10 @@ export class PoiUpsertComponent {
 
   updateMapCenter() {
     this.mapCenter = [this.longitude(), this.latitude()];
+  }
+
+  onTypeChange(value: string | null) {
+    this.types.set(value ? [value] : []);
   }
 
   addPhoto(photoUrl: string) {
@@ -197,6 +239,15 @@ export class PoiUpsertComponent {
       return;
     }
 
+    if (this.isCommunitySource() && !this.selectedUserId()) {
+      this.#messageService.add({
+        severity: 'warn',
+        summary: this.#translateService.instant('COMMON.WARNING'),
+        detail: 'Veuillez sélectionner un propriétaire pour une source communauté.',
+      });
+      return;
+    }
+
     const poiData: Partial<IDB_POI> = {
       name: this.name(),
       description: this.description(),
@@ -205,10 +256,18 @@ export class PoiUpsertComponent {
       photos: this.photos(),
       latitude: this.latitude(),
       longitude: this.longitude(),
-      status: this.status(),
+      source: this.source(),
+      userId:
+        this.source().toUpperCase() === 'COMMUNITY'
+          ? this.selectedUserId()
+          : null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+
+    if (this.isEditMode()) {
+      poiData.status = this.status();
+    }
 
     if (this.poiId()) poiData.id = this.poiId();
 
@@ -221,7 +280,12 @@ export class PoiUpsertComponent {
           detail: this.#translateService.instant('POI.SUCCESS.UPDATED'),
         });
       } else {
-        await this.#poisStore.create(poiData);
+        const createdPOI = await this.#poisStore.create(poiData);
+        if (createdPOI?.id) {
+          await this.#poisStore.update(
+            this.toPublishedPayload(createdPOI, 'PUBLISHED')
+          );
+        }
         this.#messageService.add({
           severity: 'success',
           summary: this.#translateService.instant('COMMON.SUCCESS'),
@@ -242,5 +306,121 @@ export class PoiUpsertComponent {
 
   cancel() {
     this.#router.navigate(['/backoffice/pois']);
+  }
+
+  async onSourceChange(value: string | null) {
+    const normalized = (value || 'OFFICIAL').toUpperCase();
+    this.source.set(normalized);
+
+    if (normalized === 'OFFICIAL') {
+      this.selectedUserId.set(null);
+      this.ownerDisplay.set('Officielle');
+      return;
+    }
+
+    const selected = this.normalizeUserId(this.selectedUserId());
+    if (!selected) {
+      this.ownerDisplay.set('Communauté');
+      return;
+    }
+
+    await this.onOwnerUserChange(selected);
+  }
+
+  async onOwnerUserChange(userId: string | null) {
+    const normalizedUserId = this.normalizeUserId(userId);
+    this.selectedUserId.set(normalizedUserId);
+
+    if (!normalizedUserId) {
+      this.ownerDisplay.set('Communauté');
+      return;
+    }
+
+    try {
+      const owner = await lastValueFrom(
+        this.#usersService.getUserById(normalizedUserId)
+      );
+      const lastname = (owner.lastname || '').trim();
+      const firstname = (owner.firstname || '').trim();
+      const fullName = `${lastname.toUpperCase()} ${firstname}`.trim();
+
+      this.ownerDisplay.set(
+        fullName.length > 0
+          ? `(#${owner.id}) ${fullName}`
+          : `(#${owner.id})`
+      );
+    } catch {
+      this.ownerDisplay.set(`(#${normalizedUserId}) Utilisateur introuvable`);
+    }
+  }
+
+  private async loadUsersOptions() {
+    try {
+      const response = await lastValueFrom(
+        this.#usersService.getUsers({ page: 1, limit: 200 })
+      );
+
+      this.usersOptions.set(
+        response.usersInstances.map((user) => {
+          const lastname = (user.lastname || '').trim();
+          const firstname = (user.firstname || '').trim();
+          const fullName = `${lastname.toUpperCase()} ${firstname}`.trim();
+
+          return {
+            value: String(user.id),
+            label: fullName.length > 0 ? `(#${user.id}) ${fullName}` : `(#${user.id})`,
+          };
+        })
+      );
+    } catch {
+      this.usersOptions.set([]);
+    }
+  }
+
+  private async loadOwnerDisplay(
+    userId: string | null | undefined,
+    source?: string
+  ) {
+    const normalizedUserId = this.normalizeUserId(userId);
+
+    if (!normalizedUserId) {
+      this.ownerDisplay.set(
+        (source || '').toUpperCase() === 'COMMUNITY'
+          ? 'Communauté'
+          : 'Officielle'
+      );
+      return;
+    }
+
+    await this.onOwnerUserChange(normalizedUserId);
+  }
+
+  private normalizeUserId(
+    userId: string | number | null | undefined
+  ): string | null {
+    if (userId === null || userId === undefined) {
+      return null;
+    }
+
+    const normalized = String(userId).trim();
+    return normalized.length > 0 ? normalized : null;
+  }
+
+  private toPublishedPayload(poi: POI, status: string): Partial<IDB_POI> {
+    return {
+      id: poi.id,
+      name: poi.name,
+      description: poi.description,
+      categories: poi.types,
+      photos: poi.photos,
+      latitude: poi.latitude,
+      longitude: poi.longitude,
+      comment: poi.comment,
+      source: poi.source,
+      userId: poi.userId ?? undefined,
+      createdAt: poi.createdAt.toISOString(),
+      updatedAt: poi.updatedAt.toISOString(),
+      status,
+    };
   }
 }

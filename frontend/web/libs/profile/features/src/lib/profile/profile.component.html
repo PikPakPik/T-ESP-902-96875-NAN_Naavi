@@ -1,5 +1,5 @@
 <!-- Container principal -->
-<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+<div class="min-h-screen  p-6">
   <!-- En-tête -->
   <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
     <div class="flex items-center gap-4">
@@ -55,7 +55,7 @@
                 pInputText
                 id="firstname"
                 type="text"
-                [field]="profileInfoForm.firstname"
+                [formField]="profileInfoForm.firstname"
                 [placeholder]="'COMMON.FIRSTNAME' | translate"
                 class="w-full"
                 [class.ng-invalid]="profileInfoForm.firstname().invalid() && (profileInfoForm.firstname().touched() || submittedInfo())"
@@ -84,7 +84,7 @@
                 pInputText
                 id="lastname"
                 type="text"
-                [field]="profileInfoForm.lastname"
+                [formField]="profileInfoForm.lastname"
                 [placeholder]="'COMMON.LASTNAME' | translate"
                 class="w-full"
                 [class.ng-invalid]="profileInfoForm.lastname().invalid() && (profileInfoForm.lastname().touched() || submittedInfo())"
@@ -110,7 +110,7 @@
                 pInputText
                 id="email"
                 type="email"
-                [field]="profileInfoForm.email"
+                [formField]="profileInfoForm.email"
                 placeholder="votre@email.com"
                 class="w-full"
                 [class.ng-invalid]="profileInfoForm.email().invalid() && (profileInfoForm.email().touched() || submittedInfo())"
@@ -193,7 +193,7 @@
                 pInputText
                 id="currentPassword"
                 type="password"
-                [field]="passwordChangeForm.currentPassword"
+                [formField]="passwordChangeForm.currentPassword"
                 [placeholder]="'COMMON.CURRENT_PASSWORD' | translate"
                 class="w-full"
                 [class.ng-invalid]="passwordChangeForm.currentPassword().invalid() && (passwordChangeForm.currentPassword().touched() || submittedPassword())"
@@ -219,7 +219,7 @@
                 pInputText
                 id="newPassword"
                 type="password"
-                [field]="passwordChangeForm.newPassword"
+                [formField]="passwordChangeForm.newPassword"
                 [placeholder]="'COMMON.NEW_PASSWORD' | translate"
                 class="w-full"
                 [class.ng-invalid]="passwordChangeForm.newPassword().invalid() && (passwordChangeForm.newPassword().touched() || submittedPassword())"
@@ -249,7 +249,7 @@
                 pInputText
                 id="confirmPassword"
                 type="password"
-                [field]="passwordChangeForm.confirmPassword"
+                [formField]="passwordChangeForm.confirmPassword"
                 [placeholder]="'COMMON.CONFIRM_PASSWORD' | translate"
                 class="w-full"
                 [class.ng-invalid]="passwordChangeForm.confirmPassword().invalid() && (passwordChangeForm.confirmPassword().touched() || submittedPassword())"

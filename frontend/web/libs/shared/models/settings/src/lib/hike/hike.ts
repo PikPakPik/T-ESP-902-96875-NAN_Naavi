@@ -1,4 +1,4 @@
-import { IDB_Hike, Coordinate } from './hike.interface';
+import { IDB_Hike, Coordinate, HikeImage } from './hike.interface';
 import { Geometry, Point, LineString, Polygon, MultiPoint } from 'wkx-ts';
 import { Buffer } from 'buffer/';
 
@@ -19,7 +19,10 @@ export class Hike {
   updatedAt: Date;
   status: string;
   source?: string; // OFFICIAL, COMMUNITY
+  userId?: string;
+  visibility?: string; // PUBLIC, PRIVATE, UNLISTED
   seasons?: string[]; // SPRING, SUMMER, FALL, WINTER
+  images: HikeImage[];
 
   constructor(hike: IDB_Hike) {
     this.id = hike.id;
@@ -38,6 +41,9 @@ export class Hike {
     this.updatedAt = new Date(hike.updatedAt);
     this.status = hike.status;
     this.source = hike.source;
+    this.userId = hike.userId;
+    this.visibility = hike.visibility || 'PUBLIC';
+    this.images = Array.isArray(hike.images) ? hike.images : [];
     // Gérer les saisons : s'assurer que c'est toujours un tableau
     if (Array.isArray(hike.seasons)) {
       this.seasons = hike.seasons;

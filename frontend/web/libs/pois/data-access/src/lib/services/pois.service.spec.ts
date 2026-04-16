@@ -24,6 +24,7 @@ describe('POIsService', () => {
     description: 'A test POI',
     types: ['RESTAURANT'],
     photos: [],
+    images: [],
     latitude: 48.8566,
     longitude: 2.3522,
     comment: 'Test comment',
@@ -73,7 +74,11 @@ describe('POIsService', () => {
         done();
       });
 
-      const req = httpMock.expectOne(`${apiUrl}/hike/pois`);
+      const req = httpMock.expectOne(
+        (request) =>
+          request.url === `${apiUrl}/hike/mapElements` &&
+          request.params.get('type') === 'POINT_OF_INTEREST'
+      );
       expect(req.request.method).toBe('GET');
       req.flush({ items: [mockIDBPOI] });
     });
@@ -92,7 +97,11 @@ describe('POIsService', () => {
         },
       });
 
-      const req = httpMock.expectOne(`${apiUrl}/hike/pois`);
+      const req = httpMock.expectOne(
+        (request) =>
+          request.url === `${apiUrl}/hike/mapElements` &&
+          request.params.get('type') === 'POINT_OF_INTEREST'
+      );
       req.flush('Error', { status: 500, statusText: 'Server Error' });
     });
   });
@@ -104,7 +113,11 @@ describe('POIsService', () => {
         done();
       });
 
-      const req = httpMock.expectOne(`${apiUrl}/hike/pois/1`);
+      const req = httpMock.expectOne(
+        (request) =>
+          request.url === `${apiUrl}/hike/mapElement/1` &&
+          request.params.get('type') === 'POINT_OF_INTEREST'
+      );
       expect(req.request.method).toBe('GET');
       req.flush(mockIDBPOI);
     });
@@ -123,7 +136,11 @@ describe('POIsService', () => {
         },
       });
 
-      const req = httpMock.expectOne(`${apiUrl}/hike/pois/1`);
+      const req = httpMock.expectOne(
+        (request) =>
+          request.url === `${apiUrl}/hike/mapElement/1` &&
+          request.params.get('type') === 'POINT_OF_INTEREST'
+      );
       req.flush('Error', { status: 500, statusText: 'Server Error' });
     });
   });
@@ -135,8 +152,9 @@ describe('POIsService', () => {
         done();
       });
 
-      const req = httpMock.expectOne(`${apiUrl}/hike/pois`);
+      const req = httpMock.expectOne(`${apiUrl}/hike/mapElement`);
       expect(req.request.method).toBe('POST');
+      expect(req.request.body.type).toBe('POINT_OF_INTEREST');
       req.flush(mockIDBPOI);
     });
 
@@ -154,8 +172,30 @@ describe('POIsService', () => {
         },
       });
 
-      const req = httpMock.expectOne(`${apiUrl}/hike/pois`);
+      const req = httpMock.expectOne(`${apiUrl}/hike/mapElement`);
       req.flush('Error', { status: 500, statusText: 'Server Error' });
+    });
+
+    it('should serialize date objects and categories fallback when creating POI', (done) => {
+      const poiPayload = {
+        id: '2',
+        name: 'Created POI',
+        description: 'Description',
+        categories: ['RESTAURANT'],
+        latitude: 48.5,
+        longitude: 2.1,
+        createdAt: new Date('2026-01-01T10:00:00.000Z'),
+        updatedAt: new Date('2026-01-02T10:00:00.000Z'),
+      };
+
+      service.addPOI(poiPayload).subscribe(() => done());
+
+      const req = httpMock.expectOne(`${apiUrl}/hike/mapElement`);
+      expect(req.request.body.categories).toEqual(['RESTAURANT']);
+      expect(req.request.body.type).toBe('POINT_OF_INTEREST');
+      expect(req.request.body.createdAt).toBe('2026-01-01T10:00:00.000Z');
+      expect(req.request.body.updatedAt).toBe('2026-01-02T10:00:00.000Z');
+      req.flush({ ...mockIDBPOI, id: '2', categories: ['RESTAURANT'] });
     });
   });
 
@@ -167,6 +207,7 @@ describe('POIsService', () => {
         description: 'A test POI',
         types: ['RESTAURANT'],
         photos: [],
+        images: [],
         latitude: 48.8566,
         longitude: 2.3522,
         comment: 'Test comment',
@@ -182,8 +223,11 @@ describe('POIsService', () => {
         done();
       });
 
-      const req = httpMock.expectOne(`${apiUrl}/hike/pois/1`);
+      const req = httpMock.expectOne(
+        `${apiUrl}/hike/administration/mapElement/1`
+      );
       expect(req.request.method).toBe('PUT');
+      expect(req.request.body.type).toBe('POINT_OF_INTEREST');
       req.flush(updatedIDBPOI);
     });
 
@@ -201,8 +245,33 @@ describe('POIsService', () => {
         },
       });
 
-      const req = httpMock.expectOne(`${apiUrl}/hike/pois/1`);
+      const req = httpMock.expectOne(
+        `${apiUrl}/hike/administration/mapElement/1`
+      );
       req.flush('Error', { status: 500, statusText: 'Server Error' });
+    });
+
+    it('should keep undefined dates when updating POI partial payload', (done) => {
+      service
+        .updatePOI({
+          id: '1',
+          name: 'Partial POI',
+          description: 'Partial description',
+          categories: ['CAFE'],
+          latitude: 10,
+          longitude: 20,
+          status: 'DRAFT',
+        })
+        .subscribe(() => done());
+
+      const req = httpMock.expectOne(
+        `${apiUrl}/hike/administration/mapElement/1`
+      );
+      expect(req.request.body.createdAt).toBeUndefined();
+      expect(req.request.body.updatedAt).toBeUndefined();
+      expect(req.request.body.categories).toEqual(['CAFE']);
+      expect(req.request.body.type).toBe('POINT_OF_INTEREST');
+      req.flush({ ...mockIDBPOI, categories: ['CAFE'] });
     });
   });
 
@@ -212,7 +281,11 @@ describe('POIsService', () => {
         done();
       });
 
-      const req = httpMock.expectOne(`${apiUrl}/hike/pois/1`);
+      const req = httpMock.expectOne(
+        (request) =>
+          request.url === `${apiUrl}/hike/administration/mapElement/1` &&
+          request.params.get('type') === 'POINT_OF_INTEREST'
+      );
       expect(req.request.method).toBe('DELETE');
       req.flush(null);
     });
@@ -231,7 +304,11 @@ describe('POIsService', () => {
         },
       });
 
-      const req = httpMock.expectOne(`${apiUrl}/hike/pois/1`);
+      const req = httpMock.expectOne(
+        (request) =>
+          request.url === `${apiUrl}/hike/administration/mapElement/1` &&
+          request.params.get('type') === 'POINT_OF_INTEREST'
+      );
       req.flush('Error', { status: 500, statusText: 'Server Error' });
     });
   });
@@ -257,7 +334,7 @@ describe('POIsService', () => {
 
       const req = httpMock.expectOne((request) => {
         return (
-          request.url === `${apiUrl}/hike/pois` &&
+          request.url === `${apiUrl}/hike/administration/pois` &&
           request.params.get('page') === '1' &&
           request.params.get('limit') === '20'
         );
@@ -273,11 +350,7 @@ describe('POIsService', () => {
         query: 'restaurant',
         orderField: 'name',
         order: 'asc' as const,
-        latitude: 48.8566,
-        longitude: 2.3522,
-        radius: 50,
-        distance: 10,
-        difficulty: 'EASY',
+        status: 'DRAFT',
       };
 
       const mockResponse = {
@@ -299,17 +372,13 @@ describe('POIsService', () => {
 
       const req = httpMock.expectOne((request) => {
         return (
-          request.url === `${apiUrl}/hike/pois` &&
+          request.url === `${apiUrl}/hike/administration/pois` &&
           request.params.get('page') === '2' &&
           request.params.get('limit') === '10' &&
           request.params.get('query') === 'restaurant' &&
           request.params.get('orderField') === 'name' &&
           request.params.get('order') === 'asc' &&
-          request.params.get('latitude') === '48.8566' &&
-          request.params.get('longitude') === '2.3522' &&
-          request.params.get('radius') === '50' &&
-          request.params.get('distance') === '10' &&
-          request.params.get('difficulty') === 'EASY'
+          request.params.get('status') === 'DRAFT'
         );
       });
       expect(req.request.method).toBe('GET');
@@ -337,7 +406,9 @@ describe('POIsService', () => {
         done();
       });
 
-      const req = httpMock.expectOne(`${apiUrl}/hike/pois?page=1&limit=20`);
+      const req = httpMock.expectOne(
+        `${apiUrl}/hike/administration/pois?page=1&limit=20`
+      );
       req.flush(mockResponse);
     });
 
@@ -357,7 +428,7 @@ describe('POIsService', () => {
 
       const req = httpMock.expectOne((request) => {
         return (
-          request.url === `${apiUrl}/hike/pois` &&
+          request.url === `${apiUrl}/hike/administration/pois` &&
           request.params.get('page') === '1' &&
           request.params.get('limit') === '20'
         );
@@ -409,6 +480,29 @@ describe('POIsService', () => {
       req.flush(mockConfig);
     });
 
+    it('should fallback to map_element_categories when point_of_interest_categories is missing', (done) => {
+      const mockConfig = {
+        difficulties: ['EASY'],
+        status: ['ACTIVE', 'INACTIVE'],
+        seasons: ['SPRING'],
+        sources: ['OFFICIAL', 'COMMUNITY'],
+        map_element_categories: ['DANGER', 'WATER'],
+      };
+
+      service.getConfigurations().subscribe((config) => {
+        expect(config.point_of_interest_categories).toEqual([
+          'DANGER',
+          'WATER',
+        ]);
+        expect(config.status).toEqual(['ACTIVE', 'INACTIVE']);
+        done();
+      });
+
+      const req = httpMock.expectOne(`${apiUrl}hike/configurations`);
+      expect(req.request.method).toBe('GET');
+      req.flush(mockConfig);
+    });
+
     it('should handle errors when fetching configurations', (done) => {
       service.getConfigurations().subscribe({
         next: () => fail('should have failed'),
@@ -425,6 +519,29 @@ describe('POIsService', () => {
 
       const req = httpMock.expectOne(`${apiUrl}hike/configurations`);
       req.flush('Error', { status: 500, statusText: 'Server Error' });
+    });
+  });
+
+  describe('getPendingApprovalCount', () => {
+    it('should return the pending approval count', (done) => {
+      service.getPendingApprovalCount().subscribe((count) => {
+        expect(count).toBe(7);
+        done();
+      });
+
+      const req = httpMock.expectOne(
+        `${apiUrl}/hike/administration/pois?page=1&limit=1&status=DRAFT`
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush({
+        items: [mockIDBPOI],
+        totalItems: 7,
+        currentPage: 1,
+        totalPages: 7,
+        nextPage: 2,
+        previousPage: null,
+        limit: 1,
+      });
     });
   });
 });

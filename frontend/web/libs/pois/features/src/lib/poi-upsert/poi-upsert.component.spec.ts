@@ -9,6 +9,7 @@ import { of } from 'rxjs';
 import { POI } from '@web/shared/models/settings';
 import { NgForm, FormsModule } from '@angular/forms';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { UsersService } from '@web/users/data-access';
 
 describe('PoiUpsertComponent', () => {
   let component: PoiUpsertComponent;
@@ -17,6 +18,10 @@ describe('PoiUpsertComponent', () => {
   let router: jest.Mocked<Router>;
   let messageServiceMock: { add: jest.Mock };
   let translateServiceMock: { instant: jest.Mock };
+  let usersServiceMock: {
+    getUsers: jest.Mock;
+    getUserById: jest.Mock;
+  };
 
   const mockPOI = new POI({
     id: '1',
@@ -40,10 +45,25 @@ describe('PoiUpsertComponent', () => {
     translateServiceMock = {
       instant: jest.fn((key: string) => key),
     };
+    usersServiceMock = {
+      getUsers: jest.fn(() =>
+        of({
+          usersInstances: [
+            { id: '16', firstname: 'Jean', lastname: 'Dupont' },
+          ],
+        })
+      ),
+      getUserById: jest.fn(() =>
+        of({ id: '16', firstname: 'Jean', lastname: 'Dupont' })
+      ),
+    };
 
     const poisStoreMock = {
       entities: signal([]),
-      create: jest.fn().mockResolvedValue(undefined),
+      point_of_interest_categories: signal(['RESTAURANT']),
+      status: signal(['DRAFT', 'PUBLISHED']),
+      sources: signal(['OFFICIAL', 'COMMUNITY']),
+      create: jest.fn().mockResolvedValue(mockPOI),
       update: jest.fn().mockResolvedValue(undefined),
       getPOIById: jest.fn().mockResolvedValue(mockPOI),
     };
@@ -66,6 +86,7 @@ describe('PoiUpsertComponent', () => {
         { provide: Router, useValue: routerMock },
         { provide: ActivatedRoute, useValue: activatedRouteMock },
         { provide: TranslateService, useValue: translateServiceMock },
+        { provide: UsersService, useValue: usersServiceMock },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     })
@@ -90,6 +111,22 @@ describe('PoiUpsertComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should expose source options from store', () => {
+    expect(component.sourceOptions()).toEqual([
+      { label: 'OFFICIAL', value: 'OFFICIAL' },
+      { label: 'COMMUNITY', value: 'COMMUNITY' },
+    ]);
+  });
+
+  it('should expose the selected category and its icon path', () => {
+    component.types.set(['WATER']);
+
+    expect(component.getSelectedCategory()).toBe('WATER');
+    expect(component.getSelectedCategoryIconPath()).toBe(
+      '/assets/icons/poi/water.png'
+    );
   });
 
   it('should update location when map is clicked', () => {
@@ -132,17 +169,103 @@ describe('PoiUpsertComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/backoffice/pois']);
   });
 
+  it('should keep only one selected type', () => {
+    component.onTypeChange('RESTAURANT');
+    expect(component.types()).toEqual(['RESTAURANT']);
+
+    component.onTypeChange('WATER');
+    expect(component.types()).toEqual(['WATER']);
+
+    component.onTypeChange(null);
+    expect(component.types()).toEqual([]);
+  });
+
   it('should create POI when savePOI is called in create mode', async () => {
     component.name.set('Test POI');
     component.description.set('Test description');
     component.latitude.set(48.8566);
     component.longitude.set(2.3522);
     component.types.set(['RESTAURANT']);
+    component.source.set('OFFICIAL');
 
     await component.savePOI();
 
     expect(poisStore.create).toHaveBeenCalled();
+    expect(poisStore.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'OFFICIAL',
+        userId: null,
+      })
+    );
+    expect(poisStore.create).toHaveBeenCalledWith(
+      expect.not.objectContaining({ status: expect.anything() })
+    );
+    expect(poisStore.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: '1',
+        status: 'PUBLISHED',
+      })
+    );
     expect(router.navigate).toHaveBeenCalledWith(['/backoffice/pois']);
+  });
+
+  it('should require an owner when source is community', async () => {
+    component.name.set('Test POI');
+    component.description.set('Test description');
+    component.latitude.set(48.8566);
+    component.longitude.set(2.3522);
+    component.types.set(['RESTAURANT']);
+    component.source.set('COMMUNITY');
+    component.selectedUserId.set(null);
+
+    await component.savePOI();
+
+    expect(poisStore.create).not.toHaveBeenCalled();
+    expect(messageServiceMock.add).toHaveBeenCalledWith(
+      expect.objectContaining({ severity: 'warn' })
+    );
+  });
+
+  it('should create community POI with selected owner', async () => {
+    component.name.set('Test POI');
+    component.description.set('Test description');
+    component.latitude.set(48.8566);
+    component.longitude.set(2.3522);
+    component.types.set(['RESTAURANT']);
+    component.source.set('COMMUNITY');
+    component.selectedUserId.set('16');
+
+    await component.savePOI();
+
+    expect(poisStore.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'COMMUNITY',
+        userId: '16',
+      })
+    );
+    expect(poisStore.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: '1',
+        status: 'PUBLISHED',
+      })
+    );
+  });
+
+  it('should skip publish step when create does not return an id', async () => {
+    (poisStore.create as jest.Mock).mockResolvedValueOnce(undefined);
+    component.name.set('Test POI');
+    component.description.set('Test description');
+    component.latitude.set(48.8566);
+    component.longitude.set(2.3522);
+    component.types.set(['RESTAURANT']);
+    component.source.set('OFFICIAL');
+
+    await component.savePOI();
+
+    expect(poisStore.create).toHaveBeenCalled();
+    expect(poisStore.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'PUBLISHED' })
+    );
   });
 
   it('should update POI when savePOI is called in edit mode', async () => {
@@ -157,6 +280,9 @@ describe('PoiUpsertComponent', () => {
     await component.savePOI();
 
     expect(poisStore.update).toHaveBeenCalled();
+    expect(poisStore.update).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'DRAFT' })
+    );
     expect(router.navigate).toHaveBeenCalledWith(['/backoffice/pois']);
   });
 
@@ -273,6 +399,23 @@ describe('PoiUpsertComponent', () => {
       expect(router.navigate).not.toHaveBeenCalled();
 
       jest.spyOn(console, 'error').mockRestore();
+    });
+
+    it('should switch owner display when source changes to official', async () => {
+      component.selectedUserId.set('16');
+
+      await component.onSourceChange('OFFICIAL');
+
+      expect(component.source()).toBe('OFFICIAL');
+      expect(component.selectedUserId()).toBeNull();
+      expect(component.ownerDisplay()).toBe('Officielle');
+    });
+
+    it('should resolve owner display when owner user changes', async () => {
+      await component.onOwnerUserChange('16');
+
+      expect(component.selectedUserId()).toBe('16');
+      expect(component.ownerDisplay()).toBe('(#16) DUPONT Jean');
     });
   });
 

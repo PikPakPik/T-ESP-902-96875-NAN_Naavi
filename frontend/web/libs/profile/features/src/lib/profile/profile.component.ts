@@ -1,7 +1,7 @@
 import { SelectModule } from 'primeng/select';
 import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { form, Field, required, email, minLength } from '@angular/forms/signals';
+import { form, required, email, minLength, FormField } from '@angular/forms/signals';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -32,8 +32,8 @@ interface PasswordChangeData {
   standalone: true,
   imports: [
     CommonModule,
-    Field,
     FormsModule,
+    FormField,
     ButtonModule,
     InputTextModule,
     CardModule,

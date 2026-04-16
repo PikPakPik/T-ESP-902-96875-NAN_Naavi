@@ -2,6 +2,8 @@ import { lastValueFrom } from 'rxjs';
 import { inject } from '@angular/core';
 import { signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
 import { patchState } from '@ngrx/signals';
+import { MessageService } from 'primeng/api';
+import { TranslateService } from '@ngx-translate/core';
 import { User } from '@web/shared/models/settings';
 import { UsersService } from '../services/users.service';
 import { HikesService } from '@web/hikes/data-access';
@@ -52,7 +54,9 @@ export const UserDetailsStore = signalStore(
     (
       store,
       usersService = inject(UsersService),
-      hikesService = inject(HikesService)
+      hikesService = inject(HikesService),
+      messageService = inject(MessageService),
+      translateService = inject(TranslateService)
     ) => ({
       setPage(page: number): void {
         patchState(store, { currentPage: page });
@@ -95,6 +99,25 @@ export const UserDetailsStore = signalStore(
           );
         } catch (error: unknown) {
           patchState(store, setError(error as string));
+        }
+      },
+      async deleteProfilePicture(userId: string): Promise<void> {
+        try {
+          await lastValueFrom(usersService.deleteProfilePicture(userId));
+          const updatedUser = await lastValueFrom(usersService.getUserById(userId));
+          patchState(store, { user: updatedUser }, setFulfilled());
+          messageService.add({
+            severity: 'success',
+            summary: translateService.instant('COMMON.SUCCESS'),
+            detail: translateService.instant('USER.SUCCESS.PROFILE_PICTURE_DELETED'),
+          });
+        } catch (error: unknown) {
+          patchState(store, setError(error as string));
+          messageService.add({
+            severity: 'error',
+            summary: translateService.instant('COMMON.ERROR'),
+            detail: translateService.instant('USER.ERROR.DELETE_PROFILE_PICTURE_FAILED'),
+          });
         }
       },
     })

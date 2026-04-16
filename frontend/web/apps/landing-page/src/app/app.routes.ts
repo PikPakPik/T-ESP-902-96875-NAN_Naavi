@@ -27,4 +27,19 @@ export const appRoutes: Route[] = [
     loadComponent: () =>
       import('./delete-account/delete-account.component').then((m) => m.DeleteAccountComponent),
   },
+  {
+    path: 'reset-password',
+    loadComponent: () =>
+      import('./reset-password/reset-password.component').then((m) => m.ResetPasswordComponent),
+  },
+  {
+    path: 'authorization',
+    loadComponent: () =>
+      import('./authorization/authorization.component').then((m) => m.AuthorizationComponent),
+  },
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./not-found/not-found.component').then((m) => m.NotFoundComponent),
+  },
 ];

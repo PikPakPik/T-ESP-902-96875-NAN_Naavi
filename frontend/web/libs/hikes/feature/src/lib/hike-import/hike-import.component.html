@@ -1,0 +1,370 @@
+<div class="min-h-screen  p-3 sm:p-4 md:p-6">
+  <div class="mx-auto flex w-full max-w-7xl flex-col gap-4 sm:gap-6">
+    <div class="rounded-xl sm:rounded-2xl bg-white p-4 sm:p-6 shadow-sm">
+      <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-start sm:justify-between gap-3 sm:gap-4">
+        <div class="flex items-center gap-3 sm:gap-4">
+          <div
+            class="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg"
+          >
+            <i class="pi pi-file-import text-lg sm:text-xl text-white"></i>
+          </div>
+          <div class="min-w-0">
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+              {{ 'IMPORT.UPLOAD_TITLE' | translate }}
+            </h1>
+            <p class="text-xs sm:text-sm text-gray-500">
+              {{ 'IMPORT.MAPPING_DESCRIPTION' | translate }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 sm:mt-6 rounded-lg sm:rounded-xl p-3 sm:p-4">
+        <p-fileUpload
+          #fileUpload
+          mode="advanced"
+          styleClass="hike-import-uploader"
+          [chooseLabel]="'IMPORT.CHOOSE_FILE' | translate"
+          [chooseIcon]="'pi pi-upload'"
+          accept=".csv,.geojson,.json"
+          [maxFileSize]="104857600"
+          [auto]="false"
+          [showUploadButton]="false"
+          [showCancelButton]="false"
+          (onSelect)="onFileSelect($event)"
+          (onClear)="onFileClear()"
+        >
+          <ng-template
+            #header
+            let-files
+            let-chooseCallback="chooseCallback"
+          >
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div class="flex gap-2">
+                <p-button
+                  [label]="'IMPORT.CHOOSE_FILE' | translate"
+                  icon="pi pi-upload"
+                  severity="success"
+                  (onClick)="openFilePicker($event, chooseCallback)"
+                />
+              </div>
+            </div>
+          </ng-template>
+
+          <ng-template
+            #content
+            let-files
+            let-removeFileCallback="removeFileCallback"
+          >
+            @if (files?.length > 0) {
+              <div class="mt-3 flex flex-col gap-3">
+                @for (file of files; track file.name; let i = $index) {
+                  <div class="rounded-xl border border-gray-200 bg-white p-3">
+                    <div class="flex items-center gap-3">
+                      <div
+                        class="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-gray-50"
+                      >
+                        <i
+                          [ngClass]="[
+                            getFileTypeIconByName(file.name),
+                            getCardIconColorClassByName(file.name),
+                          ]"
+                        ></i>
+                      </div>
+
+                      <div class="min-w-0 flex-1">
+                        <p class="truncate text-sm font-semibold text-gray-900">
+                          {{ file.name }}
+                        </p>
+                        <p class="text-xs text-gray-500">
+                          {{ getFileTypeLabelByName(file.name) }} -
+                          {{ formatFileSize(file.size) }}
+                        </p>
+                      </div>
+
+                      <p-button
+                        icon="pi pi-times"
+                        severity="danger"
+                        [text]="true"
+                        [rounded]="true"
+                        size="small"
+                        (onClick)="removeFile($event, removeFileCallback, i)"
+                      />
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </ng-template>
+
+          <ng-template #empty>
+            <div
+              class="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-200 bg-white py-10 text-surface-500"
+            >
+              <i class="pi pi-cloud-upload mb-3 text-4xl text-primary"></i>
+              <p class="text-base font-medium">{{ 'IMPORT.DRAG_DROP' | translate }}</p>
+            </div>
+          </ng-template>
+        </p-fileUpload>
+      </div>
+    </div>
+
+    @if (showMappingBoard()) {
+      <p-card ngClass="shadow-sm rounded-xl sm:rounded-2xl overflow-hidden">
+        <ng-template #header>
+          <div class="flex flex-wrap items-center gap-2 sm:gap-3 border-b border-gray-100 px-4 py-4 sm:px-6 sm:py-5">
+            <i class="pi pi-sitemap text-lg sm:text-xl text-primary"></i>
+            <h3 class="m-0 text-lg sm:text-xl font-semibold text-gray-900">
+              {{ 'IMPORT.MAPPING_TITLE' | translate }}
+            </h3>
+            <p-tag
+              [value]="mappedCount().toString() + '/' + apiFields.length"
+              severity="info"
+              [rounded]="true"
+            />
+          </div>
+        </ng-template>
+
+        <div class="grid gap-4 sm:gap-6 lg:grid-cols-2">
+          <div class="rounded-lg sm:rounded-xl border border-green-100 bg-green-50/40 p-3 sm:p-4">
+            <div class="mb-4 flex items-center gap-2">
+              <i class="pi pi-file-excel text-green-600"></i>
+              <span class="font-semibold text-gray-800">
+                {{ 'IMPORT.CSV_COLUMNS' | translate }}
+              </span>
+              <p-tag
+                [value]="csvHeaders().length.toString()"
+                severity="success"
+                [rounded]="true"
+              />
+            </div>
+
+            <div
+              cdkDropList
+              [cdkDropListData]="csvHeaders()"
+              [cdkDropListConnectedTo]="apiDropLists()"
+              class="flex min-h-[220px] max-h-[34rem] flex-col gap-2 overflow-y-auto pr-1"
+              [cdkDropListSortingDisabled]="true"
+              [cdkDropListAutoScrollDisabled]="false"
+              [cdkDropListAutoScrollStep]="24"
+            >
+              @for (header of csvHeaders(); track header) {
+                <div
+                  class="csv-chip group"
+                  [class.used]="isColumnUsed(header)"
+                  cdkDrag
+                  [cdkDragData]="header"
+                  [cdkDragDisabled]="isColumnUsed(header)"
+                >
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-semibold text-gray-800">{{ header }}</p>
+                    @if (getPreviewForColumn(header); as preview) {
+                      <p class="truncate text-xs text-gray-500">{{ preview }}</p>
+                    }
+                  </div>
+
+                  @if (isColumnUsed(header)) {
+                    <i class="pi pi-link text-green-500"></i>
+                  } @else {
+                    <i class="pi pi-arrows-alt text-gray-400 transition-colors group-hover:text-primary"></i>
+                  }
+
+                  <div
+                    *cdkDragPreview
+                    class="flex items-center gap-2 rounded-xl border border-primary/20 bg-white px-3 py-2 text-sm shadow-2xl"
+                  >
+                    <i class="pi pi-file-excel text-green-500"></i>
+                    <span class="font-medium">{{ header }}</span>
+                  </div>
+
+                  <div
+                    *cdkDragPlaceholder
+                    class="h-11 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50"
+                  ></div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div
+            class="rounded-lg sm:rounded-xl border border-blue-100 bg-blue-50/40 p-3 sm:p-4 lg:sticky lg:top-4 lg:self-start"
+          >
+            <div class="mb-4 flex items-center gap-2">
+              <i class="pi pi-server text-blue-600"></i>
+              <span class="font-semibold text-gray-800">
+                {{ 'IMPORT.API_FIELDS' | translate }}
+              </span>
+            </div>
+
+            <div class="flex max-h-[34rem] flex-col gap-2 overflow-y-auto pr-1">
+              @for (field of apiFields; track field.key) {
+                <div class="space-y-2">
+                  <div
+                    cdkDropList
+                    [id]="'api-drop-' + field.key"
+                    [cdkDropListData]="field.key"
+                    (cdkDropListDropped)="onDrop($any($event), field.key)"
+                    class="api-slot"
+                    [class.connected]="mappings()[field.key]"
+                    [class.empty]="!mappings()[field.key]"
+                    [cdkDropListAutoScrollDisabled]="false"
+                    [cdkDropListAutoScrollStep]="24"
+                  >
+                    <div class="flex min-w-0 flex-1 items-center gap-3">
+                      <div class="connection-dot" [class.active]="mappings()[field.key]">
+                        @if (mappings()[field.key]) {
+                          <i class="pi pi-check text-xs text-white"></i>
+                        }
+                      </div>
+
+                      <div class="min-w-0 flex-1">
+                        <p class="truncate text-sm font-semibold text-gray-800">
+                          {{ field.label | translate }}
+                        </p>
+                        <p class="truncate text-xs font-mono text-gray-500">
+                          {{ field.key }}
+                        </p>
+                      </div>
+
+                      @if (mappings()[field.key]; as mapping) {
+                        <div class="flex items-center gap-2">
+                          <div class="connected-badge">
+                          <i class="pi pi-file-excel text-xs text-green-500"></i>
+                          <span class="max-w-[130px] truncate text-xs font-medium">
+                            {{ mapping.source }}
+                          </span>
+                          </div>
+                          <p-button
+                            icon="pi pi-times"
+                            severity="danger"
+                            [text]="true"
+                            [rounded]="true"
+                            size="small"
+                            styleClass="unlink-button"
+                            (click)="onDisconnect(field.key); $event.stopPropagation()"
+                          />
+                        </div>
+                      } @else {
+                        <i class="pi pi-plus-circle text-gray-400"></i>
+                      }
+                    </div>
+                  </div>
+
+                  @if ($any(field).units && mappings()[field.key]) {
+                    <div class="ml-6 sm:ml-8 flex flex-wrap items-center gap-2">
+                      <span class="text-xs text-gray-500">
+                        {{ 'IMPORT.UNIT' | translate }} :
+                      </span>
+                      <p-select
+                        [options]="getUnitOptions($any(field).units)"
+                        [ngModel]="mappings()[field.key]?.unit || $any(field).units[0]"
+                        (ngModelChange)="onUnitChange(field.key, $event)"
+                        size="small"
+                        ngClass="w-36"
+                      />
+                    </div>
+                  }
+
+                  @if (field.type === 'enum' && mappings()[field.key]) {
+                    <div class="ml-6 sm:ml-8">
+                      <p-panel
+                        [header]="'IMPORT.VALUE_MAPPING' | translate"
+                        [toggleable]="true"
+                        [collapsed]="true"
+                        ngClass="text-sm"
+                      >
+                        @for (enumVal of field.enumValues; track enumVal) {
+                          <div class="flex items-center gap-2 py-1.5">
+                            <p-tag
+                              [value]="enumVal"
+                              severity="info"
+                              ngClass="font-mono text-xs"
+                            />
+                            <i class="pi pi-arrow-left text-xs text-gray-400"></i>
+                            <input
+                              pInputText
+                              [placeholder]="'IMPORT.CSV_VALUE_PLACEHOLDER' | translate"
+                              [ngModel]="getValueMapping(field.key, enumVal)"
+                              (ngModelChange)="onValueMappingChange(field.key, enumVal, $event)"
+                              class="flex-1 text-sm"
+                            />
+                          </div>
+                        }
+                      </p-panel>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </p-card>
+
+      @if (csvPreview().length > 0 && getMappedPreviewColumns().length > 0) {
+        <p-card ngClass="shadow-sm rounded-xl sm:rounded-2xl overflow-hidden">
+          <ng-template #header>
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3 border-b border-gray-100 px-4 py-4 sm:px-6 sm:py-5">
+              <i class="pi pi-eye text-xl text-primary"></i>
+              <h3 class="m-0 text-lg sm:text-xl font-semibold text-gray-900">
+                {{ 'IMPORT.PREVIEW_TITLE' | translate }}
+              </h3>
+            </div>
+          </ng-template>
+
+          <p-table
+            [value]="csvPreview()"
+            [scrollable]="true"
+            scrollHeight="280px"
+            ngClass="p-datatable-sm"
+          >
+            <ng-template #header>
+              <tr>
+                @for (col of getMappedPreviewColumns(); track col.apiField) {
+                  <th>
+                    <div class="flex flex-col items-center gap-1">
+                      <span class="text-xs italic text-gray-500">{{ col.csvColumn }}</span>
+                      <i class="pi pi-arrow-down text-xs text-primary"></i>
+                      <span class="text-xs font-semibold text-gray-800">{{ col.apiField }}</span>
+                    </div>
+                  </th>
+                }
+              </tr>
+            </ng-template>
+            <ng-template #body let-rowIndex="rowIndex">
+              <tr>
+                @for (col of getMappedPreviewColumns(); track col.apiField) {
+                  <td class="text-sm text-gray-700">
+                    {{ getPreviewCellValue(rowIndex, col.csvColumnIndex) }}
+                  </td>
+                }
+              </tr>
+            </ng-template>
+          </p-table>
+        </p-card>
+      }
+
+    }
+
+    @if (selectedFile()) {
+      <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-center gap-2 sm:gap-3 pb-3">
+        <p-button
+          [label]="'IMPORT.SUBMIT' | translate"
+          icon="pi pi-upload"
+          [disabled]="!canSubmit()"
+          [loading]="loading()"
+          (click)="onSubmit()"
+          severity="success"
+          size="large"
+        />
+        <p-button
+          [label]="'IMPORT.RESET' | translate"
+          icon="pi pi-refresh"
+          (click)="onReset()"
+          severity="secondary"
+          size="large"
+          [outlined]="true"
+        />
+      </div>
+    }
+  </div>
+</div>

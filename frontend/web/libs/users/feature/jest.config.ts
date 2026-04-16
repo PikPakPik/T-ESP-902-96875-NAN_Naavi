@@ -3,6 +3,9 @@ export default {
   preset: '../../../jest.preset.js',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   coverageDirectory: '../../../coverage/libs/users/feature',
+  coverageThreshold: {
+    global: { branches: 50 },
+  },
   transform: {
     '^.+\\.(ts|mjs|js|html)$': [
       'jest-preset-angular',
@@ -13,6 +16,10 @@ export default {
     ],
   },
   transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
+  moduleNameMapper: {
+    '^mapbox-gl$': '<rootDir>/../../../__mocks__/mapbox-gl.ts',
+    '^ngx-mapbox-gl$': '<rootDir>/../../../__mocks__/ngx-mapbox-gl.ts',
+  },
   snapshotSerializers: [
     'jest-preset-angular/build/serializers/no-ng-attributes',
     'jest-preset-angular/build/serializers/ng-snapshot',

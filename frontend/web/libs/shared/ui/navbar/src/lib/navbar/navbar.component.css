@@ -38,3 +38,40 @@
   background: var(--p-surface-hover);
   color: var(--p-primary-color);
 }
+
+/* Mobile: bouton hamburger plus grand (zone tactile 44px min) */
+@media (max-width: 767px) {
+  .md\:hidden + * button,
+  button[class*='md:hidden'] {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 10px;
+  }
+}
+
+/* Mobile menu - zones tactiles larges (48px min) pour overlay PrimeNG */
+:host ::ng-deep .p-menu.mobile-menu .p-menu-list,
+:host ::ng-deep .p-menu.user-menu .p-menu-list {
+  min-width: 280px;
+  padding: 8px 0;
+}
+
+:host ::ng-deep .p-menu.mobile-menu .p-menuitem-link,
+:host ::ng-deep .p-menu.user-menu .p-menuitem-link {
+  padding: 14px 18px !important;
+  min-height: 48px;
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+:host ::ng-deep .p-menu.mobile-menu .p-menuitem-icon,
+:host ::ng-deep .p-menu.user-menu .p-menuitem-icon {
+  font-size: 1.1rem;
+}
+
+:host ::ng-deep .p-menu.mobile-menu .p-submenu-list .p-menuitem-link,
+:host ::ng-deep .p-menu.user-menu .p-submenu-list .p-menuitem-link {
+  padding-left: 2.5rem !important;
+}

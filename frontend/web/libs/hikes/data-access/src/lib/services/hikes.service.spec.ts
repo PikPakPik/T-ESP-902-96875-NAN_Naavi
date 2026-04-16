@@ -92,7 +92,7 @@ describe('HikesService', () => {
         done();
       });
 
-      const req = httpMock.expectOne(`${apiUrl}hike/hikes?page=1&limit=20`);
+      const req = httpMock.expectOne(`${apiUrl}hike/administration/hikes?page=1&limit=20`);
       expect(req.request.method).toBe('GET');
       req.flush(mockResponse);
     });
@@ -129,7 +129,7 @@ describe('HikesService', () => {
 
       const req = httpMock.expectOne((request) => {
         return (
-          request.url === `${apiUrl}hike/hikes` &&
+          request.url === `${apiUrl}hike/administration/hikes` &&
           request.params.get('page') === '2' &&
           request.params.get('limit') === '10' &&
           request.params.get('query') === 'mountain' &&
@@ -160,7 +160,7 @@ describe('HikesService', () => {
         },
       });
 
-      const req = httpMock.expectOne(`${apiUrl}hike/hikes?page=1&limit=20`);
+      const req = httpMock.expectOne(`${apiUrl}hike/administration/hikes?page=1&limit=20`);
       req.flush('Error', { status: 500, statusText: 'Server Error' });
     });
   });

@@ -12,7 +12,13 @@ module.exports = {
       },
     ],
   },
-  transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
+  transformIgnorePatterns: [
+    'node_modules/(?!.*\\.mjs$|.*ngx-mapbox-gl|.*mapbox-gl)',
+  ],
+  moduleNameMapper: {
+    '^mapbox-gl$': '<rootDir>/../../../../__mocks__/mapbox-gl.ts',
+    '^ngx-mapbox-gl$': '<rootDir>/../../../../__mocks__/ngx-mapbox-gl.ts',
+  },
   snapshotSerializers: [
     'jest-preset-angular/build/serializers/no-ng-attributes',
     'jest-preset-angular/build/serializers/ng-snapshot',

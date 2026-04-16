@@ -145,6 +145,17 @@ export const UsersStore = signalStore(
         patchState(store, setError(error as string));
       }
     },
+    async deleteProfilePicture(userId: string): Promise<void> {
+      try {
+        await lastValueFrom(usersService.deleteProfilePicture(userId));
+        const updatedUser = await lastValueFrom(usersService.getUserById(userId));
+        if (updatedUser) {
+          patchState(store, updateEntity({ id: userId, changes: updatedUser }));
+        }
+      } catch (error: unknown) {
+        patchState(store, setError(error as string));
+      }
+    },
   })),
   withHooks({
     onInit() {

@@ -3,6 +3,7 @@ import { TableModule } from 'primeng/table';
 import { User } from '@web/shared/models/settings';
 import { Component, inject, input, output, signal } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
+import { IMAGES_BASE_URL } from '@web/shared/http-client';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 
@@ -57,6 +58,7 @@ export class Users {
   #confirmationService = inject(ConfirmationService);
   #router = inject(Router);
   #translateService = inject(TranslateService);
+  #imagesBaseUrl = inject(IMAGES_BASE_URL, { optional: true });
   rows = input<User[]>([]);
   columns = input<ColumnDef[]>([]);
   statuses = input<SelectItem[]>([]);
@@ -184,6 +186,7 @@ export class Users {
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
         this.deleteSelectedUsers.emit(this.selectedUsers);
+        this.selectedUsers = [];
       },
     });
   }
@@ -199,6 +202,19 @@ export class Users {
         this.resetPassword.emit(user);
       },
     });
+  }
+
+  getProfilePictureUrl(user: User): string | null {
+    const path = user.profilePicture;
+    const base = this.#imagesBaseUrl?.trim().replace(/\/$/, '') ?? '';
+    console.log('path', path);
+    console.log('base', base);
+    if (!path || !base) return null;
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    const cleanPath = path.replace(/^\//, '');
+    console.log('base', base);
+    console.log('cleanPath', cleanPath);
+    return `${base}/${cleanPath}`;
   }
 
   getSeverity(status: string | null | undefined): Tag['severity'] {

@@ -12,6 +12,7 @@ import {
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
+import { DialogModule } from 'primeng/dialog';
 
 import { FormsModule } from '@angular/forms';
 import { IconFieldModule } from 'primeng/iconfield';
@@ -27,7 +28,12 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { PopoverModule, Popover } from 'primeng/popover';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { getPOICategoryTranslationKey } from '@web/pois/data-access';
+import {
+  getPOICategoryIconPath,
+  getPOICategoryTranslationKey,
+} from '@web/pois/data-access';
+import { UsersService } from '@web/users/data-access';
+import { lastValueFrom } from 'rxjs';
 import { PoiMapComponent } from './poi-map/poi-map.component';
 
 export type ColumnDef = {
@@ -53,9 +59,10 @@ export type ColumnDef = {
     ToastModule,
     TooltipModule,
     PopoverModule,
+    DialogModule,
     TranslateModule,
-    PoiMapComponent
-],
+    PoiMapComponent,
+  ],
   providers: [ConfirmationService, MessageService],
   templateUrl: './pois.component.html',
   styleUrls: ['./pois.component.scss'],
@@ -63,6 +70,7 @@ export type ColumnDef = {
 export class Pois {
   #confirmationService = inject(ConfirmationService);
   #translateService = inject(TranslateService);
+  #usersService = inject(UsersService);
   rows = input<POI[]>([]);
   columns = input<ColumnDef[]>([]);
   loading = input<boolean>(false);
@@ -71,16 +79,19 @@ export class Pois {
   totalPages = input<number>(0);
   currentPage = input<number>(1);
   rowsPerPage = input<number>(20);
+  pendingApprovalCount = input<number>(0);
+  selectedStatus = input<string | null>(null);
   selectedPOIs: POI[] = [];
 
   editPOI = output<POI>();
   deletePOI = output<POI>();
+  approvePOI = output<POI>();
+  rejectPOI = output<POI>();
   deleteSelectedPOIs = output<POI[]>();
   newPOI = output<void>();
-  locationSearch = output<void>();
-  setParisDefault = output<void>();
   pageChange = output<{ page: number; rows: number }>();
   searchChange = output<string>();
+  statusFilterChange = output<string | null>();
 
   tableFilters: { [s: string]: FilterMetadata | FilterMetadata[] } = {
     status: { value: 'DELETED', matchMode: 'notEquals' },
@@ -88,6 +99,8 @@ export class Pois {
 
   // Signal pour stocker le POI actuel pour le popover
   currentPOIForMap = signal<POI | null>(null);
+  selectedPOIForDetail = signal<POI | null>(null);
+  ownerDisplay = signal('');
   // Clé unique pour forcer la reconstruction du Map
   mapKey = signal<string>('');
 
@@ -162,10 +175,12 @@ export class Pois {
 
   getSeverity(status: string | null | undefined): Tag['severity'] {
     switch ((status || '').toLowerCase()) {
-      case 'active':
+      case 'published':
         return 'success';
-      case 'pending':
+      case 'draft':
         return 'warn';
+      case 'unpublished':
+        return 'secondary';
       case 'deleted':
         return 'danger';
       default:
@@ -181,8 +196,8 @@ export class Pois {
     return getPOICategoryTranslationKey(category);
   }
 
-  setParisLocation() {
-    this.setParisDefault.emit();
+  getCategoryIconPath(category: string | null | undefined): string {
+    return getPOICategoryIconPath(category);
   }
 
   displayPOIMap(event: MouseEvent, poi: POI) {
@@ -210,5 +225,81 @@ export class Pois {
       this.mapKey.set(`map-${poi.id}-${Date.now()}`);
       this.mapPopover.show(event);
     }
+  }
+
+  async openDetail(poi: POI) {
+    this.selectedPOIForDetail.set(poi);
+    await this.loadOwnerDisplay(poi.userId, poi.source);
+  }
+
+  closeDetail() {
+    this.selectedPOIForDetail.set(null);
+    this.ownerDisplay.set('');
+  }
+
+  applyStatusFilter(status: string | null) {
+    this.statusFilterChange.emit(status);
+  }
+
+  approveSelectedPOI() {
+    const poi = this.selectedPOIForDetail();
+    if (poi) {
+      this.approvePOI.emit(poi);
+    }
+  }
+
+  rejectSelectedPOI() {
+    const poi = this.selectedPOIForDetail();
+    if (poi) {
+      this.rejectPOI.emit(poi);
+    }
+  }
+
+  getSourceTranslationKey(source: string | null | undefined): string {
+    return `HIKE.SOURCE.${(source || 'OFFICIAL').toUpperCase()}`;
+  }
+
+  private async loadOwnerDisplay(
+    userId: string | null | undefined,
+    source?: string
+  ) {
+    const normalizedUserId = this.normalizeUserId(userId);
+
+    if (!normalizedUserId) {
+      this.ownerDisplay.set(
+        (source || '').toUpperCase() === 'COMMUNITY'
+          ? this.#translateService.instant('HIKE.SOURCE.COMMUNITY')
+          : this.#translateService.instant('HIKE.SOURCE.OFFICIAL')
+      );
+      return;
+    }
+
+    try {
+      const owner = await lastValueFrom(
+        this.#usersService.getUserById(normalizedUserId)
+      );
+      const lastname = (owner.lastname || '').trim();
+      const firstname = (owner.firstname || '').trim();
+      const fullName = `${lastname.toUpperCase()} ${firstname}`.trim();
+
+      this.ownerDisplay.set(
+        fullName.length > 0
+          ? `(#${owner.id}) ${fullName}`
+          : `(#${owner.id})`
+      );
+    } catch {
+      this.ownerDisplay.set(`(#${normalizedUserId}) Utilisateur introuvable`);
+    }
+  }
+
+  private normalizeUserId(
+    userId: string | number | null | undefined
+  ): string | null {
+    if (userId === null || userId === undefined) {
+      return null;
+    }
+
+    const normalized = String(userId).trim();
+    return normalized.length > 0 ? normalized : null;
   }
 }

@@ -3,6 +3,10 @@
 # Stage 1: Build
 FROM registry.gitlab.com/epitech-msc-2026/ci-factory/naavi-node24-pnpm-git-alpine:latest AS builder
 
+# Build arguments for environment variables
+ARG TURNSTILE_SITE_KEY
+ARG BUILD_CONFIG=production
+
 WORKDIR /app
 
 # Copier les fichiers de configuration pnpm
@@ -16,8 +20,16 @@ RUN pnpm install --frozen-lockfile
 # Copier le code source
 COPY . .
 
+# Injecter la configuration define dans project.json pour remplacer import.meta.env au build time
+# La valeur de define doit être une string JSON qui sera évaluée par esbuild
+RUN apk add --no-cache jq && \
+    jq --arg turnstile "${TURNSTILE_SITE_KEY:-}" --arg config "${BUILD_CONFIG}" \
+    '.targets.build.configurations[$config].define = {"import.meta.env": ("{\"VITE_TURNSTILE_SITE_KEY\":\"" + $turnstile + "\"}")}' \
+    apps/landing-page/project.json > apps/landing-page/project.json.tmp && \
+    mv apps/landing-page/project.json.tmp apps/landing-page/project.json
+
 # Builder l'application Angular statique (skip cache to avoid outputCache bug)
-RUN pnpm nx build landing-page --prod --skip-nx-cache
+RUN pnpm nx build landing-page --configuration=${BUILD_CONFIG} --skip-nx-cache
 
 # Stage 2: Production runtime avec nginx
 FROM nginx:alpine AS runtime

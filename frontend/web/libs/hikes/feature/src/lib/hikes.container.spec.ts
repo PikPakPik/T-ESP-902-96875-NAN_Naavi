@@ -7,6 +7,7 @@ import { Hike } from '@web/shared/models/settings';
 import { MapboxService, MAPBOX_TOKEN } from '@web/shared/util';
 import { TranslateModule } from '@ngx-translate/core';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { UsersService } from '@web/users/data-access';
 
 describe('HikesContainer', () => {
   let component: HikesContainer;
@@ -77,6 +78,10 @@ describe('HikesContainer', () => {
       }),
     } as unknown as jest.Mocked<MapboxService>;
 
+    const usersServiceMock = {
+      getUserById: jest.fn(),
+    } as unknown as jest.Mocked<UsersService>;
+
     await TestBed.configureTestingModule({
       imports: [HikesContainer, TranslateModule.forRoot()],
       providers: [
@@ -84,6 +89,7 @@ describe('HikesContainer', () => {
         { provide: Router, useValue: routerMock },
         { provide: MapboxService, useValue: mapboxServiceMock },
         { provide: MAPBOX_TOKEN, useValue: 'test-token' },
+        { provide: UsersService, useValue: usersServiceMock },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();

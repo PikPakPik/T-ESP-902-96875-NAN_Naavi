@@ -3,6 +3,7 @@ import { TableModule } from 'primeng/table';
 import { Hike } from '@web/shared/models/settings';
 import {
   Component,
+  effect,
   inject,
   input,
   output,
@@ -24,7 +25,12 @@ import { TooltipModule } from 'primeng/tooltip';
 import { PopoverModule, Popover } from 'primeng/popover';
 import { PanelModule } from 'primeng/panel';
 import { FormsModule } from '@angular/forms';
-import { getDifficultySeverity } from '@web/hikes/data-access';
+import {
+  getDifficultySeverity,
+  getStatusSeverity,
+  getVisibilitySeverity,
+} from '@web/hikes/data-access';
+import { UsersService } from '@web/users/data-access';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { HikeMapComponent } from './hike-map/hike-map.component';
 
@@ -65,6 +71,8 @@ export type ColumnDef = {
 export class Hikes {
   #confirmationService = inject(ConfirmationService);
   #translateService = inject(TranslateService);
+  #usersService = inject(UsersService, { optional: true });
+  #requestedOwnerIds = new Set<string>();
   rows = input<Hike[]>([]);
   columns = input<ColumnDef[]>([]);
   loading = input<boolean>(false);
@@ -85,6 +93,7 @@ export class Hikes {
   deleteSelectedHikes = output<Hike[]>();
   viewDetails = output<Hike>();
   newHike = output<void>();
+  importHikes = output<void>();
   locationSearch = output<void>();
   setParisDefault = output<void>();
   pageChange = output<{ page: number; rows: number }>();
@@ -96,11 +105,18 @@ export class Hikes {
   currentHikeForMap = signal<Hike | null>(null);
   // Clé unique pour forcer la reconstruction du Map
   mapKey = signal<string>('');
+  ownerLabels = signal<Record<string, string>>({});
 
   @ViewChild('mapPopover') mapPopover!: Popover;
 
   // Timer pour le debounce de la recherche
   #searchTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    effect(() => {
+      this.preloadOwnerLabels(this.rows());
+    });
+  }
 
   clear(table: Table) {
     table.clear();
@@ -233,6 +249,68 @@ export class Hikes {
   }
 
   getSeverity = getDifficultySeverity;
+  getStatusSeverity = getStatusSeverity;
+  getVisibilitySeverity = getVisibilitySeverity;
+
+  getVisibilityLabel(visibility: string | undefined): string {
+    switch ((visibility || 'PUBLIC').toUpperCase()) {
+      case 'PUBLIC':
+        return 'Public';
+      case 'PRIVATE':
+        return 'Privé';
+      case 'UNLISTED':
+        return 'Non listée';
+      default:
+        return visibility || '—';
+    }
+  }
+
+  getOwnerLabel(hike: Hike): string {
+    if (!hike.userId) {
+      return 'Officielle';
+    }
+
+    return this.ownerLabels()[hike.userId] ?? `Utilisateur #${hike.userId}`;
+  }
+
+  private preloadOwnerLabels(hikes: Hike[]): void {
+    const userIds = [...new Set(hikes.map((hike) => hike.userId).filter(Boolean))];
+
+    for (const userId of userIds) {
+      if (!userId || this.ownerLabels()[userId] || this.#requestedOwnerIds.has(userId)) {
+        continue;
+      }
+
+      this.#requestedOwnerIds.add(userId);
+      if (!this.#usersService) {
+        this.ownerLabels.update((labels) => ({
+          ...labels,
+          [userId]: `Utilisateur #${userId}`,
+        }));
+        continue;
+      }
+
+      this.#usersService.getUserById(userId).subscribe({
+        next: (user) => {
+          const fullName =
+            user.fullName?.trim() ||
+            `${user.firstname || ''} ${user.lastname || ''}`.trim() ||
+            `Utilisateur #${userId}`;
+
+          this.ownerLabels.update((labels) => ({
+            ...labels,
+            [userId]: fullName,
+          }));
+        },
+        error: () => {
+          this.ownerLabels.update((labels) => ({
+            ...labels,
+            [userId]: `Utilisateur #${userId}`,
+          }));
+        },
+      });
+    }
+  }
 
   /**
    * Calcule le dénivelé positif et négatif à partir des coordonnées

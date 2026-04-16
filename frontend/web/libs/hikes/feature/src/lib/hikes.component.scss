@@ -17,8 +17,8 @@
 
 .map-popover-container {
   padding: 0;
-  min-width: 400px;
-  max-width: 600px;
+  min-width: min(400px, 100vw - 2rem);
+  max-width: min(600px, calc(100vw - 2rem));
 
   .map-title {
     padding: 0.75rem 1rem;

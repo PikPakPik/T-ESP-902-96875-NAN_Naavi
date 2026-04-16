@@ -1,5 +1,12 @@
 import { HikeHistoryItem } from './hike-history.interface';
 
+export interface HikeImage {
+  id: number | string;
+  filename: string;
+  createdAt: string;
+  userId?: string | null;
+}
+
 export interface IDB_Hike {
   id: string;
   name: string;
@@ -16,7 +23,10 @@ export interface IDB_Hike {
   difficulty: string;
   status: string;
   source?: string; // OFFICIAL, COMMUNITY
+  userId?: string; // null/undefined = OFFICIAL
+  visibility?: string; // PUBLIC, PRIVATE, UNLISTED
   seasons?: string[]; // SPRING, SUMMER, FALL, WINTER
+  images?: HikeImage[];
   estimatedDuration?: number; // durée en secondes depuis le backend
   createdAt: string;
   updatedAt: string;
@@ -73,5 +83,6 @@ export interface HikeConfiguration {
   difficulties: string[];
   status: string[];
   sources: string[];
+  visibilities?: string[];
   seasons: string[];
 }

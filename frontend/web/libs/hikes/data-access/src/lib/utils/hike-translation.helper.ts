@@ -32,6 +32,15 @@ export function getSourceTranslationKey(source: string): string {
 }
 
 /**
+ * Retourne la clé de traduction pour une visibilité donnée
+ * @param visibility - La visibilité (ex: "PUBLIC", "PRIVATE", "UNLISTED")
+ * @returns La clé de traduction (ex: "HIKE.VISIBILITY.PUBLIC")
+ */
+export function getVisibilityTranslationKey(visibility: string): string {
+  return `HIKE.VISIBILITY.${visibility}`;
+}
+
+/**
  * Retourne la clé de traduction pour une saison donnée
  * @param season - La saison (ex: "SPRING", "SUMMER", "FALL", "WINTER")
  * @returns La clé de traduction (ex: "HIKE.SEASON.SPRING")
@@ -94,6 +103,26 @@ export function getSourceSeverity(
     case 'OFFICIAL':
       return 'success';
     case 'COMMUNITY':
+      return 'warn';
+    default:
+      return 'secondary';
+  }
+}
+
+/**
+ * Retourne le niveau de sévérité pour une visibilité donnée (pour les badges PrimeNG)
+ * @param visibility - La visibilité (ex: "PUBLIC", "PRIVATE", "UNLISTED")
+ * @returns Le niveau de sévérité correspondant
+ */
+export function getVisibilitySeverity(
+  visibility: string | null | undefined
+): Tag['severity'] {
+  switch ((visibility || '').toUpperCase()) {
+    case 'PUBLIC':
+      return 'success';
+    case 'PRIVATE':
+      return 'danger';
+    case 'UNLISTED':
       return 'warn';
     default:
       return 'secondary';

@@ -38,6 +38,13 @@
           <i [ngClass]="['pi', item.icon]"></i>
           }
           <span>{{ item.label }}</span>
+          @if (item.badge) {
+          <span
+            class="inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-semibold text-white"
+          >
+            {{ item.badge }}
+          </span>
+          }
         </a>
         } @else {
         <!-- Menu item with submenu -->
@@ -54,6 +61,13 @@
             <i [ngClass]="['pi', item.icon]"></i>
             }
             <span>{{ item.label }}</span>
+            @if (item.badge) {
+            <span
+              class="inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-semibold text-white"
+            >
+              {{ item.badge }}
+            </span>
+            }
             <i class="pi pi-angle-down text-xs"></i>
           </a>
           } @else {
@@ -65,6 +79,13 @@
             <i [ngClass]="['pi', item.icon]"></i>
             }
             <span>{{ item.label }}</span>
+            @if (item.badge) {
+            <span
+              class="inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-semibold text-white"
+            >
+              {{ item.badge }}
+            </span>
+            }
             <i class="pi pi-angle-down text-xs"></i>
           </button>
           }
@@ -94,10 +115,10 @@
 
       <!-- User menu -->
       <div class="flex items-center gap-3">
-        <!-- Mobile menu button -->
+        <!-- Mobile menu button - zone tactile 44px min -->
         <button
-          class="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          #mobileMenuButton
+          type="button"
+          class="md:hidden min-w-[44px] min-h-[44px] p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors flex items-center justify-center -mr-1"
           (click)="mobileMenu.toggle($event)"
         >
           <i class="pi pi-bars text-gray-700 text-xl"></i>
@@ -134,48 +155,27 @@
   </div>
 </nav>
 
-<!-- Mobile menu (PrimeNG Menu) -->
-<p-menu
+<!-- Mobile menu (TieredMenu) - dropdowns comme en desktop + command au lieu de routerLink -->
+<p-tieredMenu
   #mobileMenu
-  [model]="menuItems()"
+  [model]="mobileMenuModel()"
   [popup]="true"
-  class="md:hidden mt-2 w-64"
+  appendTo="body"
+  [baseZIndex]="9999"
+  [autoDisplay]="false"
+  class="mobile-menu"
 >
-  <ng-template pTemplate="item" let-item>
-    <a
-      [routerLink]="'./' + item.routerLink"
-      [queryParams]="item.queryParams"
-      [href]="item.url || null"
-      (click)="onItemClick(item)"
-      class="flex items-center gap-3 p-3 text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors cursor-pointer"
-    >
-      @if (item.icon) {
-      <i [ngClass]="['pi', item.icon]"></i>
-      }
-      <span class="font-medium">{{ item.label }}</span>
-    </a>
-  </ng-template>
-</p-menu>
+</p-tieredMenu>
 
 <!-- User menu dropdown -->
 @if (userName() && userMenuItems().length > 0) {
-<p-menu #userMenu [model]="userMenuItems()" [popup]="true" class="mt-2 w-56">
-  <ng-template pTemplate="item" let-item>
-    <a
-      [routerLink]="'./' + item.routerLink"
-      [href]="item.url || null"
-      (click)="onItemClick(item)"
-      class="flex items-center gap-3 p-3 text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors cursor-pointer"
-      [ngClass]="{
-        'text-red-600 hover:bg-red-50 hover:text-red-700':
-          item.label === 'Déconnexion' || item.label === 'Logout'
-      }"
-    >
-      @if (item.icon) {
-      <i [ngClass]="['pi', item.icon]"></i>
-      }
-      <span class="font-medium">{{ item.label }}</span>
-    </a>
-  </ng-template>
+<p-menu
+  #userMenu
+  [model]="userMenuModel()"
+  [popup]="true"
+  appendTo="body"
+  [baseZIndex]="9999"
+  class="user-menu"
+>
 </p-menu>
 }

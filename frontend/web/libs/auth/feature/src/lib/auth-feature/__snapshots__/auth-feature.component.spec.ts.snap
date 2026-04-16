@@ -492,8 +492,8 @@ exports[`AuthFeatureComponent visual state Given forgot password modal open When
                   </label>
                   <input
                     autofocus="true"
-                    class="w-full p-component p-inputtext"
-                    data-p=""
+                    class="w-full p-component p-inputtext p-invalid"
+                    data-p="invalid"
                     data-pc-name="inputtext"
                     data-pc-section="root"
                     id="reset-email"

@@ -9,9 +9,21 @@
 ::ng-deep {
   .p-inputtextarea,
   .p-inputnumber,
-  .p-multiselect,
   .p-select,
   .p-chips {
     width: 100%;
   }
+}
+
+.poi-map-marker-icon {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.poi-category-option-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
 }

@@ -10,6 +10,8 @@ export class User {
   email: string;
   status: Status;
   roles: Role[];
+  profilePicture: string | null;
+
   constructor(user: IDB_User) {
     this.id = user.id;
     this.firstname = user.firstname;
@@ -18,5 +20,6 @@ export class User {
     this.status = user.status as Status;
     this.roles = user.roles as Role[];
     this.fullName = user.fullName;
+    this.profilePicture = user.profilePicture ?? null;
   }
 }

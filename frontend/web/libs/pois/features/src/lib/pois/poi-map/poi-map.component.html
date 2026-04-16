@@ -5,17 +5,15 @@
   [zoom]="12"
   class="w-full h-full"
 >
-  <mgl-geojson-source
-    [id]="'source-' + poiId()"
-    [data]="coordinatesToGeoJSON()"
-  >
-  </mgl-geojson-source>
-
-  <!-- Point unique -->
-  <mgl-layer
-    [id]="'point-' + poiId()"
-    type="circle"
-    [source]="'source-' + poiId()"
-    [paint]="{ 'circle-radius': 8, 'circle-color': '#f97316' }"
-  />
+  <mgl-marker [lngLat]="[longitude(), latitude()]" anchor="bottom">
+    @if (useCategoryIcon()) {
+    <img
+      [src]="getMarkerIconPath()"
+      [alt]="category() || 'POI'"
+      class="poi-marker-icon"
+    />
+    } @else {
+    <div class="poi-marker-dot" aria-label="POI point"></div>
+    }
+  </mgl-marker>
 </mgl-map>

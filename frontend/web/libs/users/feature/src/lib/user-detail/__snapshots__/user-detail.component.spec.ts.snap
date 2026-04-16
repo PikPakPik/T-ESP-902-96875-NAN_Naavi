@@ -4,15 +4,23 @@ exports[`UserDetailComponent visual state Given loading user state When renderin
 <user-detail
   back={[Function OutputEmitterRef]}
   currentPage={[Function Function]}
+  deleteProfilePicture={[Function OutputEmitterRef]}
+  hasMapboxToken={[Function Function]}
   history={[Function Function]}
+  historyDialogVisible={[Function Function]}
   limit={[Function Function]}
   loadingHistory={[Function Function]}
   loadingUser={[Function Function]}
+  mapCenter={[Function Function]}
   nextPage={[Function Function]}
   pageChange={[Function OutputEmitterRef]}
   previousPage={[Function Function]}
+  profilePictureUrl={[Function Function]}
+  selectedHistory={[Function Function]}
   totalHistory={[Function Function]}
   totalPages={[Function Function]}
+  traceCoordinates={[Function Function]}
+  traceGeoJson={[Function Function]}
   user={[Function Function]}
 >
   <div>
@@ -25,15 +33,23 @@ exports[`UserDetailComponent visual state Given user and history When rendering 
 <user-detail
   back={[Function OutputEmitterRef]}
   currentPage={[Function Function]}
+  deleteProfilePicture={[Function OutputEmitterRef]}
+  hasMapboxToken={[Function Function]}
   history={[Function Function]}
+  historyDialogVisible={[Function Function]}
   limit={[Function Function]}
   loadingHistory={[Function Function]}
   loadingUser={[Function Function]}
+  mapCenter={[Function Function]}
   nextPage={[Function Function]}
   pageChange={[Function OutputEmitterRef]}
   previousPage={[Function Function]}
+  profilePictureUrl={[Function Function]}
+  selectedHistory={[Function Function]}
   totalHistory={[Function Function]}
   totalPages={[Function Function]}
+  traceCoordinates={[Function Function]}
+  traceGeoJson={[Function Function]}
   user={[Function Function]}
 >
   <div>

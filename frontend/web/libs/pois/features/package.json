@@ -9,6 +9,7 @@
     "@ngx-translate/core": "*",
     "@web/pois/data-access": "*",
     "@web/shared/models": "*",
+    "@web/users/data-access": "*",
     "ngx-mapbox-gl": "^13.0.0",
     "primeng": "^20.0.0"
   },

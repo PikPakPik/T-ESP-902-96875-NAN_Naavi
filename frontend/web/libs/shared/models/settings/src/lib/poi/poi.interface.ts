@@ -1,10 +1,20 @@
+export interface POIImage {
+  id?: string | number | null;
+  filename: string;
+  createdAt?: string;
+}
+
 export interface IDB_POI {
   id: string | null;
   name: string;
   description: string;
+  type?: string;
+  source?: string;
+  userId?: string | null;
   types?: string[];
   categories?: string[];
-  photos: string[];
+  photos?: string[];
+  images?: POIImage[];
   latitude: number;
   longitude: number;
   comment?: string;
@@ -24,11 +34,7 @@ export interface POIsQueryParams {
   limit?: number;
   orderField?: string;
   order?: 'asc' | 'desc';
-  latitude?: number;
-  longitude?: number;
-  radius?: number;
-  distance?: number;
-  difficulty?: string;
+  status?: string;
 }
 
 export interface PaginatedPOIsResponse {
@@ -44,4 +50,5 @@ export interface PaginatedPOIsResponse {
 export interface POIConfiguration {
   point_of_interest_categories: string[];
   status: string[];
+  sources: string[];
 }

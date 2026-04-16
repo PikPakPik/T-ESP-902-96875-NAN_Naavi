@@ -8,6 +8,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MessageService } from 'primeng/api';
 import { API_URL } from '@web/shared/http-client';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('UserDetailContainer', () => {
   let component: UserDetailContainer;
@@ -57,6 +58,7 @@ describe('UserDetailContainer', () => {
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: MessageService, useValue: { add: jest.fn() } },
+        { provide: TranslateService, useValue: { instant: jest.fn((key: string) => key) } },
         { provide: API_URL, useValue: 'http://test-api' },
       ],
     })

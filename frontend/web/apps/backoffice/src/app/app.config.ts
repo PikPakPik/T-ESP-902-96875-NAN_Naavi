@@ -1,4 +1,4 @@
-import { API_URL } from '@web/shared/http-client';
+import { API_URL, IMAGES_BASE_URL } from '@web/shared/http-client';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
 import {
   GlobalErrorHandler,
@@ -16,7 +16,7 @@ import { provideRouter, RouterModule } from '@angular/router';
 import { appRoutes } from './app.routes';
 
 import { providePrimeNG } from 'primeng/config';
-import Lara from '@primeng/themes/lara';
+import Lara from '@primeuix/themes/lara';
 import { environment } from '../environments/environment';
 import { NotificationModule } from '@web/shared/ui/notification';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -74,6 +74,13 @@ export const appConfig: ApplicationConfig = {
     },
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
     { provide: API_URL, useValue: environment.api_url },
+    {
+      provide: IMAGES_BASE_URL,
+      useValue:
+        import.meta.env['VITE_IMAGES_BASE_URL'] ??
+        environment.images_base_url ??
+        '',
+    },
     {
       provide: MAPBOX_TOKEN,
       useValue: import.meta.env['VITE_MAPBOX_TOKEN'] ?? '',

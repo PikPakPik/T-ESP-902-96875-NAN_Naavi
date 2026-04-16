@@ -1,5 +1,5 @@
 <!-- Container principal -->
-<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+<div class="min-h-screen  p-6">
   <form #form="ngForm" (ngSubmit)="savePOI(form)">
     <!-- En-tête -->
     <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
@@ -116,39 +116,110 @@
             <!-- Types -->
             <div>
               <label for="types" class="block font-semibold mb-2 text-gray-700">
-                {{ 'POI.TYPES' | translate }} *
+                {{ 'POI.TYPE' | translate }} *
               </label>
-              <p-multiselect
+              <p-select
                 id="types"
                 name="types"
-                [(ngModel)]="types"
+                [ngModel]="getSelectedCategory()"
+                (ngModelChange)="onTypeChange($event)"
                 [options]="categoryOptions()"
                 optionLabel="label"
                 optionValue="value"
-                [placeholder]="'POI.UPSERT.TYPES_PLACEHOLDER' | translate"
+                [placeholder]="'POI.UPSERT.TYPE_PLACEHOLDER' | translate"
                 [showClear]="true"
-                [displaySelectedLabel]="true"
-                [maxSelectedLabels]="3"
                 class="w-full"
               >
                 <ng-template let-categoryOption pTemplate="item">
-                  {{ categoryOption.label | translate }}
+                  <div class="flex items-center gap-2">
+                    <img
+                      [src]="getCategoryIconPath(categoryOption.value)"
+                      [alt]="categoryOption.label | translate"
+                      class="poi-category-option-icon"
+                    />
+                    <span>{{ categoryOption.label | translate }}</span>
+                  </div>
                 </ng-template>
-                <ng-template pTemplate="selectedItems">
-                  @for (categoryValue of types(); track categoryValue; let i =
-                  $index) { @if (i > 0) {
-                  <span>, </span>
-                  }
-                  <span>{{
-                    getCategoryTranslationKey(categoryValue) | translate
-                  }}</span>
+                <ng-template pTemplate="selectedItem">
+                  @if (getSelectedCategory(); as selectedCategory) {
+                  <div class="flex items-center gap-2">
+                    <img
+                      [src]="getSelectedCategoryIconPath()"
+                      [alt]="getCategoryTranslationKey(selectedCategory) | translate"
+                      class="poi-category-option-icon"
+                    />
+                    <span>{{
+                      getCategoryTranslationKey(selectedCategory) | translate
+                    }}</span>
+                  </div>
+                  } @else {
+                  <span>{{ 'POI.UPSERT.TYPE_PLACEHOLDER' | translate }}</span>
                   }
                 </ng-template>
-              </p-multiselect>
+              </p-select>
               <small class="text-gray-500 mt-1 block">
                 <i class="pi pi-info-circle text-xs"></i>
                 {{ 'POI.UPSERT.TYPES_INFO' | translate }}
               </small>
+            </div>
+
+            <div>
+              <label for="source" class="block font-semibold mb-2 text-gray-700">
+                {{ 'COMMON.SOURCE' | translate }}
+              </label>
+              <p-select
+                id="source"
+                name="source"
+                [ngModel]="source()"
+                (ngModelChange)="onSourceChange($event)"
+                [options]="sourceOptions()"
+                optionValue="value"
+                placeholder="Choisir la source"
+                class="w-full"
+              >
+                <ng-template let-sourceItem pTemplate="item">
+                  {{ sourceItem.label }}
+                </ng-template>
+                <ng-template let-sourceItem pTemplate="selectedItem">
+                  {{ sourceItem.label }}
+                </ng-template>
+              </p-select>
+            </div>
+
+            @if (isCommunitySource()) {
+            <div>
+              <label for="ownerUser" class="block font-semibold mb-2 text-gray-700">
+                Propriétaire (utilisateur) *
+              </label>
+              <p-select
+                id="ownerUser"
+                name="ownerUser"
+                [ngModel]="selectedUserId()"
+                (ngModelChange)="onOwnerUserChange($event)"
+                [options]="usersOptions()"
+                optionValue="value"
+                optionLabel="label"
+                placeholder="Choisir un utilisateur"
+                class="w-full"
+                [filter]="true"
+                filterBy="label"
+              />
+            </div>
+            }
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <p class="text-xs text-gray-500 mb-1">{{ 'COMMON.SOURCE' | translate }}</p>
+                <p class="text-sm font-semibold text-gray-800">
+                  {{ source() || 'OFFICIAL' }}
+                </p>
+              </div>
+              <div class="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <p class="text-xs text-gray-500 mb-1">Propriétaire</p>
+                <p class="text-sm font-semibold text-gray-800">
+                  {{ ownerDisplay() }}
+                </p>
+              </div>
             </div>
 
             <!-- Commentaire -->
@@ -232,20 +303,20 @@
           <div
             class="map-container rounded-xl overflow-hidden border-2 border-gray-200 mb-4"
             style="height: 350px"
-          >
-            <mgl-map
-              [style]="mapStyle"
-              [center]="mapCenter"
+            >
+              <mgl-map
+                [style]="mapStyle"
+                [center]="mapCenter"
               [zoom]="mapZoom"
               (mapClick)="onMapClick($event)"
               class="w-full h-full"
-            >
-              <mgl-marker [lngLat]="[longitude(), latitude()]">
-                <div
-                  class="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg border-2 border-white"
-                >
-                  <i class="pi pi-map-marker"></i>
-                </div>
+              >
+                <mgl-marker [lngLat]="[longitude(), latitude()]" anchor="bottom">
+                <img
+                  [src]="getSelectedCategoryIconPath()"
+                  [alt]="getSelectedCategory() || 'POI'"
+                  class="poi-map-marker-icon"
+                />
               </mgl-marker>
             </mgl-map>
           </div>
@@ -318,12 +389,12 @@
               class="flex items-center justify-between py-2 border-b border-gray-100"
             >
               <span class="text-sm font-medium text-gray-600">{{
-                'POI.TYPES' | translate
+                'POI.TYPE' | translate
               }}</span>
               <span class="text-sm font-semibold text-gray-900 text-right">
-                @if (types().length > 0) { @for (type of types(); track type) {
-                {{ 'POI.CATEGORY.' + type | translate }}@if (!$last) {, } } }
-                @else { - }
+                @if (getSelectedCategory(); as selectedCategory) {
+                {{ 'POI.CATEGORY.' + selectedCategory | translate }}
+                } @else { - }
               </span>
             </div>
             <div
@@ -365,33 +436,42 @@
           </h2>
 
           <div class="space-y-4">
-            <div>
-              <label for="status" class="block font-semibold mb-2 text-gray-700"
-                >{{ 'COMMON.STATUS' | translate }} *</label
-              >
-              <p-select
-                id="status"
-                name="status"
-                [(ngModel)]="status"
-                [options]="statusOptions()"
-                optionLabel="label"
-                optionValue="value"
-                [placeholder]="'POI.UPSERT.STATUS_PLACEHOLDER' | translate"
-                class="w-full"
-                required
-              >
-                <ng-template let-statusOption pTemplate="item">
-                  {{ statusOption.label | translate }}
-                </ng-template>
-                <ng-template let-statusOption pTemplate="selectedItem">
-                  {{ statusOption.label | translate }}
-                </ng-template>
-              </p-select>
-            </div>
-            <div class="bg-orange-50 rounded-lg p-4 text-sm text-orange-700">
-              <i class="pi pi-info-circle mr-2"></i>
-              {{ 'POI.UPSERT.STATUS_INFO' | translate }}
-            </div>
+            @if (isEditMode()) {
+              <div>
+                <label
+                  for="status"
+                  class="block font-semibold mb-2 text-gray-700"
+                  >{{ 'COMMON.STATUS' | translate }} *</label
+                >
+                <p-select
+                  id="status"
+                  name="status"
+                  [(ngModel)]="status"
+                  [options]="statusOptions()"
+                  optionLabel="label"
+                  optionValue="value"
+                  [placeholder]="'POI.UPSERT.STATUS_PLACEHOLDER' | translate"
+                  class="w-full"
+                  required
+                >
+                  <ng-template let-statusOption pTemplate="item">
+                    {{ statusOption.label | translate }}
+                  </ng-template>
+                  <ng-template let-statusOption pTemplate="selectedItem">
+                    {{ statusOption.label | translate }}
+                  </ng-template>
+                </p-select>
+              </div>
+              <div class="bg-orange-50 rounded-lg p-4 text-sm text-orange-700">
+                <i class="pi pi-info-circle mr-2"></i>
+                {{ 'POI.UPSERT.STATUS_INFO' | translate }}
+              </div>
+            } @else {
+              <div class="bg-blue-50 rounded-lg p-4 text-sm text-blue-700">
+                <i class="pi pi-info-circle mr-2"></i>
+                {{ 'POI.UPSERT.STATUS_INFO' | translate }}
+              </div>
+            }
           </div>
         </div>
       </div>

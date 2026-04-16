@@ -3,7 +3,7 @@ import { UserUpsertComponent } from './user-upsert.component';
 import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { UsersStore } from '@web/users/data-access';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { TranslateModule } from '@ngx-translate/core';
 import { User, Role, Status } from '@web/shared/models/settings';
 import { FormsModule } from '@angular/forms';
@@ -68,6 +68,7 @@ describe('UserUpsertComponent', () => {
         { provide: ActivatedRoute, useValue: routeMock },
         { provide: UsersStore, useValue: usersStoreMock },
         { provide: MessageService, useValue: messageServiceMock },
+        { provide: ConfirmationService, useValue: { confirm: jest.fn() } },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     })
@@ -75,6 +76,7 @@ describe('UserUpsertComponent', () => {
         set: {
           providers: [
             { provide: MessageService, useValue: messageServiceMock },
+            ConfirmationService,
           ],
         },
       })

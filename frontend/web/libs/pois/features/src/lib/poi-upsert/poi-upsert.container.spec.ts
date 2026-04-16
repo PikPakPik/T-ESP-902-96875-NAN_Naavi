@@ -7,6 +7,7 @@ import { MessageService } from 'primeng/api';
 import { TranslateService } from '@ngx-translate/core';
 import { signal } from '@angular/core';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { UsersService } from '@web/users/data-access';
 
 describe('PoiUpsertContainer', () => {
   let component: PoiUpsertContainer;
@@ -36,6 +37,13 @@ describe('PoiUpsertContainer', () => {
         { provide: POIsStore, useValue: poisStoreMock },
         { provide: MessageService, useValue: messageServiceMock },
         { provide: TranslateService, useValue: translateServiceMock },
+        {
+          provide: UsersService,
+          useValue: {
+            getUsers: jest.fn(),
+            getUserById: jest.fn(),
+          },
+        },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();

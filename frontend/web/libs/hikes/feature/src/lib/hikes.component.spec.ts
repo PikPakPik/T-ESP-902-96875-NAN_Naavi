@@ -3,14 +3,16 @@ import { Hikes } from './hikes.component';
 import { ConfirmationService } from 'primeng/api';
 import { MapboxService } from '@web/shared/util';
 import { TranslateModule } from '@ngx-translate/core';
-import { Hike } from '@web/shared/models/settings';
-import { Subject } from 'rxjs';
+import { Hike, User } from '@web/shared/models/settings';
+import { of, Subject, throwError } from 'rxjs';
 import { Table } from 'primeng/table';
+import { UsersService } from '@web/users/data-access';
 
 describe('Hikes Component', () => {
   let component: Hikes;
   let fixture: ComponentFixture<Hikes>;
   let confirmationService: jest.Mocked<ConfirmationService>;
+  let usersService: jest.Mocked<UsersService>;
 
   const mockHike = new Hike({
     id: '1',
@@ -46,9 +48,16 @@ describe('Hikes Component', () => {
       getStaticMapUrl: jest.fn(() => 'https://api.mapbox.com/static-map-url'),
     } as unknown as jest.Mocked<MapboxService>;
 
+    const usersServiceMock = {
+      getUserById: jest.fn(),
+    } as unknown as jest.Mocked<UsersService>;
+
     await TestBed.configureTestingModule({
       imports: [Hikes, TranslateModule.forRoot()],
-      providers: [{ provide: MapboxService, useValue: mapboxServiceMock }],
+      providers: [
+        { provide: MapboxService, useValue: mapboxServiceMock },
+        { provide: UsersService, useValue: usersServiceMock },
+      ],
     })
       .overrideComponent(Hikes, {
         set: {
@@ -66,6 +75,7 @@ describe('Hikes Component', () => {
     confirmationService = fixture.debugElement.injector.get(
       ConfirmationService
     ) as jest.Mocked<ConfirmationService>;
+    usersService = TestBed.inject(UsersService) as jest.Mocked<UsersService>;
     // Ne pas appeler detectChanges() pour éviter le rendu du template
   });
 
@@ -120,6 +130,64 @@ describe('Hikes Component', () => {
     const emitSpy = jest.spyOn(component.viewDetails, 'emit');
     component.viewDetailsClick(mockHike);
     expect(emitSpy).toHaveBeenCalledWith(mockHike);
+  });
+
+  describe('getOwnerLabel', () => {
+    it('should return Officielle when hike has no userId', () => {
+      expect(component.getOwnerLabel(mockHike)).toBe('Officielle');
+    });
+
+    it('should resolve and cache the owner full name', async () => {
+      const communityHike = new Hike({
+        ...mockHike,
+        id: '2',
+        userId: '16',
+        source: 'COMMUNITY',
+      });
+      const owner = new User({
+        id: '16',
+        fullName: 'Jean Dupont',
+        firstname: 'Jean',
+        lastname: 'Dupont',
+        email: 'jean.dupont@example.com',
+        roles: ['USER'],
+        status: 'ACTIVE',
+      });
+
+      usersService.getUserById.mockReturnValue(of(owner));
+
+      fixture.componentRef.setInput('rows', [communityHike]);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(usersService.getUserById).toHaveBeenCalledWith('16');
+      expect(component.getOwnerLabel(communityHike)).toBe('Jean Dupont');
+
+      fixture.componentRef.setInput('rows', [communityHike]);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(usersService.getUserById).toHaveBeenCalledTimes(1);
+    });
+
+    it('should fallback to a readable label when owner lookup fails', async () => {
+      const communityHike = new Hike({
+        ...mockHike,
+        id: '3',
+        userId: '42',
+        source: 'COMMUNITY',
+      });
+
+      usersService.getUserById.mockReturnValue(
+        throwError(() => new Error('not found'))
+      );
+
+      fixture.componentRef.setInput('rows', [communityHike]);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(component.getOwnerLabel(communityHike)).toBe('Utilisateur #42');
+    });
   });
 
   // Tests removed: coordinatesToGeoJSON, getMapCenter, getMapBounds, getMapboxUrl methods don't exist on Hikes component
@@ -311,6 +379,65 @@ describe('Hikes Component', () => {
     });
   });
 
+  describe('onSearchChange', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should debounce and emit the latest search value', () => {
+      const emitSpy = jest.spyOn(component.searchChange, 'emit');
+      const firstEvent = { target: { value: 'alp' } } as unknown as Event;
+      const secondEvent = { target: { value: 'alps' } } as unknown as Event;
+
+      component.onSearchChange(firstEvent);
+      component.onSearchChange(secondEvent);
+
+      jest.advanceTimersByTime(499);
+      expect(emitSpy).not.toHaveBeenCalled();
+
+      jest.advanceTimersByTime(1);
+      expect(emitSpy).toHaveBeenCalledTimes(1);
+      expect(emitSpy).toHaveBeenCalledWith('alps');
+    });
+  });
+
+  describe('onPageChange', () => {
+    it('should emit the explicit page when PrimeNG provides it', () => {
+      const emitSpy = jest.spyOn(component.pageChange, 'emit');
+
+      component.onPageChange({ first: 20, rows: 10, page: 2 });
+
+      expect(emitSpy).toHaveBeenCalledWith({ page: 3, rows: 10 });
+    });
+
+    it('should compute the page from first and rows when page is absent', () => {
+      const emitSpy = jest.spyOn(component.pageChange, 'emit');
+
+      component.onPageChange({ first: 40, rows: 20 });
+
+      expect(emitSpy).toHaveBeenCalledWith({ page: 3, rows: 20 });
+    });
+  });
+
+  describe('getVisibilityLabel', () => {
+    it('should return Public by default', () => {
+      expect(component.getVisibilityLabel(undefined)).toBe('Public');
+    });
+
+    it('should return the translated labels for known visibilities', () => {
+      expect(component.getVisibilityLabel('PRIVATE')).toBe('Privé');
+      expect(component.getVisibilityLabel('UNLISTED')).toBe('Non listée');
+    });
+
+    it('should return the raw value for unknown visibilities', () => {
+      expect(component.getVisibilityLabel('TEAM_ONLY')).toBe('TEAM_ONLY');
+    });
+  });
+
   // Tests removed: getMapCenter method doesn't exist on Hikes component
 
   describe('calculateElevation', () => {
@@ -353,6 +480,37 @@ describe('Hikes Component', () => {
   });
 
   describe('getElevationGain', () => {
+    it('should prioritize positive cumulative elevation from coordinates', () => {
+      const hike = new Hike({
+        id: '4',
+        name: 'Elevation Hike',
+        startingPointLatitude: 48.8566,
+        startingPointLongitude: 2.3522,
+        startingElevation: 100,
+        arrivalPointLatitude: 48.8566,
+        arrivalPointLongitude: 2.3522,
+        arrivalElevation: 120,
+        wkbGeometry: '',
+        wkbWaypoints: '',
+        distance: 5000,
+        difficulty: 'EASY',
+        status: 'PUBLISHED',
+        source: 'OFFICIAL',
+        seasons: ['SPRING'],
+        location: 'Paris',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      });
+      hike.coordinates = [
+        { latitude: 48.8566, longitude: 2.3522, elevation: 100 },
+        { latitude: 48.86, longitude: 2.355, elevation: 180 },
+        { latitude: 48.865, longitude: 2.36, elevation: 140 },
+      ];
+      hike.elevationGain = 50;
+
+      expect(component.getElevationGain(hike)).toBe(80);
+    });
+
     it('should use elevationGain from hike when available', () => {
       // Set elevationGain directly on the hike instance
       (mockHike as any).elevationGain = 500;
@@ -415,6 +573,36 @@ describe('Hikes Component', () => {
       const result = component.getElevationGain(hike);
 
       expect(result).toBe(0);
+    });
+
+    it('should return 0 when coordinates exist but have no positive gain and net elevation is negative', () => {
+      const hike = new Hike({
+        id: '5',
+        name: 'Flat Hike',
+        startingPointLatitude: 48.8566,
+        startingPointLongitude: 2.3522,
+        startingElevation: 300,
+        arrivalPointLatitude: 48.8566,
+        arrivalPointLongitude: 2.3522,
+        arrivalElevation: 100,
+        wkbGeometry: '',
+        wkbWaypoints: '',
+        distance: 5000,
+        difficulty: 'EASY',
+        status: 'PUBLISHED',
+        source: 'OFFICIAL',
+        seasons: ['SPRING'],
+        location: 'Paris',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      });
+      hike.coordinates = [
+        { latitude: 48.8566, longitude: 2.3522, elevation: 0 },
+        { latitude: 48.86, longitude: 2.355, elevation: 0 },
+      ];
+      hike.elevationGain = 0;
+
+      expect(component.getElevationGain(hike)).toBe(0);
     });
   });
 });

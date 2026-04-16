@@ -83,4 +83,24 @@ export class AuthService {
       throw error;
     }
   }
+
+  /**
+   * Process an authorization request (e.g. from email link with ?token=...).
+   * POST identity/authorization with { authorizationToken, token }.
+   */
+  processAuthorization(
+    authorizationToken: string,
+    turnstileToken: string
+  ): Observable<{ i18nKey: string; message: string; extra?: unknown }> {
+    return this.http
+      .post<{ i18nKey: string; message: string; extra?: unknown }>(
+        `${this.apiUrl}identity/authorization`,
+        { authorizationToken, token: turnstileToken }
+      )
+      .pipe(
+        catchError((error) => {
+          throw error;
+        })
+      );
+  }
 }

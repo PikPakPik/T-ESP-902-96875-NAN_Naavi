@@ -19,7 +19,12 @@ export default {
     '!**/index.{ts,js}',
     '!**/hike-map.component.ts', // Exclure car difficile à tester (Mapbox)
     '!**/hike-location-search.component.ts', // Exclure car difficile à tester (Mapbox)
+    '!**/hike-import.component.ts',
+    '!**/hike-import.container.ts',
   ],
+  coverageThreshold: {
+    global: { branches: 75 },
+  },
   transform: {
     '^.+\\.(ts|mjs|js|html)$': [
       'jest-preset-angular',
@@ -29,7 +34,13 @@ export default {
       },
     ],
   },
-  transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
+  transformIgnorePatterns: [
+    'node_modules/(?!.*\\.mjs$|.*ngx-mapbox-gl|.*mapbox-gl)',
+  ],
+  moduleNameMapper: {
+    '^mapbox-gl$': '<rootDir>/../../../__mocks__/mapbox-gl.ts',
+    '^ngx-mapbox-gl$': '<rootDir>/../../../__mocks__/ngx-mapbox-gl.ts',
+  },
   snapshotSerializers: [
     'jest-preset-angular/build/serializers/no-ng-attributes',
     'jest-preset-angular/build/serializers/ng-snapshot',

@@ -1,0 +1,130 @@
+<div class="not-found-container">
+  <!-- Animated Background Mountains -->
+  <div class="mountains-background">
+    <!-- Back Mountains -->
+    <svg class="mountain-layer back" viewBox="0 0 1440 320" preserveAspectRatio="none">
+      <path fill="var(--primary)" fill-opacity="0.3"
+        d="M0,96L48,112C96,128,192,160,288,154.7C384,149,480,107,576,101.3C672,96,768,128,864,138.7C960,149,1056,139,1152,122.7C1248,107,1344,85,1392,74.7L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
+    </svg>
+
+    <!-- Middle Mountains -->
+    <svg class="mountain-layer middle" viewBox="0 0 1440 320" preserveAspectRatio="none">
+      <path fill="var(--primary)" fill-opacity="0.5"
+        d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,208C672,213,768,203,864,181.3C960,160,1056,128,1152,128C1248,128,1344,160,1392,176L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
+    </svg>
+
+    <!-- Front Mountains -->
+    <svg class="mountain-layer front" viewBox="0 0 1440 320" preserveAspectRatio="none">
+      <path fill="var(--primary)" fill-opacity="0.8"
+        d="M0,160L48,170.7C96,181,192,203,288,197.3C384,192,480,160,576,165.3C672,171,768,213,864,213.3C960,213,1056,171,1152,149.3C1248,128,1344,128,1392,128L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
+    </svg>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content">
+    <!-- Animated Compass -->
+    <div class="compass-container" [class.mounted]="mounted">
+      <svg width="120" height="120" viewBox="0 0 120 120" class="compass">
+        <!-- Compass Circle -->
+        <circle cx="60" cy="60" r="55" fill="white" stroke="var(--primary)" stroke-width="3" opacity="0.9" />
+
+        <!-- Compass Rose -->
+        <g transform="translate(60, 60)">
+          <!-- North Pointer - Red -->
+          <path d="M 0,-40 L 8,0 L 0,-10 L -8,0 Z" fill="var(--danger)" stroke="var(--primary)" stroke-width="1" />
+          <!-- South Pointer - White -->
+          <path d="M 0,40 L 8,0 L 0,10 L -8,0 Z" fill="white" stroke="var(--primary)" stroke-width="1" />
+          <!-- East Pointer -->
+          <path d="M 40,0 L 0,8 L 10,0 L 0,-8 Z" fill="var(--primary-light)" stroke="var(--primary)"
+            stroke-width="1" />
+          <!-- West Pointer -->
+          <path d="M -40,0 L 0,8 L -10,0 L 0,-8 Z" fill="var(--primary-light)" stroke="var(--primary)"
+            stroke-width="1" />
+
+          <!-- Center Circle -->
+          <circle cx="0" cy="0" r="4" fill="var(--primary)" />
+        </g>
+
+        <!-- Direction Letters -->
+        <text x="60" y="20" text-anchor="middle" fill="var(--primary)" font-size="14" font-weight="bold"
+          font-family="'Nova Round', cursive">N</text>
+        <text x="60" y="108" text-anchor="middle" fill="var(--primary)" font-size="14" font-weight="bold"
+          font-family="'Nova Round', cursive">S</text>
+        <text x="105" y="65" text-anchor="middle" fill="var(--primary)" font-size="14" font-weight="bold"
+          font-family="'Nova Round', cursive">E</text>
+        <text x="15" y="65" text-anchor="middle" fill="var(--primary)" font-size="14" font-weight="bold"
+          font-family="'Nova Round', cursive">O</text>
+      </svg>
+    </div>
+
+    <!-- Error Code -->
+    <div class="error-code" [class.mounted]="mounted">
+      <h1>404</h1>
+    </div>
+
+    <!-- Error Message -->
+    <div class="error-message" [class.mounted]="mounted">
+      <h2>Oups ! Vous vous êtes égaré</h2>
+      <p>Le sentier que vous cherchez n'existe pas. Il semble que vous ayez pris un mauvais tournant sur votre chemin.
+      </p>
+    </div>
+
+    <!-- Trail Icon with Animation -->
+    <div class="trail-container" [class.mounted]="mounted">
+      <svg width="200" height="80" viewBox="0 0 200 80" class="trail">
+        <!-- Winding Trail -->
+        <path d="M 10,70 Q 30,50 50,60 T 90,50 T 130,60 T 170,50" fill="none" stroke="var(--primary)" stroke-width="4"
+          stroke-dasharray="8 4" opacity="0.6" />
+
+        <!-- Trail Markers -->
+        <circle cx="50" cy="60" r="5" fill="var(--warning)" opacity="0.8" />
+        <circle cx="90" cy="50" r="5" fill="var(--warning)" opacity="0.8" />
+        <circle cx="130" cy="60" r="5" fill="var(--warning)" opacity="0.8" />
+
+        <!-- Hiker Icon -->
+        <g transform="translate(170, 35)">
+          <circle cx="0" cy="-5" r="6" fill="var(--secondary)" />
+          <line x1="0" y1="1" x2="0" y2="15" stroke="var(--secondary)" stroke-width="3" />
+          <line x1="0" y1="6" x2="-6" y2="12" stroke="var(--secondary)" stroke-width="3" />
+          <line x1="0" y1="6" x2="6" y2="12" stroke="var(--secondary)" stroke-width="3" />
+          <line x1="0" y1="15" x2="-4" y2="22" stroke="var(--secondary)" stroke-width="3" />
+          <line x1="0" y1="15" x2="4" y2="22" stroke="var(--secondary)" stroke-width="3" />
+          <!-- Backpack -->
+          <rect x="-4" y="2" width="8" height="10" fill="var(--danger)" rx="2" />
+        </g>
+      </svg>
+    </div>
+
+    <!-- CTA Button -->
+    <div class="cta-button" [class.mounted]="mounted">
+      <a routerLink="/">
+        <p-button label="Retour à l'accueil" styleClass="p-button-lg btn-primary" icon="pi pi-arrow-left">
+        </p-button>
+      </a>
+    </div>
+
+    <!-- Decorative Trees -->
+    <div class="tree left-tree">
+      <svg width="40" height="60" viewBox="0 0 40 60">
+        <polygon points="20,5 5,25 15,25 0,45 15,45 15,60 25,60 25,45 40,45 25,25 35,25" fill="var(--primary)" />
+      </svg>
+    </div>
+    <div class="tree right-tree">
+      <svg width="50" height="70" viewBox="0 0 40 60">
+        <polygon points="20,5 5,25 15,25 0,45 15,45 15,60 25,60 25,45 40,45 25,25 35,25" fill="var(--primary)" />
+      </svg>
+    </div>
+  </div>
+
+  <!-- Floating Elements - Birds -->
+  <div class="bird left-bird" [class.mounted]="mounted">
+    <svg width="30" height="20" viewBox="0 0 30 20" fill="var(--primary)" opacity="0.5">
+      <path d="M5,10 Q10,5 15,10 M15,10 Q20,5 25,10" stroke="var(--primary)" stroke-width="2" fill="none" />
+    </svg>
+  </div>
+  <div class="bird right-bird" [class.mounted]="mounted">
+    <svg width="25" height="18" viewBox="0 0 30 20" fill="var(--primary)" opacity="0.5">
+      <path d="M5,10 Q10,5 15,10 M15,10 Q20,5 25,10" stroke="var(--primary)" stroke-width="2" fill="none" />
+    </svg>
+  </div>
+</div>

@@ -1,0 +1,249 @@
+.not-found-container {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(to bottom, var(--primary-lighter), var(--primary-light));
+
+  /* Mountains Background */
+  .mountains-background {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+
+    .mountain-layer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+
+      &.back {
+        opacity: 0.3;
+      }
+
+      &.middle {
+        opacity: 0.5;
+      }
+
+      &.front {
+        opacity: 1;
+      }
+    }
+  }
+
+  /* Main Content */
+  .content {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 3rem 1rem;
+    margin-top: 4rem;
+  }
+
+  /* Animated Compass */
+  .compass-container {
+    margin-bottom: 2rem;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.5s ease;
+
+    &.mounted {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .compass {
+      animation: spin-slow 8s linear infinite;
+    }
+  }
+
+  @keyframes spin-slow {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Error Code */
+  .error-code {
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    transform: translateY(2rem);
+    transition: all 0.5s ease 0.1s;
+
+    &.mounted {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    h1 {
+      text-align: center;
+      font-family: 'Nova Round', cursive;
+      font-size: 9rem;
+      font-weight: bold;
+      letter-spacing: -0.05em;
+      color: var(--primary);
+
+      @media (min-width: 768px) {
+        font-size: 12rem;
+      }
+    }
+  }
+
+  /* Error Message */
+  .error-message {
+    margin-bottom: 2rem;
+    max-width: 42rem;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(2rem);
+    transition: all 0.5s ease 0.15s;
+
+    &.mounted {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    h2 {
+      margin-bottom: 1rem;
+      font-family: 'Nova Round', cursive;
+      font-size: 1.875rem;
+      font-weight: bold;
+      color: var(--primary);
+
+      @media (min-width: 768px) {
+        font-size: 2.25rem;
+      }
+    }
+
+    p {
+      font-family: 'Lexend Deca', sans-serif;
+      font-size: 1.125rem;
+      color: var(--primary);
+      opacity: 0.8;
+
+      @media (min-width: 768px) {
+        font-size: 1.25rem;
+      }
+    }
+  }
+
+  /* Trail Icon */
+  .trail-container {
+    margin-bottom: 2rem;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.5s ease 0.25s;
+
+    &.mounted {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .trail {
+      animation: pulse 3s ease-in-out infinite;
+    }
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  /* CTA Button */
+  .cta-button {
+    opacity: 0;
+    transform: translateY(2rem);
+    transition: all 0.5s ease 0.35s;
+
+    &.mounted {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    a {
+      text-decoration: none;
+    }
+
+    ::ng-deep .p-button {
+      padding: 1.5rem 2rem;
+      font-size: 1.125rem;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: scale(1.05);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+      }
+
+      .pi-arrow-left {
+        transition: transform 0.3s ease;
+      }
+
+      &:hover .pi-arrow-left {
+        transform: translateX(-0.25rem);
+      }
+    }
+  }
+
+  /* Decorative Trees */
+  .tree {
+    position: absolute;
+    opacity: 0.6;
+    display: none;
+
+    @media (min-width: 768px) {
+      display: block;
+    }
+
+    &.left-tree {
+      bottom: 6rem;
+      left: 2rem;
+    }
+
+    &.right-tree {
+      bottom: 8rem;
+      right: 3rem;
+    }
+  }
+
+  /* Floating Birds */
+  .bird {
+    position: absolute;
+    opacity: 0;
+    transition: all 0.8s ease;
+
+    &.left-bird {
+      left: 10%;
+      top: 20%;
+      transform: translateX(-5rem);
+
+      &.mounted {
+        opacity: 0.7;
+        transform: translateX(0);
+      }
+    }
+
+    &.right-bird {
+      right: 15%;
+      top: 15%;
+      transform: translateX(5rem);
+      transition-duration: 1s;
+
+      &.mounted {
+        opacity: 0.7;
+        transform: translateX(0);
+      }
+    }
+  }
+}

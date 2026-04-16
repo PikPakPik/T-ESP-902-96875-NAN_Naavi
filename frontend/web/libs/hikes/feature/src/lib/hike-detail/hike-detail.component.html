@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+<div class="min-h-screen  p-6">
   <!-- Header avec bouton retour -->
   <div class="mb-6">
     <p-button
@@ -19,7 +19,7 @@
   <div class="relative mb-6 rounded-2xl overflow-hidden shadow-2xl">
     <div class="relative h-[500px]">
       <img
-        src="https://via.placeholder.com/1200x500?text={{ hike()?.name ?? '' }}"
+        [src]="getPrimaryImageUrl()"
         alt="{{ hike()?.name ?? '' }}"
         class="w-full h-full object-cover"
       />
@@ -164,6 +164,46 @@
           </div>
         </div>
       </p-card>
+
+      @if (hike()?.images?.length) {
+      <p-card class="shadow-lg">
+        <ng-template pTemplate="header">
+          <div
+            class="p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-gray-200"
+          >
+            <h2
+              class="text-2xl font-bold text-gray-900 flex items-center gap-3"
+            >
+              <div
+                class="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg"
+              >
+                <i class="pi pi-images text-white text-xl"></i>
+              </div>
+              Photos
+            </h2>
+          </div>
+        </ng-template>
+        <div class="p-6">
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            @for (image of hike()?.images; track image.id) {
+            <a
+              [href]="getHikeImageUrl(image.filename)"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="block overflow-hidden rounded-xl border border-gray-200 bg-gray-100"
+            >
+              <img
+                [src]="getHikeImageUrl(image.filename) ?? ''"
+                [alt]="'Photo ' + image.id"
+                class="h-40 w-full object-cover transition-transform duration-300 hover:scale-105"
+                loading="lazy"
+              />
+            </a>
+            }
+          </div>
+        </div>
+      </p-card>
+      }
     </div>
 
     <!-- Colonne latérale -->
@@ -238,6 +278,32 @@
                 severity="info"
                 [rounded]="true"
               />
+            </div>
+            <div
+              class="flex items-center justify-between py-4 px-4 bg-gray-50 rounded-lg border border-gray-200"
+            >
+              <span class="text-sm font-semibold text-gray-700">Visibilité</span>
+              <p-tag
+                [value]="getVisibilityLabel(hike()?.visibility)"
+                [severity]="getVisibilitySeverity(hike()?.visibility)"
+                [rounded]="true"
+              />
+            </div>
+            <div
+              class="flex items-center justify-between py-4 px-4 bg-gray-50 rounded-lg border border-gray-200"
+            >
+              <span class="text-sm font-semibold text-gray-700">Source</span>
+              <p-tag
+                [value]="hike()?.source || 'OFFICIAL'"
+                [severity]="getSourceSeverity(hike()?.source)"
+                [rounded]="true"
+              />
+            </div>
+            <div
+              class="flex items-center justify-between py-4 px-4 bg-gray-50 rounded-lg border border-gray-200"
+            >
+              <span class="text-sm font-semibold text-gray-700">Propriétaire</span>
+              <span class="text-sm font-semibold text-gray-800">{{ getOwnerLabel(hike()?.userId) }}</span>
             </div>
             @if (hike()!.coordinates && hike()!.coordinates.length > 0) {
             <div

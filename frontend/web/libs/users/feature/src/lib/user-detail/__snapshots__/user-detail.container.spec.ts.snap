@@ -3,6 +3,7 @@
 exports[`UserDetailContainer visual state Given container rendered When component is created Then should match snapshot 1`] = `
 <user-detail-container
   loading={[Function Function]}
+  profilePictureUrl={[Function Function]}
   userDetailsStore={[Function Object]}
 >
   <div>

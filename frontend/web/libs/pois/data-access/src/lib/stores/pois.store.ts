@@ -35,11 +35,8 @@ interface POIsPaginationState {
   page: number;
   limit: number;
   totalPages: number;
-}
-
-interface UserLocationState {
-  latitude: number | null;
-  longitude: number | null;
+  pendingApprovalCount: number;
+  selectedStatus: string | null;
 }
 
 export const POIsStore = signalStore(
@@ -50,14 +47,13 @@ export const POIsStore = signalStore(
     page: 1,
     limit: 20,
     totalPages: 0,
-  }),
-  withState<UserLocationState>({
-    latitude: null,
-    longitude: null,
+    pendingApprovalCount: 0,
+    selectedStatus: null,
   }),
   withState<POIConfiguration>({
     point_of_interest_categories: [],
     status: [],
+    sources: [],
   }),
   withLogger('POIs'),
   withDevtools('POIs'),
@@ -69,29 +65,24 @@ export const POIsStore = signalStore(
     setLimit(limit: number): void {
       patchState(store, { limit });
     },
+    setSelectedStatus(selectedStatus: string | null): void {
+      patchState(store, { selectedStatus });
+    },
     async getPOIs(queryParams?: POIsQueryParams): Promise<void> {
       patchState(store, setPending());
       try {
-        // Construire les params en incluant la position si disponible
         const params: POIsQueryParams = { ...queryParams };
-
-        // Utiliser la page et le limit du store si non spécifiés dans queryParams
         if (params.page === undefined) {
           params.page = store.page();
         }
         if (params.limit === undefined) {
           params.limit = store.limit();
         }
-
-        // Si pas de coordonnées fournies explicitement, utiliser celles du store
-        if (!params.latitude && !params.longitude) {
-          params.latitude = store.latitude() ?? undefined;
-          params.longitude = store.longitude() ?? undefined;
-          params.radius = params.radius || 20; // 20km par défaut
+        if (params.status === undefined) {
+          params.status = store.selectedStatus() ?? undefined;
         }
 
         const response = await lastValueFrom(poisService.searchPOIs(params));
-        // Filter out any POIs without an id (should not happen, but safety check)
         const validPOIs = response.poisInstances.filter(
           (poi) => poi.id != null
         );
@@ -116,6 +107,7 @@ export const POIsStore = signalStore(
             page: currentPage,
             limit,
             totalPages,
+            selectedStatus: params.status ?? null,
           },
           setFulfilled()
         );
@@ -139,13 +131,15 @@ export const POIsStore = signalStore(
         return undefined;
       }
     },
-    async create(poi: POI | Partial<IDB_POI>): Promise<void> {
+    async create(poi: POI | Partial<IDB_POI>): Promise<POI | undefined> {
       patchState(store, setPending());
       try {
         const createdPOI = await lastValueFrom(poisService.addPOI(poi));
         patchState(store, addEntity(createdPOI), setFulfilled());
+        return createdPOI;
       } catch (error: unknown) {
         patchState(store, setError(error as string));
+        return undefined;
       }
     },
     async update(poi: POI | Partial<IDB_POI>): Promise<void> {
@@ -170,44 +164,15 @@ export const POIsStore = signalStore(
         patchState(store, setError(error as string));
       }
     },
-    async getUserLocation(): Promise<void> {
-      return new Promise((resolve) => {
-        // Check if running in a browser environment
-        if (typeof navigator === 'undefined' || !navigator.geolocation) {
-          console.warn('Geolocation is not supported by this environment.');
-          patchState(store, { latitude: null, longitude: null });
-          resolve();
-          return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            patchState(store, {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-            });
-            resolve();
-          },
-          (error) => {
-            console.warn('Unable to retrieve user location:', error.message);
-            patchState(store, {
-              latitude: null,
-              longitude: null,
-            });
-            resolve();
-          },
-          {
-            timeout: 5000,
-            maximumAge: 60000, // Cache la position pendant 1 minute
-          }
+    async loadPendingApprovalCount(): Promise<void> {
+      try {
+        const pendingApprovalCount = await lastValueFrom(
+          poisService.getPendingApprovalCount()
         );
-      });
-    },
-    setDefaultLocation(latitude: number, longitude: number): void {
-      patchState(store, {
-        latitude,
-        longitude,
-      });
+        patchState(store, { pendingApprovalCount });
+      } catch (error: unknown) {
+        console.error('Failed to load pending POI approval count:', error);
+      }
     },
     async loadConfigurations(): Promise<void> {
       try {
@@ -216,6 +181,7 @@ export const POIsStore = signalStore(
           point_of_interest_categories:
             config.point_of_interest_categories || [],
           status: config.status || [],
+          sources: config.sources || [],
         });
       } catch (error: unknown) {
         console.error('Failed to load POI configurations:', error);
@@ -226,15 +192,10 @@ export const POIsStore = signalStore(
     async onInit(store) {
       try {
         await store.loadConfigurations();
-        await store.getUserLocation();
-        // Ne charger les POIs que si on a la position
-        if (store.latitude() !== null && store.longitude() !== null) {
-          await store.getPOIs();
-        }
+        await store.loadPendingApprovalCount();
+        await store.getPOIs();
       } catch (error) {
         console.error('Error during POIsStore initialization:', error);
-        // Continue initialization even if there are errors
-        // This prevents the app from crashing in CI or when APIs are unavailable
       }
     },
   })

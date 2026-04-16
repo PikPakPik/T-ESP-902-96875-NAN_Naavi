@@ -1,5 +1,5 @@
 <!-- Container principal -->
-<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+<div class="min-h-screen  p-6">
   <form (ngSubmit)="saveHike()">
     <!-- En-tête -->
     <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
@@ -156,69 +156,87 @@
               }
             </div>
 
-            <!-- Source -->
+            <!-- Visibilité -->
             <div>
-              <label
-                for="source"
-                class="block font-semibold mb-2 text-gray-700"
-              >
-                {{ 'HIKE.UPSERT.SOURCE' | translate }}
+              <label for="visibility" class="block font-semibold mb-2 text-gray-700">
+                Visibilité
               </label>
               <p-select
-                id="source"
-                name="source"
-                [(ngModel)]="source"
-                [options]="sourceOptions()"
+                id="visibility"
+                name="visibility"
+                [(ngModel)]="visibility"
+                [options]="visibilityOptions()"
                 optionValue="value"
-                [placeholder]="'HIKE.UPSERT.SOURCE_PLACEHOLDER' | translate"
+                placeholder="Choisir la visibilité"
                 class="w-full"
               >
-                <ng-template let-source pTemplate="item">
-                  {{ source.label | translate }}
+                <ng-template let-visibility pTemplate="item">
+                  {{ visibility.label | translate }}
                 </ng-template>
-                <ng-template let-source pTemplate="selectedItem">
-                  {{ source.label | translate }}
+                <ng-template let-visibility pTemplate="selectedItem">
+                  {{ visibility.label | translate }}
                 </ng-template>
               </p-select>
             </div>
 
-            <!-- Saisons -->
+            <!-- Source -->
             <div>
-              <label
-                for="seasons"
-                class="block font-semibold mb-2 text-gray-700"
-              >
-                {{ 'HIKE.UPSERT.SEASONS' | translate }}
+              <label for="source" class="block font-semibold mb-2 text-gray-700">
+                Source
               </label>
-              <p-multiSelect
-                id="seasons"
-                name="seasons"
-                [(ngModel)]="seasons"
-                [options]="seasonOptions()"
-                optionLabel="label"
+              <p-select
+                id="source"
+                name="source"
+                [ngModel]="source()"
+                (ngModelChange)="onSourceChange($event)"
+                [options]="sourceOptions()"
                 optionValue="value"
-                [placeholder]="'HIKE.UPSERT.SEASONS_PLACEHOLDER' | translate"
+                placeholder="Choisir la source"
                 class="w-full"
-                [displaySelectedLabel]="true"
-                [maxSelectedLabels]="3"
-                [selectedItemsLabel]="
-                  'HIKE.UPSERT.SEASONS_SELECTED' | translate
-                "
               >
-                <ng-template let-season pTemplate="item">
-                  {{ season.label | translate }}
+                <ng-template let-sourceItem pTemplate="item">
+                  {{ sourceItem.label }}
                 </ng-template>
-                <ng-template pTemplate="selectedItems">
-                  @for (seasonValue of seasons(); track seasonValue; let i =
-                  $index) { @if (i > 0) {
-                  <span>, </span>
-                  }
-                  <span>{{
-                    getSeasonTranslationKey(seasonValue) | translate
-                  }}</span>
-                  }
+                <ng-template let-sourceItem pTemplate="selectedItem">
+                  {{ sourceItem.label }}
                 </ng-template>
-              </p-multiSelect>
+              </p-select>
+            </div>
+
+            @if (isCommunitySource()) {
+            <div>
+              <label for="ownerUser" class="block font-semibold mb-2 text-gray-700">
+                Propriétaire (utilisateur) *
+              </label>
+              <p-select
+                id="ownerUser"
+                name="ownerUser"
+                [ngModel]="selectedUserId()"
+                (ngModelChange)="onOwnerUserChange($event)"
+                [options]="usersOptions()"
+                optionValue="value"
+                optionLabel="label"
+                placeholder="Choisir un utilisateur"
+                class="w-full"
+                [filter]="true"
+                filterBy="label"
+              />
+            </div>
+            }
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <p class="text-xs text-gray-500 mb-1">Source</p>
+                <p class="text-sm font-semibold text-gray-800">
+                  {{ source() || 'OFFICIAL' }}
+                </p>
+              </div>
+              <div class="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <p class="text-xs text-gray-500 mb-1">Propriétaire</p>
+                <p class="text-sm font-semibold text-gray-800">
+                  {{ ownerDisplay() }}
+                </p>
+              </div>
             </div>
 
             <!-- Distance -->

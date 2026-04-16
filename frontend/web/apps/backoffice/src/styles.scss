@@ -39,3 +39,59 @@
   --surface-800: var(--gray-800);
   --surface-900: var(--gray-900);
 }
+
+/* Backoffice layout - responsive */
+.app-container {
+  width: 100%;
+  min-height: calc(100vh - 4rem);
+  overflow-x: hidden;
+}
+
+.inf-full-container {
+  width: 100%;
+  max-width: 100%;
+  padding: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .inf-full-container {
+    padding: 1rem 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .inf-full-container {
+    padding: 1.5rem 2rem;
+  }
+}
+
+/* Navbar mobile/user menu overlay (appendTo="body") - zones tactiles 48px */
+.p-menu.mobile-menu .p-menu-list,
+.p-menu.user-menu .p-menu-list,
+.p-tieredmenu.mobile-menu .p-tieredmenu-root-list {
+  min-width: 280px;
+  padding: 8px 0;
+}
+
+.p-menu.mobile-menu .p-menuitem-link,
+.p-menu.user-menu .p-menuitem-link,
+.p-tieredmenu.mobile-menu .p-tieredmenu-item-link {
+  padding: 14px 18px !important;
+  min-height: 48px;
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.p-menu.mobile-menu .p-menuitem-icon,
+.p-menu.user-menu .p-menuitem-icon,
+.p-tieredmenu.mobile-menu .p-tieredmenu-item-icon {
+  font-size: 1.1rem;
+}
+
+.p-menu.mobile-menu .p-submenu-list .p-menuitem-link,
+.p-menu.user-menu .p-submenu-list .p-menuitem-link,
+.p-tieredmenu.mobile-menu .p-tieredmenu-submenu .p-tieredmenu-item-link {
+  padding-left: 2.5rem !important;
+}

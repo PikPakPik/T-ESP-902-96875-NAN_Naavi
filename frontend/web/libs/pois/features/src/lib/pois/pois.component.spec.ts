@@ -3,9 +3,10 @@ import { Pois } from './pois.component';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { POI } from '@web/shared/models/settings';
+import { UsersService } from '@web/users/data-access';
 import { Table } from 'primeng/table';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { Popover } from 'primeng/popover';
+import { of, throwError } from 'rxjs';
 
 describe('Pois', () => {
   let component: Pois;
@@ -13,6 +14,7 @@ describe('Pois', () => {
   let confirmationService: ConfirmationService;
   let confirmSpy: jest.SpyInstance;
   let translateService: TranslateService;
+  let usersServiceMock: { getUserById: jest.Mock };
 
   const mockPOI = new POI({
     id: '1',
@@ -20,6 +22,7 @@ describe('Pois', () => {
     description: 'A test POI',
     types: ['RESTAURANT'],
     photos: [],
+    images: [],
     latitude: 48.8566,
     longitude: 2.3522,
     comment: 'Test comment',
@@ -34,6 +37,9 @@ describe('Pois', () => {
     translateServiceMock = {
       instant: jest.fn((key: string) => key),
     };
+    usersServiceMock = {
+      getUserById: jest.fn(),
+    };
 
     const fullTranslateServiceMock = {
       ...translateServiceMock,
@@ -46,6 +52,7 @@ describe('Pois', () => {
       imports: [Pois, TranslateModule.forRoot()],
       providers: [
         { provide: TranslateService, useValue: fullTranslateServiceMock },
+        { provide: UsersService, useValue: usersServiceMock },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     })
@@ -133,14 +140,19 @@ describe('Pois', () => {
   });
 
   describe('getSeverity', () => {
-    it('should return success for active status', () => {
-      expect(component.getSeverity('active')).toBe('success');
-      expect(component.getSeverity('ACTIVE')).toBe('success');
+    it('should return success for published status', () => {
+      expect(component.getSeverity('published')).toBe('success');
+      expect(component.getSeverity('PUBLISHED')).toBe('success');
     });
 
-    it('should return warn for pending status', () => {
-      expect(component.getSeverity('pending')).toBe('warn');
-      expect(component.getSeverity('PENDING')).toBe('warn');
+    it('should return warn for draft status', () => {
+      expect(component.getSeverity('draft')).toBe('warn');
+      expect(component.getSeverity('DRAFT')).toBe('warn');
+    });
+
+    it('should return secondary for unpublished status', () => {
+      expect(component.getSeverity('unpublished')).toBe('secondary');
+      expect(component.getSeverity('UNPUBLISHED')).toBe('secondary');
     });
 
     it('should return danger for deleted status', () => {
@@ -263,12 +275,149 @@ describe('Pois', () => {
     });
   });
 
-  describe('setParisLocation', () => {
-    it('should emit setParisDefault event', () => {
-      const emitSpy = jest.spyOn(component.setParisDefault, 'emit');
-      component.setParisLocation();
-      expect(emitSpy).toHaveBeenCalled();
+  it('should emit approvePOI for selected detail POI', () => {
+    const emitSpy = jest.spyOn(component.approvePOI, 'emit');
+    component.selectedPOIForDetail.set(mockPOI);
+
+    component.approveSelectedPOI();
+
+    expect(emitSpy).toHaveBeenCalledWith(mockPOI);
+  });
+
+  it('should emit rejectPOI for selected detail POI', () => {
+    const emitSpy = jest.spyOn(component.rejectPOI, 'emit');
+    component.selectedPOIForDetail.set(mockPOI);
+
+    component.rejectSelectedPOI();
+
+    expect(emitSpy).toHaveBeenCalledWith(mockPOI);
+  });
+
+  it('should not emit approvePOI when no detail POI is selected', () => {
+    const emitSpy = jest.spyOn(component.approvePOI, 'emit');
+
+    component.approveSelectedPOI();
+
+    expect(emitSpy).not.toHaveBeenCalled();
+  });
+
+  it('should not emit rejectPOI when no detail POI is selected', () => {
+    const emitSpy = jest.spyOn(component.rejectPOI, 'emit');
+
+    component.rejectSelectedPOI();
+
+    expect(emitSpy).not.toHaveBeenCalled();
+  });
+
+  it('should open and close detail dialog', async () => {
+    usersServiceMock.getUserById.mockReturnValue(
+      throwError(() => new Error('not found'))
+    );
+
+    await component.openDetail(mockPOI);
+    expect(component.selectedPOIForDetail()).toEqual(mockPOI);
+
+    component.closeDetail();
+    expect(component.selectedPOIForDetail()).toBeNull();
+    expect(component.ownerDisplay()).toBe('');
+  });
+
+  it('should resolve owner display from user service', async () => {
+    const communityPoi = new POI({
+      id: '2',
+      name: 'Community POI',
+      description: 'A community POI',
+      source: 'COMMUNITY',
+      userId: '16',
+      types: ['RESTAURANT'],
+      photos: [],
+      images: [],
+      latitude: 48.8566,
+      longitude: 2.3522,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      status: 'DRAFT',
     });
+    usersServiceMock.getUserById.mockReturnValue(
+      of({
+        id: '16',
+        firstname: 'Jean',
+        lastname: 'Dupont',
+      })
+    );
+
+    await component.openDetail(communityPoi);
+
+    expect(component.ownerDisplay()).toBe('(#16) DUPONT Jean');
+  });
+
+  it('should fall back to source label when there is no owner id', async () => {
+    const officialPoi = new POI({
+      id: '3',
+      name: 'Official POI',
+      description: 'An official POI',
+      source: 'OFFICIAL',
+      userId: null,
+      types: ['RESTAURANT'],
+      photos: [],
+      images: [],
+      latitude: 48.8566,
+      longitude: 2.3522,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      status: 'PUBLISHED',
+    });
+
+    await component.openDetail(officialPoi);
+
+    expect(component.ownerDisplay()).toBe('HIKE.SOURCE.OFFICIAL');
+  });
+
+  it('should return official source translation key by default', () => {
+    expect(component.getSourceTranslationKey(undefined)).toBe(
+      'HIKE.SOURCE.OFFICIAL'
+    );
+  });
+
+  it('should show unknown user fallback when owner lookup fails', async () => {
+    const communityPoi = new POI({
+      id: '4',
+      name: 'Fallback POI',
+      description: 'Fallback owner',
+      source: 'COMMUNITY',
+      userId: '42',
+      types: ['RESTAURANT'],
+      photos: [],
+      images: [],
+      latitude: 48.8566,
+      longitude: 2.3522,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      status: 'DRAFT',
+    });
+    usersServiceMock.getUserById.mockReturnValue(
+      throwError(() => new Error('not found'))
+    );
+
+    await component.openDetail(communityPoi);
+
+    expect(component.ownerDisplay()).toBe('(#42) Utilisateur introuvable');
+  });
+
+  it('should emit status filter changes', () => {
+    const emitSpy = jest.spyOn(component.statusFilterChange, 'emit');
+
+    component.applyStatusFilter('DRAFT');
+    component.applyStatusFilter(null);
+
+    expect(emitSpy).toHaveBeenNthCalledWith(1, 'DRAFT');
+    expect(emitSpy).toHaveBeenNthCalledWith(2, null);
+  });
+
+  it('should return the POI category translation key', () => {
+    expect(component.getCategoryTranslationKey('RESTAURANT')).toBe(
+      'POI.CATEGORY.RESTAURANT'
+    );
   });
 
   describe('displayPOIMap', () => {

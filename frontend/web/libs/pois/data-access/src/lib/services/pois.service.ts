@@ -21,7 +21,9 @@ export class POIsService {
 
   getPOIs(): Observable<POI[]> {
     return this.#http
-      .get<{ items: IDB_POI[] }>(`${this.#apiUrl}/hike/pois`)
+      .get<{ items: IDB_POI[] }>(`${this.#apiUrl}/hike/mapElements`, {
+        params: new HttpParams().set('type', 'POINT_OF_INTEREST'),
+      })
       .pipe(
         map((response) => {
           return response.items.map((poi) => new POI(poi));
@@ -59,24 +61,14 @@ export class POIsService {
     if (queryParams?.order) {
       params = params.set('order', queryParams.order);
     }
-    if (queryParams?.latitude !== undefined) {
-      params = params.set('latitude', queryParams.latitude.toString());
-    }
-    if (queryParams?.longitude !== undefined) {
-      params = params.set('longitude', queryParams.longitude.toString());
-    }
-    if (queryParams?.radius !== undefined) {
-      params = params.set('radius', queryParams.radius.toString());
-    }
-    if (queryParams?.distance !== undefined) {
-      params = params.set('distance', queryParams.distance.toString());
-    }
-    if (queryParams?.difficulty) {
-      params = params.set('difficulty', queryParams.difficulty);
+    if (queryParams?.status) {
+      params = params.set('status', queryParams.status);
     }
 
     return this.#http
-      .get<PaginatedPOIsResponse>(`${this.#apiUrl}/hike/pois`, { params })
+      .get<PaginatedPOIsResponse>(`${this.#apiUrl}/hike/administration/pois`, {
+        params,
+      })
       .pipe(
         map((response) => {
           // Filter out items without id before creating POI instances
@@ -99,7 +91,11 @@ export class POIsService {
   }
 
   getPOIById(id: string): Observable<POI> {
-    return this.#http.get<IDB_POI>(`${this.#apiUrl}/hike/pois/${id}`).pipe(
+    return this.#http
+      .get<IDB_POI>(`${this.#apiUrl}/hike/mapElement/${id}`, {
+        params: new HttpParams().set('type', 'POINT_OF_INTEREST'),
+      })
+      .pipe(
       map((poi) => new POI(poi)),
       catchError((error) => {
         this.#messageService.add({
@@ -124,11 +120,13 @@ export class POIsService {
       name: poi.name,
       description: poi.description,
       comment: poi.comment,
+      type: 'POINT_OF_INTEREST',
+      source: poi.source,
+      userId: poi.userId ?? null,
       categories,
       photos: poi.photos || [],
       latitude: poi.latitude,
       longitude: poi.longitude,
-      status: poi.status,
       createdAt: poi.createdAt
         ? typeof poi.createdAt === 'string'
           ? poi.createdAt
@@ -142,7 +140,7 @@ export class POIsService {
     };
 
     return this.#http
-      .post<IDB_POI>(`${this.#apiUrl}/hike/pois`, apiPayload)
+      .post<IDB_POI>(`${this.#apiUrl}/hike/mapElement`, apiPayload)
       .pipe(
         map((poi) => new POI(poi)),
         catchError((error) => {
@@ -150,6 +148,23 @@ export class POIsService {
             severity: 'error',
             summary: 'Erreur',
             detail: 'Impossible de créer le POI',
+          });
+          return throwError(() => error);
+        })
+      );
+  }
+
+  deletePOI(id: string): Observable<void> {
+    return this.#http
+      .delete<void>(`${this.#apiUrl}/hike/administration/mapElement/${id}`, {
+        params: new HttpParams().set('type', 'POINT_OF_INTEREST'),
+      })
+      .pipe(
+        catchError((error) => {
+          this.#messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Impossible de supprimer le POI',
           });
           return throwError(() => error);
         })
@@ -168,6 +183,9 @@ export class POIsService {
       name: poi.name,
       description: poi.description,
       comment: poi.comment,
+      type: 'POINT_OF_INTEREST',
+      source: poi.source,
+      userId: poi.userId ?? null,
       categories,
       photos: poi.photos || [],
       latitude: poi.latitude,
@@ -186,7 +204,10 @@ export class POIsService {
     };
 
     return this.#http
-      .put<IDB_POI>(`${this.#apiUrl}/hike/pois/${poi.id}`, apiPayload)
+      .put<IDB_POI>(
+        `${this.#apiUrl}/hike/administration/mapElement/${poi.id}`,
+        apiPayload
+      )
       .pipe(
         map((poi) => new POI(poi)),
         catchError((error) => {
@@ -200,19 +221,6 @@ export class POIsService {
       );
   }
 
-  deletePOI(id: string): Observable<void> {
-    return this.#http.delete<void>(`${this.#apiUrl}/hike/pois/${id}`).pipe(
-      catchError((error) => {
-        this.#messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Impossible de supprimer le POI',
-        });
-        return throwError(() => error);
-      })
-    );
-  }
-
   getConfigurations(): Observable<POIConfiguration> {
     return this.#http
       .get<{
@@ -221,14 +229,18 @@ export class POIsService {
         seasons: string[];
         sources: string[];
         point_of_interest_categories: string[];
+        map_element_categories?: string[];
       }>(`${this.#apiUrl}hike/configurations`)
       .pipe(
         map((response) => {
           // Extraire seulement les catégories POI et les status
           return {
             point_of_interest_categories:
-              response.point_of_interest_categories || [],
+              response.point_of_interest_categories ||
+              response.map_element_categories ||
+              [],
             status: response.status || [],
+            sources: response.sources || [],
           };
         }),
         catchError((error) => {
@@ -240,5 +252,11 @@ export class POIsService {
           return throwError(() => error);
         })
       );
+  }
+
+  getPendingApprovalCount(): Observable<number> {
+    return this.searchPOIs({ page: 1, limit: 1, status: 'DRAFT' }).pipe(
+      map((response) => response.totalItems ?? 0)
+    );
   }
 }

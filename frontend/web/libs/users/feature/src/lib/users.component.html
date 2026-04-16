@@ -1,5 +1,5 @@
 <!-- Container principal -->
-<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+<div class="min-h-screen  p-6">
   <!-- En-tête avec fond blanc -->
   <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
     <div class="flex items-center justify-between flex-wrap gap-4">
@@ -144,15 +144,27 @@
           </td>
           <td>
             <div class="flex items-center gap-3">
-              <div
-                class="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-bold text-sm shadow-md"
+              @if (getProfilePictureUrl(user)) {
+                <img
+                  [src]="getProfilePictureUrl(user)"
+                  [alt]="user.firstname + ' ' + user.lastname"
+                  class="w-10 h-10 rounded-xl object-cover shadow-md"
+                />
+              } @else {
+                <div
+                  class="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-bold text-sm shadow-md"
+                >
+                  {{ user.firstname.charAt(0).toUpperCase()
+                  }}{{ user.lastname.charAt(0).toUpperCase() }}
+                </div>
+              }
+              <button
+                type="button"
+                class="text-left text-gray-900 font-medium hover:text-blue-600 hover:underline transition-colors"
+                (click)="viewUserDetails(user)"
               >
-                {{ user.firstname.charAt(0).toUpperCase()
-                }}{{ user.lastname.charAt(0).toUpperCase() }}
-              </div>
-              <span class="text-gray-900 font-medium">{{
-                user.firstname
-              }}</span>
+                {{ user.firstname }}
+              </button>
             </div>
           </td>
           <td>
@@ -188,13 +200,13 @@
           <td style="text-align: center">
             <div class="flex gap-1 justify-center">
               <p-button
-                icon="pi pi-history"
+                icon="pi pi-eye"
                 severity="info"
                 size="small"
                 [text]="true"
                 [rounded]="true"
                 (click)="viewUserDetails(user)"
-                [pTooltip]="'HIKE.HISTORY.TITLE' | translate"
+                [pTooltip]="'USER.VIEW_DETAILS' | translate"
               />
               <p-button
                 icon="pi pi-key"

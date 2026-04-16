@@ -9,6 +9,11 @@ interface ImportMetaEnv {
    * Required for authentication forms.
    */
   readonly VITE_TURNSTILE_SITE_KEY?: string;
+  /**
+   * Base URL for S3/MinIO images (e.g. profile pictures). Path is appended.
+   * Must be prefixed with VITE_ to be exposed by Vite.
+   */
+  readonly VITE_IMAGES_BASE_URL?: string;
 }
 
 interface ImportMeta {

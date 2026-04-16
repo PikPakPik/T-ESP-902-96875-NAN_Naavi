@@ -1,31 +1,40 @@
 <!-- Container principal -->
-<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+<div class="min-h-screen  p-3 sm:p-4 md:p-6">
   <!-- En-tête avec fond blanc -->
-  <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
-    <div class="flex items-center justify-between flex-wrap gap-4">
-      <div class="flex items-center gap-4">
+  <div class="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-6 mb-4 sm:mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between flex-wrap gap-3 sm:gap-4">
+      <div class="flex items-center gap-3 sm:gap-4">
         <div
-          class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg"
+          class="w-10 h-10 sm:w-12 sm:h-12 shrink-0 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg"
         >
-          <i class="pi pi-compass text-white text-2xl"></i>
+          <i class="pi pi-compass text-white text-xl sm:text-2xl"></i>
         </div>
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900">
+        <div class="min-w-0">
+          <h1 class="text-xl sm:text-2xl font-bold text-gray-900">
             {{ 'HIKE.TITLE' | translate }}
           </h1>
-          <p class="text-sm text-gray-500">{{ 'HIKE.SUBTITLE' | translate }}</p>
+          <p class="text-xs sm:text-sm text-gray-500">{{ 'HIKE.SUBTITLE' | translate }}</p>
         </div>
       </div>
+      <div class="flex flex-wrap gap-2">
       <p-button
         [label]="'HIKE.NEW' | translate"
         icon="pi pi-plus"
         (click)="openNewDialog()"
       />
+      <p-button
+        [label]="'COMMON.IMPORT_HIKES' | translate"
+        icon="pi pi-file-import"
+        [outlined]="true"
+        severity="secondary"
+        (click)="importHikes.emit()"
+      />
+      </div>
     </div>
 
     <!-- Barre de recherche -->
-    <div class="mt-6 flex flex-wrap items-center gap-3">
-      <div class="flex-1 min-w-[300px]">
+    <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 sm:gap-3">
+      <div class="flex-1 min-w-0 sm:min-w-[280px]">
         <p-iconfield iconPosition="left" class="w-full">
           <p-inputicon>
             <i class="pi pi-search"></i>
@@ -75,7 +84,7 @@
   <!-- Message de localisation requis -->
   @if (needsLocation()) {
   <div
-    class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-sm p-6 mb-6 border-2 border-blue-200"
+    class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-6 mb-4 sm:mb-6 border-2 border-blue-200"
   >
     <div class="flex items-start gap-4">
       <div class="flex-shrink-0">
@@ -113,7 +122,7 @@
   }
 
   <!-- Tableau -->
-  <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+  <div class="bg-white rounded-xl sm:rounded-2xl shadow-sm overflow-x-auto">
     <p-table
       #dt
       dataKey="id"
@@ -127,7 +136,7 @@
       [loading]="loading()"
       [paginator]="true"
       [lazy]="true"
-      [globalFilterFields]="['name', 'description', 'difficulty']"
+      [globalFilterFields]="['name', 'description', 'difficulty', 'status']"
       [first]="(currentPage() - 1) * rowsPerPage()"
       [totalRecords]="totalRecords()"
       (onPage)="onPageChange($event)"
@@ -166,6 +175,18 @@
               {{ 'HIKE.ELEVATION' | translate }}
               <p-sortIcon field="elevation" />
             </div>
+          </th>
+          <th pSortableColumn="status" style="min-width: 8rem">
+            <div class="flex items-center gap-2">
+              {{ 'COMMON.STATUS' | translate }}
+              <p-sortIcon field="status" />
+            </div>
+          </th>
+          <th style="min-width: 8rem">
+            <div class="flex items-center gap-2">Visibilité</div>
+          </th>
+          <th style="min-width: 9rem">
+            <div class="flex items-center gap-2">Propriétaire</div>
           </th>
           <th style="width: 6rem; text-align: center">
             {{ 'HIKE.MAP' | translate }}
@@ -232,6 +253,25 @@
               }}</span>
             </div>
           </td>
+          <td>
+            <p-tag
+              [value]="'HIKE.STATUS.' + (hike.status ?? '') | translate"
+              [severity]="getStatusSeverity(hike.status)"
+              [rounded]="true"
+            />
+          </td>
+          <td>
+            <p-tag
+              [value]="getVisibilityLabel(hike.visibility)"
+              [severity]="getVisibilitySeverity(hike.visibility)"
+              [rounded]="true"
+            />
+          </td>
+          <td>
+            <span class="text-sm text-gray-700 font-medium">
+              {{ getOwnerLabel(hike) }}
+            </span>
+          </td>
           <td style="text-align: center">
             @if (hike.coordinates && hike.coordinates.length > 0) {
             <p-button
@@ -273,7 +313,7 @@
       </ng-template>
       <ng-template #emptymessage>
         <tr>
-          <td colspan="8">
+          <td colspan="11">
             <div class="py-20 text-center">
               <div
                 class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-green-50 to-green-100 mb-6"
@@ -301,7 +341,7 @@
 
 <p-dialog
   [(visible)]="hikeDialog"
-  [style]="{ width: '600px' }"
+  [style]="{ width: '95vw', maxWidth: '600px' }"
   [header]="'HIKE.DETAILS_TITLE' | translate"
   [modal]="true"
 >
@@ -346,7 +386,7 @@
         }
       </div>
 
-      <div class="grid grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div>
           <label for="difficulty" class="block font-bold mb-3"
             >{{ 'HIKE.DIFFICULTY' | translate }} *</label

@@ -5,7 +5,6 @@ import {
   signalStore,
   withMethods,
   withState,
-  withHooks,
 } from '@ngrx/signals';
 import { withLogger } from '@web/shared/util/signal-stores/logger';
 import {
@@ -20,7 +19,6 @@ import {
   ACCESS_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
   deleteCookie,
-  getCookie,
   setCookie,
 } from '@web/shared/util';
 import { inject } from '@angular/core';
@@ -33,6 +31,7 @@ const defaultUser: User = {
   email: '',
   firstname: '',
   lastname: '',
+  profilePicture: null,
   roles: [],
   status: 'UNVERIFIED',
 };
@@ -179,33 +178,19 @@ export const AuthStore = signalStore(
         patchState(store, setPending());
         try {
           await lastValueFrom(authService.logout());
+        } catch (error: unknown) {
+          patchState(store, setError(getErrorMessage(error, translateService)));
+          // Continue: best-effort logout even if API fails (e.g. session already invalid)
+        } finally {
           deleteCookie(ACCESS_TOKEN_COOKIE, { path: '/' });
           deleteCookie(REFRESH_TOKEN_COOKIE, { path: '/' });
           patchState(store, { user: defaultUser }, setFulfilled());
-        } catch (error: unknown) {
-          patchState(store, setError(getErrorMessage(error, translateService)));
         }
+      },
+
+      clearError(): void {
+        patchState(store, setFulfilled());
       },
     })
   ),
-  withHooks({
-    onInit(store) {
-      // Vérifier si un token existe avant de charger l'utilisateur
-      const accessToken = getCookie(ACCESS_TOKEN_COOKIE);
-      if (!accessToken) {
-        return;
-      }
-
-      // Charger l'utilisateur automatiquement si des tokens existent
-      try {
-        store.currentUser().catch(() => {
-          // Silently fail - the guard will handle redirects
-          console.debug('AuthStore: No authenticated user found on init');
-        });
-      } catch (error) {
-        // Handle synchronous errors during initialization
-        console.debug('AuthStore: Error during initialization', error);
-      }
-    },
-  })
 );

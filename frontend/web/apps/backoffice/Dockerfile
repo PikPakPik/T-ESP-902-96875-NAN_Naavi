@@ -6,6 +6,7 @@ FROM registry.gitlab.com/epitech-msc-2026/ci-factory/naavi-node24-pnpm-git-alpin
 # Build arguments for environment variables
 ARG MAPBOX_TOKEN
 ARG TURNSTILE_SITE_KEY
+ARG IMAGES_BASE_URL
 ARG BUILD_CONFIG=production
 
 WORKDIR /app
@@ -24,8 +25,8 @@ COPY . .
 # Injecter la configuration define dans project.json pour remplacer import.meta.env au build time
 # La valeur de define doit être une string JSON qui sera évaluée par esbuild
 RUN apk add --no-cache jq && \
-    jq --arg token "${MAPBOX_TOKEN:-}" --arg turnstile "${TURNSTILE_SITE_KEY:-}" --arg config "${BUILD_CONFIG}" \
-    '.targets.build.configurations[$config].define = {"import.meta.env": ("{\"VITE_MAPBOX_TOKEN\":\"" + $token + "\",\"VITE_TURNSTILE_SITE_KEY\":\"" + $turnstile + "\"}")}' \
+    jq --arg token "${MAPBOX_TOKEN:-}" --arg turnstile "${TURNSTILE_SITE_KEY:-}" --arg images "${IMAGES_BASE_URL:-}" --arg config "${BUILD_CONFIG}" \
+    '.targets.build.configurations[$config].define = {"import.meta.env": ("{\"VITE_MAPBOX_TOKEN\":\"" + $token + "\",\"VITE_TURNSTILE_SITE_KEY\":\"" + $turnstile + "\",\"VITE_IMAGES_BASE_URL\":\"" + $images + "\"}")}' \
     apps/backoffice/project.json > apps/backoffice/project.json.tmp && \
     mv apps/backoffice/project.json.tmp apps/backoffice/project.json
 

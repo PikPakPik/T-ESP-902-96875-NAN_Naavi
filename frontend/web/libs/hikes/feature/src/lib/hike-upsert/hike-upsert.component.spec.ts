@@ -4,13 +4,14 @@ import { HikesStore, HikeDetailStore } from '@web/hikes/data-access';
 import { Router, ActivatedRoute } from '@angular/router';
 import { signal, NO_ERRORS_SCHEMA, ChangeDetectorRef } from '@angular/core';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { of, Observable } from 'rxjs';
+import { of, Observable, throwError } from 'rxjs';
 import { MapboxService } from '@web/shared/util';
 import { MessageService } from 'primeng/api';
 import { NgForm } from '@angular/forms';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { Marker } from 'mapbox-gl';
 import { Coordinate, Hike } from '@web/shared/models/settings';
+import { UsersService } from '@web/users/data-access';
 
 describe('HikeUpsertComponent', () => {
   let component: HikeUpsertComponent;
@@ -19,6 +20,7 @@ describe('HikeUpsertComponent', () => {
   let router: jest.Mocked<Router>;
   let mapboxService: jest.Mocked<MapboxService>;
   let messageService: jest.Mocked<MessageService>;
+  let usersService: jest.Mocked<UsersService>;
   let translateService: TranslateService;
 
   beforeEach(async () => {
@@ -26,6 +28,7 @@ describe('HikeUpsertComponent', () => {
       difficulties: signal(['EASY', 'MEDIUM', 'HARD']),
       status: signal(['DRAFT', 'PUBLISHED']),
       sources: signal(['OFFICIAL', 'COMMUNITY']),
+      visibilities: signal(['PUBLIC', 'PRIVATE', 'UNLISTED']),
       seasons: signal(['SPRING', 'SUMMER', 'FALL', 'WINTER']),
       create: jest.fn(),
       update: jest.fn(),
@@ -58,6 +61,9 @@ describe('HikeUpsertComponent', () => {
           },
         ],
       }),
+      getElevationsForCoordinates: jest.fn((coordinates: Coordinate[]) =>
+        Promise.resolve(coordinates)
+      ),
     } as unknown as jest.Mocked<MapboxService>;
 
     messageService = {
@@ -77,6 +83,21 @@ describe('HikeUpsertComponent', () => {
       load: jest.fn(),
     } as unknown as jest.Mocked<typeof HikeDetailStore>;
 
+    usersService = {
+      getUsers: jest.fn(() =>
+        of({
+          usersInstances: [],
+        } as any)
+      ),
+      getUserById: jest.fn(() =>
+        of({
+          id: '1',
+          firstname: 'John',
+          lastname: 'Doe',
+        } as any)
+      ),
+    } as unknown as jest.Mocked<UsersService>;
+
     await TestBed.configureTestingModule({
       imports: [HikeUpsertComponent, TranslateModule.forRoot()],
       providers: [
@@ -86,6 +107,7 @@ describe('HikeUpsertComponent', () => {
         { provide: MapboxService, useValue: mapboxService },
         { provide: MessageService, useValue: messageService },
         { provide: HikeDetailStore, useValue: hikeDetailStoreMock },
+        { provide: UsersService, useValue: usersService },
         { provide: TranslateService, useValue: translateServiceMock },
       ],
       schemas: [NO_ERRORS_SCHEMA],
@@ -96,6 +118,7 @@ describe('HikeUpsertComponent', () => {
           providers: [
             { provide: MessageService, useValue: messageService },
             { provide: HikeDetailStore, useValue: hikeDetailStoreMock },
+            { provide: UsersService, useValue: usersService },
           ],
         },
       })
@@ -551,6 +574,49 @@ describe('HikeUpsertComponent', () => {
     });
   });
 
+  describe('computed options', () => {
+    it('should map difficulties and status options from the store', () => {
+      expect(component.difficulties()).toEqual([
+        { label: 'HIKE.DIFFICULTY.EASY', value: 'EASY' },
+        { label: 'HIKE.DIFFICULTY.MEDIUM', value: 'MEDIUM' },
+        { label: 'HIKE.DIFFICULTY.HARD', value: 'HARD' },
+      ]);
+      expect(component.statusOptions()).toEqual([
+        { label: 'HIKE.STATUS.DRAFT', value: 'DRAFT' },
+        { label: 'HIKE.STATUS.PUBLISHED', value: 'PUBLISHED' },
+      ]);
+    });
+
+    it('should fall back to default source options when the store is empty', () => {
+      hikesStore.sources = signal([]);
+
+      expect(component.sourceOptions()).toEqual([
+        { label: 'OFFICIAL', value: 'OFFICIAL' },
+        { label: 'COMMUNITY', value: 'COMMUNITY' },
+      ]);
+    });
+
+    it('should exclude PRIVATE visibility for official hikes', () => {
+      component.source.set('OFFICIAL');
+
+      expect(component.visibilityOptions().map((option) => option.value)).toEqual([
+        'PUBLIC',
+        'UNLISTED',
+      ]);
+    });
+
+    it('should keep all visibility values for community hikes', () => {
+      component.source.set('COMMUNITY');
+
+      expect(component.visibilityOptions().map((option) => option.value)).toEqual([
+        'PUBLIC',
+        'PRIVATE',
+        'UNLISTED',
+      ]);
+      expect(component.isCommunitySource()).toBe(true);
+    });
+  });
+
   describe('loadHikeForEdit', () => {
     beforeEach(() => {
       jest.clearAllMocks();
@@ -586,13 +652,12 @@ describe('HikeUpsertComponent', () => {
       expect(component.isEditMode()).toBe(true);
       expect(component.hikeId()).toBe('1');
       expect(component.location()).toBe('');
-      expect(component.source()).toBe('');
-      expect(component.seasons()).toEqual([]);
+      expect(component.source()).toBe('OFFICIAL');
       expect(component.elevationGain()).toBe(0);
       expect(component.elevationLoss()).toBe(0);
     });
 
-    it('should recalculate distance when distance is missing or zero', () => {
+    it('should recalculate distance when distance is missing or zero', async () => {
       const mockHike = new Hike({
         id: '1',
         name: 'Test Hike',
@@ -621,12 +686,12 @@ describe('HikeUpsertComponent', () => {
         'recalculateDistance' as any
       );
 
-      component.loadHikeForEdit(mockHike);
+      await component.loadHikeForEdit(mockHike);
 
       expect(recalculateDistanceSpy).toHaveBeenCalled();
     });
 
-    it('should recalculate elevation when elevationGain is missing or zero', () => {
+    it('should recalculate elevation when elevationGain is missing or zero', async () => {
       const mockHike = new Hike({
         id: '1',
         name: 'Test Hike',
@@ -656,7 +721,7 @@ describe('HikeUpsertComponent', () => {
         'recalculateElevation' as any
       );
 
-      component.loadHikeForEdit(mockHike);
+      await component.loadHikeForEdit(mockHike);
 
       expect(recalculateElevationSpy).toHaveBeenCalled();
     });
@@ -688,6 +753,183 @@ describe('HikeUpsertComponent', () => {
 
       jest.spyOn(console, 'error').mockRestore();
       (component.name.set as jest.Mock).mockRestore();
+    });
+  });
+
+  describe('owner display handling', () => {
+    it('should load the owner display with an official fallback', async () => {
+      await component['loadOwnerDisplay'](null, 'OFFICIAL');
+
+      expect(component.ownerDisplay()).toBe('Officielle');
+    });
+
+    it('should load the owner display with a community fallback', async () => {
+      await component['loadOwnerDisplay'](null, 'COMMUNITY');
+
+      expect(component.ownerDisplay()).toBe('Communauté');
+    });
+
+    it('should load the owner full name when the user exists', async () => {
+      usersService.getUserById.mockReturnValueOnce(
+        of({
+          id: '16',
+          firstname: 'Jean',
+          lastname: 'Dupont',
+        } as any)
+      );
+
+      await component['loadOwnerDisplay']('16', 'COMMUNITY');
+
+      expect(component.ownerDisplay()).toBe('(#16) DUPONT Jean');
+    });
+
+    it('should show only the id when the owner has no name', async () => {
+      usersService.getUserById.mockReturnValueOnce(
+        of({
+          id: '16',
+          firstname: '',
+          lastname: '',
+        } as any)
+      );
+
+      await component['loadOwnerDisplay']('16', 'COMMUNITY');
+
+      expect(component.ownerDisplay()).toBe('(#16)');
+    });
+
+    it('should show a missing user label when owner lookup fails', async () => {
+      usersService.getUserById.mockReturnValueOnce(
+        throwError(() => new Error('missing'))
+      );
+
+      await component['loadOwnerDisplay']('16', 'COMMUNITY');
+
+      expect(component.ownerDisplay()).toBe('(#16) Utilisateur introuvable');
+    });
+  });
+
+  describe('onSourceChange', () => {
+    it('should reset official source state and force PUBLIC visibility when needed', async () => {
+      component.selectedUserId.set('16');
+      component.visibility.set('PRIVATE');
+
+      await component.onSourceChange('OFFICIAL');
+
+      expect(component.source()).toBe('OFFICIAL');
+      expect(component.selectedUserId()).toBeNull();
+      expect(component.ownerDisplay()).toBe('Officielle');
+      expect(component.visibility()).toBe('PUBLIC');
+    });
+
+    it('should keep community fallback when no owner is selected', async () => {
+      component.selectedUserId.set(null);
+
+      await component.onSourceChange('COMMUNITY');
+
+      expect(component.source()).toBe('COMMUNITY');
+      expect(component.ownerDisplay()).toBe('Communauté');
+    });
+
+    it('should resolve the selected owner when switching to community', async () => {
+      usersService.getUserById.mockReturnValueOnce(
+        of({
+          id: '16',
+          firstname: 'Jean',
+          lastname: 'Dupont',
+        } as any)
+      );
+      component.selectedUserId.set('16');
+
+      await component.onSourceChange('COMMUNITY');
+
+      expect(component.ownerDisplay()).toBe('(#16) DUPONT Jean');
+    });
+  });
+
+  describe('onOwnerUserChange', () => {
+    it('should set community label when owner is cleared', async () => {
+      await component.onOwnerUserChange(null);
+
+      expect(component.selectedUserId()).toBeNull();
+      expect(component.ownerDisplay()).toBe('Communauté');
+    });
+
+    it('should normalize string values like undefined and null', () => {
+      expect(component['normalizeUserId'](undefined)).toBeNull();
+      expect(component['normalizeUserId'](null)).toBeNull();
+      expect(component['normalizeUserId']('   ')).toBeNull();
+      expect(component['normalizeUserId']('undefined')).toBeNull();
+      expect(component['normalizeUserId']('null')).toBeNull();
+      expect(component['normalizeUserId'](' 16 ')).toBe('16');
+    });
+
+    it('should resolve an owner full name', async () => {
+      usersService.getUserById.mockReturnValueOnce(
+        of({
+          id: '16',
+          firstname: 'Jean',
+          lastname: 'Dupont',
+        } as any)
+      );
+
+      await component.onOwnerUserChange('16');
+
+      expect(component.selectedUserId()).toBe('16');
+      expect(component.ownerDisplay()).toBe('(#16) DUPONT Jean');
+    });
+
+    it('should show only the id when owner name fields are empty', async () => {
+      usersService.getUserById.mockReturnValueOnce(
+        of({
+          id: '16',
+          firstname: '',
+          lastname: '',
+        } as any)
+      );
+
+      await component.onOwnerUserChange('16');
+
+      expect(component.ownerDisplay()).toBe('(#16)');
+    });
+
+    it('should show an error label when owner lookup fails', async () => {
+      usersService.getUserById.mockReturnValueOnce(
+        throwError(() => new Error('missing'))
+      );
+
+      await component.onOwnerUserChange('16');
+
+      expect(component.ownerDisplay()).toBe('(#16) Utilisateur introuvable');
+    });
+  });
+
+  describe('loadUsersOptions', () => {
+    it('should map the returned users to select options', async () => {
+      usersService.getUsers.mockReturnValueOnce(
+        of({
+          usersInstances: [
+            { id: '16', firstname: 'Jean', lastname: 'Dupont' },
+            { id: '17', firstname: 'Marie', lastname: 'Curie' },
+          ],
+        } as any)
+      );
+
+      await component['loadUsersOptions']();
+
+      expect(component.usersOptions()).toEqual([
+        { value: '16', label: '(#16) DUPONT Jean' },
+        { value: '17', label: '(#17) CURIE Marie' },
+      ]);
+    });
+
+    it('should clear options when loading users fails', async () => {
+      usersService.getUsers.mockReturnValueOnce(
+        throwError(() => new Error('failure'))
+      );
+
+      await component['loadUsersOptions']();
+
+      expect(component.usersOptions()).toEqual([]);
     });
   });
 

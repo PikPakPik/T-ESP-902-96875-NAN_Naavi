@@ -7,6 +7,7 @@ export interface IDB_User {
   roles: string[];
   status: string;
   permissions?: string[];
+  profilePicture?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }

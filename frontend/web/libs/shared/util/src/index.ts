@@ -5,3 +5,4 @@ export * from './lib/cookie-service';
 export * from './lib/mapbox.service';
 export * from './lib/language-service';
 export * from './lib/turnstile-service';
+export * from './lib/validators';

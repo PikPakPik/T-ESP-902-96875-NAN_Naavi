@@ -1,5 +1,5 @@
 <!-- Container principal -->
-<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+<div class="min-h-screen  p-6">
   <!-- En-tête avec fond blanc -->
   <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
     <div class="flex items-center justify-between flex-wrap gap-4">
@@ -42,13 +42,25 @@
         </p-iconfield>
       </div>
       <p-button
-        icon="pi pi-map-marker"
-        [outlined]="true"
-        severity="success"
-        (click)="locationSearch.emit()"
-        [pTooltip]="'POI.LOCATION_TOOLTIP' | translate"
-        [label]="'POI.LOCATION' | translate"
+        icon="pi pi-list"
+        [outlined]="selectedStatus() !== null"
+        severity="secondary"
+        (click)="applyStatusFilter(null)"
+        [label]="'COMMON.ALL' | translate"
       />
+      <p-button
+        icon="pi pi-clock"
+        [outlined]="selectedStatus() !== 'DRAFT'"
+        severity="warn"
+        (click)="applyStatusFilter('DRAFT')"
+        [label]="'POI.STATUS.DRAFT' | translate"
+      />
+      <div class="flex items-center gap-2 bg-amber-50 px-4 py-2 rounded-lg">
+        <span class="text-sm font-medium text-amber-700">
+          {{ pendingApprovalCount() }}
+          {{ 'POI.STATUS.DRAFT' | translate }}
+        </span>
+      </div>
       <p-button
         icon="pi pi-filter-slash"
         [outlined]="true"
@@ -73,46 +85,6 @@
       }
     </div>
   </div>
-
-  <!-- Message de localisation requis -->
-  @if (needsLocation()) {
-  <div
-    class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-sm p-6 mb-6 border-2 border-blue-200"
-  >
-    <div class="flex items-start gap-4">
-      <div class="flex-shrink-0">
-        <div
-          class="w-12 h-12 rounded-xl flex items-center justify-center"
-        >
-          <i class="pi pi-map-marker text-white text-2xl"></i>
-        </div>
-      </div>
-      <div class="flex-1">
-        <h3 class="text-lg font-bold text-gray-900 mb-2">
-          {{ 'POI.LOCATION_REQUIRED_TITLE' | translate }}
-        </h3>
-        <p class="text-gray-700 mb-4">
-          {{ 'POI.LOCATION_REQUIRED_DESCRIPTION' | translate }}
-        </p>
-        <div class="flex flex-wrap gap-3">
-          <p-button
-            [label]="'POI.SET_PARIS' | translate"
-            icon="pi pi-map"
-            severity="info"
-            (click)="setParisLocation()"
-          />
-          <p-button
-            [label]="'POI.CHOOSE_LOCATION' | translate"
-            icon="pi pi-map-marker"
-            [outlined]="true"
-            severity="success"
-            (click)="locationSearch.emit()"
-          />
-        </div>
-      </div>
-    </div>
-  </div>
-  }
 
   <!-- Tableau -->
   <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -175,11 +147,15 @@
           <td>
             <div class="flex items-center gap-3">
               <div
-                class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold shadow-md"
+                class="w-10 h-10 min-w-10 min-h-10 shrink-0 rounded-xl bg-white border border-orange-100 flex items-center justify-center shadow-md overflow-hidden"
               >
-                <i class="pi pi-map-marker"></i>
+                <img
+                  [src]="getCategoryIconPath(poi.types[0])"
+                  [alt]="poi.types[0] || poi.name"
+                  class="h-7 w-7 object-contain"
+                />
               </div>
-              <div>
+              <div class="min-w-0">
                 <div class="font-semibold text-gray-900">{{ poi.name }}</div>
                 @if (poi.photos && poi.photos.length > 0) {
                 <div class="text-xs text-gray-500 flex items-center gap-1">
@@ -242,6 +218,15 @@
           </td>
           <td style="text-align: center">
             <div class="flex gap-1 justify-center">
+              <p-button
+                icon="pi pi-eye"
+                severity="info"
+                size="small"
+                [text]="true"
+                [rounded]="true"
+                (click)="openDetail(poi)"
+                [pTooltip]="'COMMON.DETAILS' | translate"
+              />
               <p-button
                 icon="pi pi-pencil"
                 severity="secondary"
@@ -306,6 +291,7 @@
           [latitude]="poi.latitude"
           [longitude]="poi.longitude"
           [poiId]="poi.id"
+          [category]="poi.types[0] || null"
         />
       </div>
       }
@@ -313,3 +299,154 @@
     }
   </ng-template>
 </p-popover>
+
+<p-dialog
+  [visible]="selectedPOIForDetail() !== null"
+  (visibleChange)="!$event && closeDetail()"
+  [modal]="true"
+  [style]="{ width: '52rem', maxWidth: '95vw' }"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="true"
+>
+  <ng-template #header>
+    @if (selectedPOIForDetail(); as poi) {
+    <div class="flex items-center gap-3">
+      <img
+        [src]="getCategoryIconPath(poi.types[0])"
+        [alt]="poi.types[0] || poi.name"
+        class="h-7 w-7 object-contain"
+      />
+      <span class="font-semibold">{{ poi.name }}</span>
+    </div>
+    }
+  </ng-template>
+
+  @if (selectedPOIForDetail(); as poi) {
+  <div class="grid gap-6 md:grid-cols-2">
+    <div class="space-y-4">
+      <div class="detail-category-card">
+        <div class="detail-category-icon-wrapper">
+          <img
+            [src]="getCategoryIconPath(poi.types[0])"
+            [alt]="poi.types[0] || poi.name"
+            class="detail-category-icon"
+          />
+        </div>
+        <div class="min-w-0">
+          <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            {{ 'POI.TYPE' | translate }}
+          </div>
+          <div class="text-sm font-semibold text-gray-900">
+            {{
+              poi.types[0]
+                ? (getCategoryTranslationKey(poi.types[0]) | translate)
+                : '-'
+            }}
+          </div>
+        </div>
+      </div>
+      @if (poi.photos.length > 0) {
+      <img
+        [src]="poi.photos[0]"
+        [alt]="poi.name"
+        class="h-64 w-full rounded-xl object-cover bg-gray-100"
+      />
+      } @else {
+      <div class="detail-map-container overflow-hidden rounded-xl border border-gray-200">
+        <poi-map
+          [latitude]="poi.latitude"
+          [longitude]="poi.longitude"
+          [poiId]="poi.id"
+          [category]="poi.types[0] || null"
+          [useCategoryIcon]="false"
+        />
+      </div>
+      }
+      @if (poi.photos.length > 0) {
+      <div class="detail-map-container overflow-hidden rounded-xl border border-gray-200">
+        <poi-map
+          [latitude]="poi.latitude"
+          [longitude]="poi.longitude"
+          [poiId]="poi.id"
+          [category]="poi.types[0] || null"
+          [useCategoryIcon]="false"
+        />
+      </div>
+      }
+      <div>
+        <div class="mb-2 text-sm font-semibold text-gray-500">
+          {{ 'POI.DESCRIPTION' | translate }}
+        </div>
+        <p class="text-sm text-gray-800">{{ poi.description }}</p>
+      </div>
+    </div>
+    <div class="space-y-4">
+      <div>
+        <div class="mb-2 text-sm font-semibold text-gray-500">
+          {{ 'COMMON.STATUS' | translate }}
+        </div>
+        <p-tag
+          [value]="'POI.STATUS.' + poi.status | translate"
+          [severity]="getSeverity(poi.status)"
+          [rounded]="true"
+        />
+      </div>
+      <div>
+        <div class="mb-2 text-sm font-semibold text-gray-500">
+          {{ 'COMMON.SOURCE' | translate }}
+        </div>
+        <p-tag
+          [value]="getSourceTranslationKey(poi.source) | translate"
+          [severity]="poi.source === 'COMMUNITY' ? 'warn' : 'success'"
+          [rounded]="true"
+        />
+      </div>
+      <div>
+        <div class="mb-2 text-sm font-semibold text-gray-500">
+          {{ 'COMMON.AUTHOR' | translate }}
+        </div>
+        <div class="text-sm font-semibold text-gray-800">
+          {{ ownerDisplay() }}
+        </div>
+      </div>
+      <div>
+        <div class="mb-2 text-sm font-semibold text-gray-500">
+          {{ 'POI.TYPES' | translate }}
+        </div>
+        <div class="flex flex-wrap gap-2">
+          @for (type of poi.types; track type) {
+          <p-tag
+            [value]="getCategoryTranslationKey(type) | translate"
+            severity="info"
+            [rounded]="true"
+          />
+          }
+        </div>
+      </div>
+      <div>
+        <div class="mb-2 text-sm font-semibold text-gray-500">
+          {{ 'POI.LOCATION' | translate }}
+        </div>
+        <div class="text-sm font-mono text-gray-800">
+          {{ poi.latitude.toFixed(6) }}, {{ poi.longitude.toFixed(6) }}
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-3 pt-4">
+        <p-button
+          icon="pi pi-check"
+          severity="success"
+          [label]="'COMMON.APPROVE' | translate"
+          (click)="approveSelectedPOI()"
+        />
+        <p-button
+          icon="pi pi-times"
+          severity="warn"
+          [label]="'COMMON.REJECT' | translate"
+          (click)="rejectSelectedPOI()"
+        />
+      </div>
+    </div>
+  </div>
+  }
+</p-dialog>

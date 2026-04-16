@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+<div class="min-h-screen  p-6">
   <div class="max-w-6xl mx-auto space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between gap-4 flex-wrap">
@@ -48,11 +48,37 @@
             </div>
           } @else if (user()) {
             <div class="flex items-center gap-4 mb-6">
-              <div
-                class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-bold text-2xl shadow-md"
-                >
-                {{ user()!.firstname.charAt(0).toUpperCase()
-                }}{{ user()!.lastname.charAt(0).toUpperCase() }}
+              <div class="relative group flex-shrink-0 w-16 h-16">
+                @if (profilePictureUrl()) {
+                  <p-image
+                    [src]="profilePictureUrl()!"
+                    [alt]="user()!.fullName"
+                    [preview]="true"
+                    styleClass="w-16 h-16 inline-block overflow-hidden rounded-2xl"
+                    imageClass="w-16 h-16 rounded-2xl object-cover shadow-md block cursor-pointer"
+                    [pTooltip]="'USER.CLICK_TO_ENLARGE' | translate"
+                  />
+                  <button
+                    pButton
+                    type="button"
+                    icon="pi pi-trash"
+                    severity="secondary"
+                    [rounded]="true"
+                    [text]="true"
+                    class="absolute top-0.5 right-0.5 z-10 w-7 h-7 min-w-0 p-0 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-gray-100 border border-gray-200 shadow-sm"
+                    [pTooltip]="'USER.DELETE_PROFILE_PICTURE' | translate"
+                    (click)="$event.stopPropagation(); deleteProfilePicture.emit()"
+                  >
+                    <span class="sr-only">{{ 'USER.DELETE_PROFILE_PICTURE' | translate }}</span>
+                  </button>
+                } @else {
+                  <div
+                    class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-bold text-2xl shadow-md"
+                  >
+                    {{ user()!.firstname.charAt(0).toUpperCase()
+                    }}{{ user()!.lastname.charAt(0).toUpperCase() }}
+                  </div>
+                }
               </div>
               <div>
                 <h2 class="text-xl font-semibold text-gray-900">
@@ -121,6 +147,9 @@
               <p class="text-xs text-gray-500">
                 {{ 'HIKE.HISTORY.SUBTITLE' | translate }}
               </p>
+              <p class="text-xs text-gray-400 mt-1">
+                {{ 'HIKE.HISTORY.DETAIL.CLICK_HINT' | translate }}
+              </p>
             </div>
           </div>
 
@@ -145,7 +174,13 @@
             </ng-template>
 
             <ng-template pTemplate="body" let-item>
-              <tr>
+              <tr
+                class="cursor-pointer hover:bg-green-50 transition-colors"
+                tabindex="0"
+                (click)="openHistoryDetail(item)"
+                (keydown.enter)="openHistoryDetail(item)"
+                (keydown.space)="openHistoryDetail(item); $event.preventDefault()"
+              >
                 <td>
                   <span class="text-gray-900 font-medium">{{ item.hike }}</span>
                 </td>
@@ -192,3 +227,103 @@
     </div>
   </div>
 </div>
+
+<p-dialog
+  [header]="'HIKE.HISTORY.DETAIL.TITLE' | translate"
+  [visible]="historyDialogVisible()"
+  [modal]="true"
+  [style]="{ width: 'min(96vw, 900px)' }"
+  [draggable]="false"
+  [resizable]="false"
+  (onHide)="closeHistoryDetail()"
+>
+  @if (selectedHistory(); as selected) {
+    <div class="space-y-4">
+      <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+        <h3 class="text-base font-semibold text-gray-900 mb-1">{{ selected.hike }}</h3>
+        <p class="text-xs text-gray-500">
+          {{ 'COMMON.CREATED_AT' | translate }}: {{ selected.createdAt | date : 'full' }}
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="rounded-xl border border-gray-100 p-3 bg-white">
+          <p class="text-xs text-gray-500 mb-1">{{ 'COMMON.DURATION' | translate }}</p>
+          <p class="text-base font-semibold text-gray-900">
+            {{ selected.duration | secondsToTimePipe }}
+          </p>
+        </div>
+
+        <div class="rounded-xl border border-gray-100 p-3 bg-white">
+          <p class="text-xs text-gray-500 mb-1">{{ 'COMMON.DISTANCE' | translate }}</p>
+          @if (distanceInKm(selected.distance); as distanceKm) {
+            <p class="text-base font-semibold text-gray-900">
+              {{ distanceKm | number : '1.0-2' }} {{ 'COMMON.KM' | translate }}
+            </p>
+          } @else {
+            <p class="text-base font-semibold text-gray-400">-</p>
+          }
+        </div>
+
+        <div class="rounded-xl border border-gray-100 p-3 bg-white">
+          <p class="text-xs text-gray-500 mb-1">{{ 'COMMON.ELEVATION' | translate }}</p>
+          @if (selected.elevationGain !== undefined && selected.elevationGain !== null) {
+            <p class="text-base font-semibold text-gray-900">
+              {{ selected.elevationGain | number : '1.0-0' }} {{ 'COMMON.M' | translate }}
+            </p>
+          } @else {
+            <p class="text-base font-semibold text-gray-400">-</p>
+          }
+        </div>
+
+        <div class="rounded-xl border border-gray-100 p-3 bg-white">
+          <p class="text-xs text-gray-500 mb-1">{{ 'HIKE.HISTORY.DETAIL.AVG_SPEED' | translate }}</p>
+          @if (selected.averageSpeed !== undefined && selected.averageSpeed !== null) {
+            <p class="text-base font-semibold text-gray-900">
+              {{ selected.averageSpeed | number : '1.0-2' }}
+            </p>
+          } @else {
+            <p class="text-base font-semibold text-gray-400">-</p>
+          }
+        </div>
+      </div>
+
+      <div class="rounded-xl border border-gray-100 p-4 bg-white">
+        <h4 class="text-sm font-semibold text-gray-800 mb-3">
+          {{ 'HIKE.HISTORY.DETAIL.TRACE' | translate }}
+        </h4>
+
+        @if (!hasMapboxToken()) {
+          <div class="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-sm text-gray-500">
+            {{ 'HIKE.HISTORY.DETAIL.MAP_TOKEN_MISSING' | translate }}
+          </div>
+        } @else if (traceCoordinates().length === 0) {
+          <div class="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-6 text-sm text-gray-500">
+            {{ 'HIKE.HISTORY.DETAIL.NO_TRACE' | translate }}
+          </div>
+        } @else {
+          <div class="h-80 rounded-lg overflow-hidden border border-gray-200">
+            <mgl-map
+              [style]="'mapbox://styles/mapbox/outdoors-v12'"
+              [center]="mapCenter()"
+              [zoom]="11"
+              class="w-full h-full"
+            >
+              <mgl-geojson-source id="history-trace-source" [data]="traceGeoJson()" />
+              <mgl-layer
+                id="history-trace-line"
+                [source]="'history-trace-source'"
+                [type]="traceCoordinates().length === 1 ? 'circle' : 'line'"
+                [paint]="
+                  traceCoordinates().length === 1
+                    ? { 'circle-radius': 7, 'circle-color': '#16a34a' }
+                    : { 'line-width': 4, 'line-color': '#16a34a' }
+                "
+              />
+            </mgl-map>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</p-dialog>
