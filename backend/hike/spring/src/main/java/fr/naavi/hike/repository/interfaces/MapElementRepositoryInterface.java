@@ -7,6 +7,7 @@ import fr.naavi.hike.dto.input.PointOfInterestAdministrationPaginationDTO;
 import fr.naavi.hike.entity.MapElement;
 import fr.naavi.hike.enums.TypeMapElementEnum;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface MapElementRepositoryInterface {
@@ -29,12 +30,7 @@ public interface MapElementRepositoryInterface {
             TypeMapElementEnum type
     );
 
-    /**
-     * Find a map element by ID and type.
-     *
-     * @param id The map element ID.
-     * @param type The type of map element.
-     * @return The map element, if found.
-     */
     Optional<MapElement> findByIdAndType(Long id, TypeMapElementEnum type);
+
+    List<MapElement> findAllPendingByUserId(Long userId, TypeMapElementEnum type);
 }

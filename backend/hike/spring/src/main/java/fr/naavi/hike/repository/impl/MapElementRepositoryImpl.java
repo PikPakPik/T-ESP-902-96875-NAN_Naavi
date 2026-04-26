@@ -289,4 +289,27 @@ public class MapElementRepositoryImpl implements MapElementRepositoryInterface {
 
         return Optional.ofNullable(element);
     }
+    @Override
+    public List<MapElement> findAllPendingByUserId(Long userId, TypeMapElementEnum type) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<MapElement> query = cb.createQuery(MapElement.class);
+        Root<MapElement> root = query.from(MapElement.class);
+        root.fetch("images", JoinType.LEFT);
+
+        List<Predicate> predicates = new ArrayList<>();
+        predicates.add(cb.equal(root.get("userId"), userId));
+        predicates.add(cb.equal(root.get("status"), StatusEnum.DRAFT));
+        if (type != null) {
+            predicates.add(cb.equal(root.get("type"), type));
+        }
+
+        query.select(root)
+                .distinct(true)
+                .where(
+                        cb.and(predicates.toArray(new Predicate[0]))
+                )
+                .orderBy(cb.desc(root.get("createdAt")));
+
+        return entityManager.createQuery(query).getResultList();
+    }
 }

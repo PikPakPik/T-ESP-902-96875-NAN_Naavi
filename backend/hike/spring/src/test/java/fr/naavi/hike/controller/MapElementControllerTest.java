@@ -8,6 +8,7 @@ import fr.naavi.hike.dto.input.MapElementDTO;
 import fr.naavi.hike.entity.MapElement;
 import fr.naavi.hike.entity.Media;
 import fr.naavi.hike.enums.MapElementEnum;
+import fr.naavi.hike.enums.StatusEnum;
 import fr.naavi.hike.enums.TypeMapElementEnum;
 import fr.naavi.hike.repository.MapElementReactionRepository;
 import fr.naavi.hike.enums.SourceEnum;
@@ -136,6 +137,44 @@ public class MapElementControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.i18nKey").value("map_element.not_found"))
                 .andExpect(jsonPath("$.message").value("Map element not found"));
+    }
+
+    @Test
+    void shouldReturnPendingMapElements_WhenAuthenticated_WithoutTypeFilter() throws Exception {
+        UsernamePasswordAuthenticationToken authToken = AuthenticationManagerUtil.mockAuthenticationManager(
+                authenticationManager,
+                UserSeeder.USER
+        );
+
+        MapElement pendingPoi = new MapElement();
+        pendingPoi.setName("Pending POI");
+        pendingPoi.setDescription("Pending POI description");
+        pendingPoi.setLatitude(47.2180438348419);
+        pendingPoi.setLongitude(-1.5549507712791397);
+        pendingPoi.setType(TypeMapElementEnum.POINT_OF_INTEREST);
+        pendingPoi.setStatus(StatusEnum.DRAFT);
+        pendingPoi.setSource(SourceEnum.COMMUNITY);
+        pendingPoi.setUserId(UserSeeder.USER.getId());
+        mapElementRepository.save(pendingPoi);
+
+        MapElement pendingAlert = new MapElement();
+        pendingAlert.setName("Pending ALERT");
+        pendingAlert.setDescription("Pending ALERT description");
+        pendingAlert.setLatitude(47.2180438348419);
+        pendingAlert.setLongitude(-1.5549507712791397);
+        pendingAlert.setType(TypeMapElementEnum.ALERT);
+        pendingAlert.setStatus(StatusEnum.DRAFT);
+        pendingAlert.setSource(SourceEnum.COMMUNITY);
+        pendingAlert.setUserId(UserSeeder.USER.getId());
+        mapElementRepository.save(pendingAlert);
+
+        mockMvc.perform(get("/mapElements/pending")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(authentication(authToken)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].status").value("DRAFT"));
     }
 
     @Test

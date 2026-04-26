@@ -36,15 +36,7 @@ public class MapElementService {
         this.reactionRepository = reactionRepository;
     }
 
-    /**
-     * Save a map element.
-     *
-     * @param element The map element to save (can be new or existing).
-     * @param dto The DTO containing the data to update.
-     * @param type The expected type of the map element.
-     * @param currentUser The authenticated user.
-     * @return The saved map element.
-     */
+    // Création ou update générique
     public MapElement save(MapElement element, MapElementDTO dto, TypeMapElementEnum type, UserDTO currentUser) {
         boolean isCreate = element.getId() == null;
         boolean isAdminOrModerator = currentUser != null
@@ -195,7 +187,6 @@ public class MapElementService {
         element.setSource(targetSource);
         element.setUserId(targetSource == SourceEnum.COMMUNITY ? userId : null);
     }
-
 
     /**
      * Add a media to a map element.

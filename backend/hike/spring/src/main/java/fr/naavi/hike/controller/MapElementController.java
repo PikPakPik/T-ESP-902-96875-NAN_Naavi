@@ -111,6 +111,32 @@ public class MapElementController extends AbstractController {
         return mapElementRepository.findAllWithPagination(geoPaginationDTO, type, false);
     }
 
+    @Operation(
+            summary = "Récupérer les éléments de carte en attente de l'utilisateur",
+            description = "Retourne les éléments de carte au statut DRAFT pour l'utilisateur connecté (tous les types).",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            tags = {"MapElement"}
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Liste des éléments de carte en attente de l'utilisateur.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = MapElementDto.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/UnauthorizedError")
+    })
+    @GetMapping("/mapElements/pending")
+    public List<MapElementDto> mapElementsPending(
+            @RequestParam(required = false) TypeMapElementEnum type
+    ) {
+        return mapElementRepository.findAllPendingByUserId(getUser().getId(), type).stream()
+                .map(element -> new MapElementDto(element, true))
+                .toList();
+    }
+
     /**
      * Endpoint to retrieve a specific map element by ID.
      *
@@ -619,7 +645,6 @@ public class MapElementController extends AbstractController {
     ) {
         return this.mapElementRepository.findAllWithPagination(geoPaginationDTO, type, true);
     }
-
     /**
      * Endpoint to update a map element .
      *
