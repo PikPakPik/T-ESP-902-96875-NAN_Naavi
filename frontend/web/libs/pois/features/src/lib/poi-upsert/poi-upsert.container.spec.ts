@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PoiUpsertContainer } from './poi-upsert.container';
 import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
-import { POIsStore } from '@web/pois/data-access';
+import { POIsStore, POIsService } from '@web/pois/data-access';
 import { MessageService } from 'primeng/api';
 import { TranslateService } from '@ngx-translate/core';
 import { signal } from '@angular/core';
@@ -28,6 +28,10 @@ describe('PoiUpsertContainer', () => {
     };
     const messageServiceMock = { add: jest.fn() };
     const translateServiceMock = { instant: jest.fn((key: string) => key) };
+    const poisServiceMock = {
+      uploadPoiImage: jest.fn(),
+      deletePoiImage: jest.fn(),
+    };
 
     await TestBed.configureTestingModule({
       imports: [PoiUpsertContainer],
@@ -35,6 +39,7 @@ describe('PoiUpsertContainer', () => {
         { provide: Router, useValue: routerMock },
         { provide: ActivatedRoute, useValue: routeMock },
         { provide: POIsStore, useValue: poisStoreMock },
+        { provide: POIsService, useValue: poisServiceMock },
         { provide: MessageService, useValue: messageServiceMock },
         { provide: TranslateService, useValue: translateServiceMock },
         {

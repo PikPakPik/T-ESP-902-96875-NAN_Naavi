@@ -21,6 +21,7 @@ import {
   HikesStore,
   HikeDetailStore,
   getDifficultyTranslationKey,
+  getSourceTranslationKey,
   getStatusTranslationKey,
   getVisibilityTranslationKey,
 } from '@web/hikes/data-access';
@@ -92,7 +93,7 @@ export class HikeUpsertComponent {
   visibility = signal('PUBLIC');
   selectedUserId = signal<string | null>(null);
   usersOptions = signal<Array<{ label: string; value: string }>>([]);
-  ownerDisplay = signal('Officielle');
+  ownerDisplay = signal('');
 
   // Modèle Signal Forms pour la validation
   hikeFormModel = signal<HikeFormData>({
@@ -112,6 +113,10 @@ export class HikeUpsertComponent {
   });
 
   constructor() {
+    this.ownerDisplay.set(
+      this.#translateService.instant('HIKE.UPSERT.OWNER_OFFICIAL')
+    );
+
     // Synchroniser les signals avec le modèle Signal Forms
     effect(() => {
       this.hikeFormModel.update((model) => ({
@@ -173,9 +178,9 @@ export class HikeUpsertComponent {
   sourceOptions = computed(() => {
     const sources = this.#hikesStore.sources() ?? [];
     const values = sources.length > 0 ? sources : ['OFFICIAL', 'COMMUNITY'];
-    return values.map((source) => ({
-      label: source,
-      value: source,
+    return values.map((sourceValue) => ({
+      label: getSourceTranslationKey(sourceValue),
+      value: sourceValue,
     }));
   });
 
@@ -340,8 +345,11 @@ export class HikeUpsertComponent {
 
     this.#messageService.add({
       severity: 'success',
-      summary: 'Point ajouté',
-      detail: `Point ajouté: ${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+      summary: this.#translateService.instant('COMMON.SUCCESS'),
+      detail: this.#translateService.instant('HIKE.WAYPOINT.ADDED', {
+        lat: lat.toFixed(5),
+        lng: lng.toFixed(5),
+      }),
     });
   }
 
@@ -624,7 +632,9 @@ export class HikeUpsertComponent {
       this.#messageService.add({
         severity: 'warn',
         summary: this.#translateService.instant('COMMON.WARNING'),
-        detail: 'Veuillez sélectionner un utilisateur pour une randonnée communauté.',
+        detail: this.#translateService.instant(
+          'HIKE.UPSERT.COMMUNITY_USER_REQUIRED'
+        ),
       });
       return;
     }
@@ -699,8 +709,8 @@ export class HikeUpsertComponent {
     if (!normalizedUserId) {
       this.ownerDisplay.set(
         (source || '').toUpperCase() === 'COMMUNITY'
-          ? 'Communauté'
-          : 'Officielle'
+          ? this.#translateService.instant('HIKE.UPSERT.OWNER_COMMUNITY')
+          : this.#translateService.instant('HIKE.UPSERT.OWNER_OFFICIAL')
       );
       return;
     }
@@ -719,7 +729,11 @@ export class HikeUpsertComponent {
           : `(#${owner.id})`
       );
     } catch {
-      this.ownerDisplay.set(`(#${normalizedUserId}) Utilisateur introuvable`);
+      this.ownerDisplay.set(
+        this.#translateService.instant('HIKE.UPSERT.OWNER_USER_UNKNOWN', {
+          id: normalizedUserId,
+        })
+      );
     }
   }
 
@@ -729,7 +743,9 @@ export class HikeUpsertComponent {
 
     if (normalized === 'OFFICIAL') {
       this.selectedUserId.set(null);
-      this.ownerDisplay.set('Officielle');
+      this.ownerDisplay.set(
+        this.#translateService.instant('HIKE.UPSERT.OWNER_OFFICIAL')
+      );
       if (this.visibility().toUpperCase() === 'PRIVATE') {
         this.visibility.set('PUBLIC');
       }
@@ -738,7 +754,9 @@ export class HikeUpsertComponent {
 
     const selected = this.normalizeUserId(this.selectedUserId());
     if (!selected) {
-      this.ownerDisplay.set('Communauté');
+      this.ownerDisplay.set(
+        this.#translateService.instant('HIKE.UPSERT.OWNER_COMMUNITY')
+      );
       return;
     }
 
@@ -750,7 +768,9 @@ export class HikeUpsertComponent {
     this.selectedUserId.set(normalizedUserId);
 
     if (!normalizedUserId) {
-      this.ownerDisplay.set('Communauté');
+      this.ownerDisplay.set(
+        this.#translateService.instant('HIKE.UPSERT.OWNER_COMMUNITY')
+      );
       return;
     }
 
@@ -768,7 +788,11 @@ export class HikeUpsertComponent {
           : `(#${owner.id})`
       );
     } catch {
-      this.ownerDisplay.set(`(#${normalizedUserId}) Utilisateur introuvable`);
+      this.ownerDisplay.set(
+        this.#translateService.instant('HIKE.UPSERT.OWNER_USER_UNKNOWN', {
+          id: normalizedUserId,
+        })
+      );
     }
   }
 

@@ -248,11 +248,21 @@ export class Pois {
     this.statusFilterChange.emit(status);
   }
 
+  /** Le détail œil : pas d’action « approuver » si le POI est déjà publié. */
+  showApproveInPoiDetail(): boolean {
+    const poi = this.selectedPOIForDetail();
+    if (!poi) {
+      return false;
+    }
+    return poi.status?.toUpperCase() !== 'PUBLISHED';
+  }
+
   approveSelectedPOI() {
     const poi = this.selectedPOIForDetail();
-    if (poi) {
-      this.approvePOI.emit(poi);
+    if (!poi || poi.status?.toUpperCase() === 'PUBLISHED') {
+      return;
     }
+    this.approvePOI.emit(poi);
   }
 
   rejectSelectedPOI() {

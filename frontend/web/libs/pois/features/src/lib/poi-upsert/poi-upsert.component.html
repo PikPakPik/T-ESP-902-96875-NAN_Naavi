@@ -242,41 +242,49 @@
               ></textarea>
             </div>
 
-            <!-- Photos -->
+            <!-- Photos (fichiers → POST /hike/mapElement/{id}/images) -->
             <div>
               <label
-                for="photos"
+                for="poi-photo-files"
                 class="block font-semibold mb-2 text-gray-700"
               >
                 {{ 'POI.UPSERT.PHOTOS' | translate }}
               </label>
-              <div class="flex gap-3">
+              <p class="text-sm text-gray-500 mb-2">
+                {{ 'POI.UPSERT.PHOTOS_HINT' | translate }}
+              </p>
+              <div class="flex flex-wrap items-center gap-3">
                 <input
-                  pInputText
-                  #photoInput
-                  placeholder="https://..."
-                  class="flex-1"
+                  id="poi-photo-files"
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml,image/heic,.heic"
+                  multiple
+                  class="hidden"
+                  (change)="onPhotoFilesSelected($event)"
+                  #photoFileInput
                 />
                 <p-button
-                  icon="pi pi-plus"
-                  [label]="'POI.UPSERT.ADD_PHOTO' | translate"
+                  icon="pi pi-upload"
+                  [label]="'POI.UPSERT.ADD_PHOTOS' | translate"
                   type="button"
-                  (click)="addPhoto(photoInput.value); photoInput.value = ''"
+                  (click)="photoFileInput.click()"
                 />
               </div>
-              @if (photos().length > 0) {
+              @if (photoSlots().length > 0) {
               <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                @for (photo of photos(); track photo; let i = $index) {
+                @for (slot of photoSlots(); track $index; let i = $index) {
                 <div class="relative group">
+                  @if (getSlotDisplayUrl(slot); as src) {
                   <img
-                    [src]="getPhotoUrl(photo)"
+                    [src]="src"
                     alt="Photo du POI"
                     class="w-full h-36 object-cover rounded-xl border border-gray-200"
                   />
+                  }
                   <button
                     type="button"
                     class="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition"
-                    (click)="removePhoto(i)"
+                    (click)="removePhotoSlotAt(i)"
                   >
                     <i class="pi pi-times"></i>
                   </button>

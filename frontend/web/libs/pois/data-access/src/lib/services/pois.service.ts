@@ -21,7 +21,7 @@ export class POIsService {
 
   getPOIs(): Observable<POI[]> {
     return this.#http
-      .get<{ items: IDB_POI[] }>(`${this.#apiUrl}/hike/mapElements`, {
+      .get<{ items: IDB_POI[] }>(`${this.#apiUrl}hike/mapElements`, {
         params: new HttpParams().set('type', 'POINT_OF_INTEREST'),
       })
       .pipe(
@@ -66,7 +66,7 @@ export class POIsService {
     }
 
     return this.#http
-      .get<PaginatedPOIsResponse>(`${this.#apiUrl}/hike/administration/pois`, {
+      .get<PaginatedPOIsResponse>(`${this.#apiUrl}hike/administration/pois`, {
         params,
       })
       .pipe(
@@ -92,7 +92,7 @@ export class POIsService {
 
   getPOIById(id: string): Observable<POI> {
     return this.#http
-      .get<IDB_POI>(`${this.#apiUrl}/hike/mapElement/${id}`, {
+      .get<IDB_POI>(`${this.#apiUrl}hike/mapElement/${id}`, {
         params: new HttpParams().set('type', 'POINT_OF_INTEREST'),
       })
       .pipe(
@@ -124,7 +124,6 @@ export class POIsService {
       source: poi.source,
       userId: poi.userId ?? null,
       categories,
-      photos: poi.photos || [],
       latitude: poi.latitude,
       longitude: poi.longitude,
       createdAt: poi.createdAt
@@ -140,7 +139,7 @@ export class POIsService {
     };
 
     return this.#http
-      .post<IDB_POI>(`${this.#apiUrl}/hike/mapElement`, apiPayload)
+      .post<IDB_POI>(`${this.#apiUrl}hike/mapElement`, apiPayload)
       .pipe(
         map((poi) => new POI(poi)),
         catchError((error) => {
@@ -156,7 +155,7 @@ export class POIsService {
 
   deletePOI(id: string): Observable<void> {
     return this.#http
-      .delete<void>(`${this.#apiUrl}/hike/administration/mapElement/${id}`, {
+      .delete<void>(`${this.#apiUrl}hike/administration/mapElement/${id}`, {
         params: new HttpParams().set('type', 'POINT_OF_INTEREST'),
       })
       .pipe(
@@ -187,7 +186,6 @@ export class POIsService {
       source: poi.source,
       userId: poi.userId ?? null,
       categories,
-      photos: poi.photos || [],
       latitude: poi.latitude,
       longitude: poi.longitude,
       status: poi.status,
@@ -205,7 +203,7 @@ export class POIsService {
 
     return this.#http
       .put<IDB_POI>(
-        `${this.#apiUrl}/hike/administration/mapElement/${poi.id}`,
+        `${this.#apiUrl}hike/administration/mapElement/${poi.id}`,
         apiPayload
       )
       .pipe(
@@ -258,5 +256,83 @@ export class POIsService {
     return this.searchPOIs({ page: 1, limit: 1, status: 'DRAFT' }).pipe(
       map((response) => response.totalItems ?? 0)
     );
+  }
+
+  /**
+   * Spring exige un Content-Type image exact ; certains navigateurs laissent
+   * `file.type` vide — on le déduit de l'extension.
+   */
+  #fileWithImageMimeForUpload(file: File): File {
+    const type = (file.type || '').toLowerCase();
+    const allowed = new Set([
+      'image/png',
+      'image/jpeg',
+      'image/jpg',
+      'image/webp',
+      'image/svg+xml',
+      'image/heic',
+    ]);
+    if (allowed.has(type)) {
+      return file;
+    }
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+    const mimeByExt: Record<string, string> = {
+      png: 'image/png',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      webp: 'image/webp',
+      svg: 'image/svg+xml',
+      heic: 'image/heic',
+    };
+    const guessed = mimeByExt[ext];
+    if (!guessed) {
+      return file;
+    }
+    return new File([file], file.name, {
+      type: guessed,
+      lastModified: file.lastModified,
+    });
+  }
+
+  /**
+   * Upload brut d'une image POI (multipart, champ `image`), comme le service hike
+   * {@code POST /hike/mapElement/{id}/images?type=POINT_OF_INTEREST}.
+   */
+  uploadPoiImage(poiId: string, file: File): Observable<void> {
+    const uploadFile = this.#fileWithImageMimeForUpload(file);
+    const formData = new FormData();
+    formData.append('image', uploadFile, uploadFile.name);
+    return this.#http
+      .post<void>(`${this.#apiUrl}hike/mapElement/${poiId}/images`, formData, {
+        params: new HttpParams().set('type', 'POINT_OF_INTEREST'),
+      })
+      .pipe(
+        catchError((error) => {
+          this.#messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: "Impossible d'envoyer l'image du POI",
+          });
+          return throwError(() => error);
+        })
+      );
+  }
+
+  deletePoiImage(elementId: string, imageId: string): Observable<void> {
+    return this.#http
+      .delete<void>(
+        `${this.#apiUrl}hike/administration/mapElement/${elementId}/images/${imageId}`,
+        { params: new HttpParams().set('type', 'POINT_OF_INTEREST') }
+      )
+      .pipe(
+        catchError((error) => {
+          this.#messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: "Impossible de supprimer l'image du POI",
+          });
+          return throwError(() => error);
+        })
+      );
   }
 }

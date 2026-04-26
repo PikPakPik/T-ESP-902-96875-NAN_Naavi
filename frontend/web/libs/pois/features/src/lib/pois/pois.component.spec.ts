@@ -284,6 +284,29 @@ describe('Pois', () => {
     expect(emitSpy).toHaveBeenCalledWith(mockPOI);
   });
 
+  it('should not emit approvePOI when detail POI is already published', () => {
+    const emitSpy = jest.spyOn(component.approvePOI, 'emit');
+    const published = new POI({
+      id: '9',
+      name: 'Live POI',
+      description: 'D',
+      types: ['WATER'],
+      photos: [],
+      images: [],
+      latitude: 48,
+      longitude: 2,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      status: 'PUBLISHED',
+    });
+    component.selectedPOIForDetail.set(published);
+
+    expect(component.showApproveInPoiDetail()).toBe(false);
+    component.approveSelectedPOI();
+
+    expect(emitSpy).not.toHaveBeenCalled();
+  });
+
   it('should emit rejectPOI for selected detail POI', () => {
     const emitSpy = jest.spyOn(component.rejectPOI, 'emit');
     component.selectedPOIForDetail.set(mockPOI);

@@ -76,7 +76,7 @@ describe('POIsService', () => {
 
       const req = httpMock.expectOne(
         (request) =>
-          request.url === `${apiUrl}/hike/mapElements` &&
+          request.url === `${apiUrl}hike/mapElements` &&
           request.params.get('type') === 'POINT_OF_INTEREST'
       );
       expect(req.request.method).toBe('GET');
@@ -99,7 +99,7 @@ describe('POIsService', () => {
 
       const req = httpMock.expectOne(
         (request) =>
-          request.url === `${apiUrl}/hike/mapElements` &&
+          request.url === `${apiUrl}hike/mapElements` &&
           request.params.get('type') === 'POINT_OF_INTEREST'
       );
       req.flush('Error', { status: 500, statusText: 'Server Error' });
@@ -115,7 +115,7 @@ describe('POIsService', () => {
 
       const req = httpMock.expectOne(
         (request) =>
-          request.url === `${apiUrl}/hike/mapElement/1` &&
+          request.url === `${apiUrl}hike/mapElement/1` &&
           request.params.get('type') === 'POINT_OF_INTEREST'
       );
       expect(req.request.method).toBe('GET');
@@ -138,7 +138,7 @@ describe('POIsService', () => {
 
       const req = httpMock.expectOne(
         (request) =>
-          request.url === `${apiUrl}/hike/mapElement/1` &&
+          request.url === `${apiUrl}hike/mapElement/1` &&
           request.params.get('type') === 'POINT_OF_INTEREST'
       );
       req.flush('Error', { status: 500, statusText: 'Server Error' });
@@ -152,7 +152,7 @@ describe('POIsService', () => {
         done();
       });
 
-      const req = httpMock.expectOne(`${apiUrl}/hike/mapElement`);
+      const req = httpMock.expectOne(`${apiUrl}hike/mapElement`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body.type).toBe('POINT_OF_INTEREST');
       req.flush(mockIDBPOI);
@@ -172,7 +172,7 @@ describe('POIsService', () => {
         },
       });
 
-      const req = httpMock.expectOne(`${apiUrl}/hike/mapElement`);
+      const req = httpMock.expectOne(`${apiUrl}hike/mapElement`);
       req.flush('Error', { status: 500, statusText: 'Server Error' });
     });
 
@@ -190,7 +190,7 @@ describe('POIsService', () => {
 
       service.addPOI(poiPayload).subscribe(() => done());
 
-      const req = httpMock.expectOne(`${apiUrl}/hike/mapElement`);
+      const req = httpMock.expectOne(`${apiUrl}hike/mapElement`);
       expect(req.request.body.categories).toEqual(['RESTAURANT']);
       expect(req.request.body.type).toBe('POINT_OF_INTEREST');
       expect(req.request.body.createdAt).toBe('2026-01-01T10:00:00.000Z');
@@ -224,7 +224,7 @@ describe('POIsService', () => {
       });
 
       const req = httpMock.expectOne(
-        `${apiUrl}/hike/administration/mapElement/1`
+        `${apiUrl}hike/administration/mapElement/1`
       );
       expect(req.request.method).toBe('PUT');
       expect(req.request.body.type).toBe('POINT_OF_INTEREST');
@@ -246,7 +246,7 @@ describe('POIsService', () => {
       });
 
       const req = httpMock.expectOne(
-        `${apiUrl}/hike/administration/mapElement/1`
+        `${apiUrl}hike/administration/mapElement/1`
       );
       req.flush('Error', { status: 500, statusText: 'Server Error' });
     });
@@ -265,7 +265,7 @@ describe('POIsService', () => {
         .subscribe(() => done());
 
       const req = httpMock.expectOne(
-        `${apiUrl}/hike/administration/mapElement/1`
+        `${apiUrl}hike/administration/mapElement/1`
       );
       expect(req.request.body.createdAt).toBeUndefined();
       expect(req.request.body.updatedAt).toBeUndefined();
@@ -283,7 +283,7 @@ describe('POIsService', () => {
 
       const req = httpMock.expectOne(
         (request) =>
-          request.url === `${apiUrl}/hike/administration/mapElement/1` &&
+          request.url === `${apiUrl}hike/administration/mapElement/1` &&
           request.params.get('type') === 'POINT_OF_INTEREST'
       );
       expect(req.request.method).toBe('DELETE');
@@ -306,7 +306,7 @@ describe('POIsService', () => {
 
       const req = httpMock.expectOne(
         (request) =>
-          request.url === `${apiUrl}/hike/administration/mapElement/1` &&
+          request.url === `${apiUrl}hike/administration/mapElement/1` &&
           request.params.get('type') === 'POINT_OF_INTEREST'
       );
       req.flush('Error', { status: 500, statusText: 'Server Error' });
@@ -334,7 +334,7 @@ describe('POIsService', () => {
 
       const req = httpMock.expectOne((request) => {
         return (
-          request.url === `${apiUrl}/hike/administration/pois` &&
+          request.url === `${apiUrl}hike/administration/pois` &&
           request.params.get('page') === '1' &&
           request.params.get('limit') === '20'
         );
@@ -372,7 +372,7 @@ describe('POIsService', () => {
 
       const req = httpMock.expectOne((request) => {
         return (
-          request.url === `${apiUrl}/hike/administration/pois` &&
+          request.url === `${apiUrl}hike/administration/pois` &&
           request.params.get('page') === '2' &&
           request.params.get('limit') === '10' &&
           request.params.get('query') === 'restaurant' &&
@@ -407,7 +407,7 @@ describe('POIsService', () => {
       });
 
       const req = httpMock.expectOne(
-        `${apiUrl}/hike/administration/pois?page=1&limit=20`
+        `${apiUrl}hike/administration/pois?page=1&limit=20`
       );
       req.flush(mockResponse);
     });
@@ -428,7 +428,7 @@ describe('POIsService', () => {
 
       const req = httpMock.expectOne((request) => {
         return (
-          request.url === `${apiUrl}/hike/administration/pois` &&
+          request.url === `${apiUrl}hike/administration/pois` &&
           request.params.get('page') === '1' &&
           request.params.get('limit') === '20'
         );
@@ -530,7 +530,7 @@ describe('POIsService', () => {
       });
 
       const req = httpMock.expectOne(
-        `${apiUrl}/hike/administration/pois?page=1&limit=1&status=DRAFT`
+        `${apiUrl}hike/administration/pois?page=1&limit=1&status=DRAFT`
       );
       expect(req.request.method).toBe('GET');
       req.flush({
@@ -542,6 +542,52 @@ describe('POIsService', () => {
         previousPage: null,
         limit: 1,
       });
+    });
+  });
+
+  describe('uploadPoiImage', () => {
+    it('should POST multipart to mapElement images endpoint', (done) => {
+      const file = new File(['a'], 'x.png', { type: 'image/png' });
+      service.uploadPoiImage('7', file).subscribe(() => done());
+
+      const req = httpMock.expectOne(
+        (r) =>
+          r.url === `${apiUrl}hike/mapElement/7/images` &&
+          r.params.get('type') === 'POINT_OF_INTEREST'
+      );
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body instanceof FormData).toBe(true);
+      req.flush({});
+    });
+
+    it('should set image/jpeg when browser leaves file.type empty on .jpg', (done) => {
+      const file = new File(['a'], 'photo.jpg', { type: '' });
+      service.uploadPoiImage('7', file).subscribe(() => done());
+
+      const req = httpMock.expectOne(
+        (r) =>
+          r.url === `${apiUrl}hike/mapElement/7/images` &&
+          r.params.get('type') === 'POINT_OF_INTEREST'
+      );
+      const fd = req.request.body as FormData;
+      const sent = fd.get('image') as File;
+      expect(sent.type).toBe('image/jpeg');
+      req.flush({});
+    });
+  });
+
+  describe('deletePoiImage', () => {
+    it('should DELETE administration mapElement image', (done) => {
+      service.deletePoiImage('7', '99').subscribe(() => done());
+
+      const req = httpMock.expectOne(
+        (r) =>
+          r.url ===
+            `${apiUrl}hike/administration/mapElement/7/images/99` &&
+          r.params.get('type') === 'POINT_OF_INTEREST'
+      );
+      expect(req.request.method).toBe('DELETE');
+      req.flush({});
     });
   });
 });

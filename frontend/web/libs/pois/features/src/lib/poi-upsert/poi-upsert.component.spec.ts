@@ -1,15 +1,30 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PoiUpsertComponent } from './poi-upsert.component';
-import { POIsStore } from '@web/pois/data-access';
+import { POIsStore, POIsService } from '@web/pois/data-access';
 import { Router, ActivatedRoute } from '@angular/router';
 import { signal } from '@angular/core';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MessageService } from 'primeng/api';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { POI } from '@web/shared/models/settings';
 import { NgForm, FormsModule } from '@angular/forms';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { UsersService } from '@web/users/data-access';
+
+/** Jest/jsdom : FileList minimal (length + item) comme dans le navigateur. */
+function fileListFromFiles(files: File[]): FileList {
+  return {
+    length: files.length,
+    item: (i: number) => files[i] ?? null,
+    ...files,
+  } as unknown as FileList;
+}
+
+function fileInputChangeEvent(files: File[]): Event {
+  return {
+    target: { files: fileListFromFiles(files), value: '' },
+  } as unknown as Event;
+}
 
 describe('PoiUpsertComponent', () => {
   let component: PoiUpsertComponent;
@@ -21,6 +36,10 @@ describe('PoiUpsertComponent', () => {
   let usersServiceMock: {
     getUsers: jest.Mock;
     getUserById: jest.Mock;
+  };
+  let poisServiceMock: {
+    uploadPoiImage: jest.Mock;
+    deletePoiImage: jest.Mock;
   };
 
   const mockPOI = new POI({
@@ -38,6 +57,12 @@ describe('PoiUpsertComponent', () => {
   });
 
   beforeEach(async () => {
+    // Jest (Node) : URL sans API blob — nécessaire pour les tests d’upload.
+    Object.assign(URL, {
+      createObjectURL: jest.fn().mockReturnValue('blob:mock-preview'),
+      revokeObjectURL: jest.fn(),
+    });
+
     messageServiceMock = {
       add: jest.fn(),
     };
@@ -56,6 +81,11 @@ describe('PoiUpsertComponent', () => {
       getUserById: jest.fn(() =>
         of({ id: '16', firstname: 'Jean', lastname: 'Dupont' })
       ),
+    };
+
+    poisServiceMock = {
+      uploadPoiImage: jest.fn(() => of(undefined)),
+      deletePoiImage: jest.fn(() => of(undefined)),
     };
 
     const poisStoreMock = {
@@ -83,6 +113,7 @@ describe('PoiUpsertComponent', () => {
       imports: [PoiUpsertComponent, TranslateModule.forRoot(), FormsModule],
       providers: [
         { provide: POIsStore, useValue: poisStoreMock },
+        { provide: POIsService, useValue: poisServiceMock },
         { provide: Router, useValue: routerMock },
         { provide: ActivatedRoute, useValue: activatedRouteMock },
         { provide: TranslateService, useValue: translateServiceMock },
@@ -136,32 +167,34 @@ describe('PoiUpsertComponent', () => {
     expect(component.latitude()).toBe(48.9);
   });
 
-  it('should add a photo URL', () => {
-    component.photos.set(['https://example.com/photo.jpg']);
-    const initialLength = component.photos().length;
+  it('should add a pending photo from file input', () => {
+    const file = new File(['x'], 'shot.png', { type: 'image/png' });
+    component.onPhotoFilesSelected(fileInputChangeEvent([file]));
 
-    component.addPhoto('https://example.com/photo1.jpg');
-
-    expect(component.photos()).toHaveLength(initialLength + 1);
-    expect(component.photos()).toContainEqual('https://example.com/photo.jpg');
+    expect(component.photoSlots()).toHaveLength(1);
+    expect(component.photoSlots()[0].kind).toBe('pending');
   });
 
-  it('should not add empty photo URL', () => {
-    component.photos.set([]);
-    const initialLength = component.photos().length;
+  it('should warn and skip when file exceeds 5MB', () => {
+    const buf = new Uint8Array(5 * 1024 * 1024 + 1);
+    const file = new File([buf], 'huge.png', { type: 'image/png' });
+    component.onPhotoFilesSelected(fileInputChangeEvent([file]));
 
-    component.addPhoto('');
-
-    expect(component.photos()).toHaveLength(initialLength);
+    expect(component.photoSlots()).toHaveLength(0);
+    expect(messageServiceMock.add).toHaveBeenCalledWith(
+      expect.objectContaining({ severity: 'warn' })
+    );
   });
 
-  it('should remove a photo', () => {
-    component.photos.set(['photo1.jpg', 'photo2.jpg', 'photo3.jpg']);
+  it('should remove a pending photo slot', async () => {
+    const file = new File(['x'], 'a.png', { type: 'image/png' });
+    component.onPhotoFilesSelected(fileInputChangeEvent([file]));
 
-    component.removePhoto(1);
+    component.removePhotoSlotAt(0);
+    await Promise.resolve();
+    await Promise.resolve();
 
-    expect(component.photos()).toHaveLength(2);
-    expect(component.photos()).not.toContain('photo2.jpg');
+    expect(component.photoSlots()).toHaveLength(0);
   });
 
   it('should navigate back when cancel is called', () => {
@@ -206,7 +239,190 @@ describe('PoiUpsertComponent', () => {
         status: 'PUBLISHED',
       })
     );
+    expect(poisServiceMock.uploadPoiImage).not.toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(['/backoffice/pois']);
+  });
+
+  it('should upload pending photos after create then publish', async () => {
+    const file = new File(['x'], 'a.png', { type: 'image/png' });
+    component.onPhotoFilesSelected(fileInputChangeEvent([file]));
+
+    component.name.set('Test POI');
+    component.description.set('Test description');
+    component.latitude.set(48.8566);
+    component.longitude.set(2.3522);
+    component.types.set(['RESTAURANT']);
+    component.source.set('OFFICIAL');
+
+    await component.savePOI();
+
+    expect(poisServiceMock.uploadPoiImage).toHaveBeenCalledWith('1', file);
+    expect(poisStore.update).toHaveBeenCalled();
+  });
+
+  it('should upload pending photos after update in edit mode', async () => {
+    const file = new File(['b'], 'b.png', { type: 'image/png' });
+    component.onPhotoFilesSelected(fileInputChangeEvent([file]));
+    component.isEditMode.set(true);
+    component.poiId.set('1');
+    component.name.set('Updated');
+    component.description.set('Desc');
+    component.latitude.set(48.8566);
+    component.longitude.set(2.3522);
+    component.types.set(['RESTAURANT']);
+
+    await component.savePOI();
+
+    expect(poisServiceMock.uploadPoiImage).toHaveBeenCalledWith('1', file);
+  });
+
+  it('getSlotDisplayUrl returns blob preview for pending slot', () => {
+    const file = new File(['x'], 'z.png', { type: 'image/png' });
+    component.onPhotoFilesSelected(fileInputChangeEvent([file]));
+    expect(
+      component.getSlotDisplayUrl(component.photoSlots()[0])
+    ).toBe('blob:mock-preview');
+  });
+
+  it('getSlotDisplayUrl returns null for server filename without images base URL', () => {
+    component.photoSlots.set([
+      { kind: 'server', id: '', filename: 'POINTS_OF_INTEREST/1/a.png' },
+    ]);
+    expect(
+      component.getSlotDisplayUrl(component.photoSlots()[0])
+    ).toBeNull();
+  });
+
+  it('should call deletePoiImage when removing server photo in edit mode', async () => {
+    component.isEditMode.set(true);
+    component.poiId.set('10');
+    component.photoSlots.set([
+      { kind: 'server', id: '55', filename: 'POINTS_OF_INTEREST/10/f.png' },
+    ]);
+    component.removePhotoSlotAt(0);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(poisServiceMock.deletePoiImage).toHaveBeenCalledWith('10', '55');
+    expect(component.photoSlots()).toHaveLength(0);
+  });
+
+  it('onPhotoFilesSelected ignores empty file list', () => {
+    component.onPhotoFilesSelected(
+      { target: { files: null, value: '' } } as unknown as Event
+    );
+    expect(component.photoSlots()).toHaveLength(0);
+  });
+
+  it('onPhotoFilesSelected rejects non-image file', () => {
+    const file = new File(['x'], 'doc.txt', { type: 'text/plain' });
+    component.onPhotoFilesSelected(fileInputChangeEvent([file]));
+    expect(component.photoSlots()).toHaveLength(0);
+    expect(messageServiceMock.add).toHaveBeenCalledWith(
+      expect.objectContaining({ severity: 'warn' })
+    );
+  });
+
+  it('should show error when photo upload fails after update', async () => {
+    poisServiceMock.uploadPoiImage.mockReturnValueOnce(
+      throwError(() => new Error('upload'))
+    );
+    const file = new File(['b'], 'b.png', { type: 'image/png' });
+    component.onPhotoFilesSelected(fileInputChangeEvent([file]));
+    component.isEditMode.set(true);
+    component.poiId.set('1');
+    component.name.set('U');
+    component.description.set('D');
+    component.latitude.set(48);
+    component.longitude.set(2);
+    component.types.set(['RESTAURANT']);
+
+    await component.savePOI();
+
+    expect(messageServiceMock.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        severity: 'error',
+        detail: 'POI.ERROR.PHOTO_UPLOAD_FAILED',
+      })
+    );
+    expect(router.navigate).not.toHaveBeenCalled();
+    poisServiceMock.uploadPoiImage.mockReturnValue(of(undefined));
+  });
+
+  it('should show error when photo upload fails after create', async () => {
+    poisServiceMock.uploadPoiImage.mockReturnValueOnce(
+      throwError(() => new Error('upload'))
+    );
+    const file = new File(['b'], 'b.png', { type: 'image/png' });
+    component.onPhotoFilesSelected(fileInputChangeEvent([file]));
+    component.name.set('Test POI');
+    component.description.set('Test description');
+    component.latitude.set(48.8566);
+    component.longitude.set(2.3522);
+    component.types.set(['RESTAURANT']);
+    component.source.set('OFFICIAL');
+
+    await component.savePOI();
+
+    expect(messageServiceMock.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        severity: 'error',
+        detail: 'POI.ERROR.PHOTO_UPLOAD_FAILED',
+      })
+    );
+    expect(router.navigate).not.toHaveBeenCalled();
+    poisServiceMock.uploadPoiImage.mockReturnValue(of(undefined));
+  });
+
+  it('onSourceChange community without owner sets display Communauté', async () => {
+    component.selectedUserId.set(null);
+    await component.onSourceChange('COMMUNITY');
+    expect(component.ownerDisplay()).toBe('Communauté');
+  });
+
+  it('delegates category and status translation keys', () => {
+    expect(component.getCategoryTranslationKey('RESTAURANT')).toContain(
+      'POI.CATEGORY'
+    );
+    expect(component.getStatusTranslationKey('DRAFT')).toContain('POI.STATUS');
+  });
+
+  it('onOwnerUserChange shows introuvable when user fetch fails', async () => {
+    usersServiceMock.getUserById.mockReturnValueOnce(
+      throwError(() => new Error('x'))
+    );
+    await component.onOwnerUserChange('99');
+    expect(component.ownerDisplay()).toContain('introuvable');
+    usersServiceMock.getUserById.mockReturnValue(
+      of({ id: '16', firstname: 'Jean', lastname: 'Dupont' })
+    );
+  });
+
+  it('loadPOIForEdit maps images from API to server photo slots', async () => {
+    const poiWithImg = new POI({
+      id: '3',
+      name: 'P',
+      description: 'D',
+      types: ['WATER'],
+      photos: [],
+      images: [{ id: '9', filename: 'POINTS_OF_INTEREST/3/x.png' }],
+      latitude: 48,
+      longitude: 2,
+      comment: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      status: 'DRAFT',
+    });
+    (poisStore.entities as any) = signal([poiWithImg]);
+
+    await component.loadPOIForEdit('3');
+
+    expect(component.photoSlots()).toEqual([
+      expect.objectContaining({
+        kind: 'server',
+        id: '9',
+        filename: 'POINTS_OF_INTEREST/3/x.png',
+      }),
+    ]);
   });
 
   it('should require an owner when source is community', async () => {
@@ -251,7 +467,7 @@ describe('PoiUpsertComponent', () => {
     );
   });
 
-  it('should skip publish step when create does not return an id', async () => {
+  it('should abort when create does not return an id', async () => {
     (poisStore.create as jest.Mock).mockResolvedValueOnce(undefined);
     component.name.set('Test POI');
     component.description.set('Test description');
@@ -263,9 +479,8 @@ describe('PoiUpsertComponent', () => {
     await component.savePOI();
 
     expect(poisStore.create).toHaveBeenCalled();
-    expect(poisStore.update).not.toHaveBeenCalledWith(
-      expect.objectContaining({ status: 'PUBLISHED' })
-    );
+    expect(poisStore.update).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it('should update POI when savePOI is called in edit mode', async () => {
@@ -294,26 +509,6 @@ describe('PoiUpsertComponent', () => {
 
     expect(poisStore.create).not.toHaveBeenCalled();
     expect(poisStore.update).not.toHaveBeenCalled();
-  });
-
-  describe('addPhoto', () => {
-    it('should not add photo URL when it is only whitespace', () => {
-      component.photos.set([]);
-      const initialLength = component.photos().length;
-
-      component.addPhoto('   ');
-
-      expect(component.photos()).toHaveLength(initialLength);
-    });
-
-    it('should not add duplicate photo URL', () => {
-      component.photos.set(['https://example.com/photo.jpg']);
-
-      component.addPhoto('https://example.com/photo.jpg');
-
-      expect(component.photos()).toHaveLength(1);
-      expect(component.photos()).toEqual(['https://example.com/photo.jpg']);
-    });
   });
 
   describe('savePOI', () => {
@@ -482,7 +677,7 @@ describe('PoiUpsertComponent', () => {
       await component.loadPOIForEdit('2');
 
       expect(component.comment()).toBe('');
-      expect(component.photos()).toEqual([]);
+      expect(component.photoSlots()).toEqual([]);
       expect(component.status()).toBe('ACTIVE');
     });
   });

@@ -1,5 +1,12 @@
 import { ChipModule } from 'primeng/chip';
-import { Component, effect, inject, signal, computed } from '@angular/core';
+import {
+  Component,
+  effect,
+  inject,
+  signal,
+  computed,
+  OnDestroy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -16,6 +23,7 @@ import { naaviMediaDisplayUrl } from '@web/shared/util';
 import { MapComponent, MarkerComponent } from 'ngx-mapbox-gl';
 import {
   POIsStore,
+  POIsService,
   getPOICategoryIconPath,
   getPOICategoryTranslationKey,
   getPOIStatusTranslationKey,
@@ -25,6 +33,20 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { UsersService } from '@web/users/data-access';
 import { lastValueFrom } from 'rxjs';
 import { POI } from '@web/shared/models/settings';
+
+type PoiPhotoSlot =
+  | { kind: 'server'; id: string; filename: string }
+  | { kind: 'pending'; file: File; previewUrl: string };
+
+const POI_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+const POI_IMAGE_ALLOWED_MIME = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/webp',
+  'image/svg+xml',
+  'image/heic',
+]);
 
 @Component({
   selector: 'poi-upsert',
@@ -48,10 +70,11 @@ import { POI } from '@web/shared/models/settings';
   templateUrl: './poi-upsert.component.html',
   styleUrl: './poi-upsert.component.scss',
 })
-export class PoiUpsertComponent {
+export class PoiUpsertComponent implements OnDestroy {
   #router = inject(Router);
   #route = inject(ActivatedRoute);
   #poisStore = inject(POIsStore);
+  #poisService = inject(POIsService);
   #messageService = inject(MessageService);
   #translateService = inject(TranslateService);
   #usersService = inject(UsersService);
@@ -62,7 +85,8 @@ export class PoiUpsertComponent {
   description = signal('');
   comment = signal('');
   types = signal<string[]>([]);
-  photos = signal<string[]>([]);
+  /** Images existantes (S3) + fichiers locaux à envoyer après sauvegarde. */
+  photoSlots = signal<PoiPhotoSlot[]>([]);
   latitude = signal(45.764);
   longitude = signal(4.8357);
   status = signal('DRAFT');
@@ -161,7 +185,7 @@ export class PoiUpsertComponent {
         this.description.set(poi.description);
         this.comment.set(poi.comment || '');
         this.types.set([...(poi.types as string[])]);
-        this.photos.set([...(poi.photos || [])]);
+        this.photoSlots.set(this.#buildPhotoSlotsFromPoi(poi));
         this.latitude.set(poi.latitude);
         this.longitude.set(poi.longitude);
         this.status.set(poi.status || 'DRAFT');
@@ -205,25 +229,156 @@ export class PoiUpsertComponent {
     this.types.set(value ? [value] : []);
   }
 
-  addPhoto(photoUrl: string) {
-    if (!photoUrl) {
+  ngOnDestroy(): void {
+    for (const slot of this.photoSlots()) {
+      if (slot.kind === 'pending') {
+        this.#revokeBlobUrl(slot.previewUrl);
+      }
+    }
+  }
+
+  onPhotoFilesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const list = input.files;
+    input.value = '';
+    if (!list?.length) {
       return;
     }
-    const trimmed = photoUrl.trim();
-    if (!trimmed) {
+
+    for (let i = 0; i < list.length; i++) {
+      const file = list.item(i);
+      if (!file) {
+        continue;
+      }
+      const mime = (file.type || '').toLowerCase();
+      const extOk = /\.(png|jpe?g|webp|svg|heic)$/i.test(file.name);
+      const mimeOk = POI_IMAGE_ALLOWED_MIME.has(mime) || extOk;
+      if (!mimeOk) {
+        this.#messageService.add({
+          severity: 'warn',
+          summary: this.#translateService.instant('COMMON.WARNING'),
+          detail: this.#translateService.instant(
+            'POI.UPSERT.PHOTO_TYPE_REJECTED',
+            { name: file.name }
+          ),
+        });
+        continue;
+      }
+      if (file.size > POI_IMAGE_MAX_BYTES) {
+        this.#messageService.add({
+          severity: 'warn',
+          summary: this.#translateService.instant('COMMON.WARNING'),
+          detail: this.#translateService.instant(
+            'POI.UPSERT.PHOTO_TOO_LARGE',
+            { name: file.name }
+          ),
+        });
+        continue;
+      }
+      const previewUrl = URL.createObjectURL(file);
+      this.photoSlots.update((slots) => [
+        ...slots,
+        { kind: 'pending', file, previewUrl },
+      ]);
+    }
+  }
+
+  getSlotDisplayUrl(slot: PoiPhotoSlot): string | null {
+    if (slot.kind === 'pending') {
+      return slot.previewUrl;
+    }
+    return naaviMediaDisplayUrl(slot.filename, this.#imagesBaseUrl);
+  }
+
+  removePhotoSlotAt(index: number): void {
+    void this.#removePhotoSlotAsync(index);
+  }
+
+  async #removePhotoSlotAsync(index: number): Promise<void> {
+    const slots = this.photoSlots();
+    const slot = slots[index];
+    if (!slot) {
       return;
     }
-    this.photos.update((photos) =>
-      photos.includes(trimmed) ? photos : [...photos, trimmed]
+
+    if (slot.kind === 'server' && slot.id && this.isEditMode()) {
+      const pid = this.poiId();
+      if (pid) {
+        try {
+          await lastValueFrom(
+            this.#poisService.deletePoiImage(pid, slot.id)
+          );
+        } catch {
+          return;
+        }
+      }
+    }
+
+    if (slot.kind === 'pending') {
+      this.#revokeBlobUrl(slot.previewUrl);
+    }
+
+    this.photoSlots.update((s) => s.filter((_, i) => i !== index));
+  }
+
+  #buildPhotoSlotsFromPoi(poi: POI): PoiPhotoSlot[] {
+    const fromImages = (poi.images ?? [])
+      .filter((img) => Boolean(img.filename))
+      .map(
+        (img): PoiPhotoSlot => ({
+          kind: 'server',
+          id:
+            img.id !== undefined && img.id !== null && String(img.id) !== ''
+              ? String(img.id)
+              : '',
+          filename: img.filename,
+        })
+      );
+
+    if (fromImages.length > 0) {
+      return fromImages;
+    }
+
+    return (poi.photos ?? [])
+      .filter(Boolean)
+      .map(
+        (filename): PoiPhotoSlot => ({
+          kind: 'server',
+          id: '',
+          filename,
+        })
+      );
+  }
+
+  async #uploadPendingImages(poiId: string): Promise<void> {
+    const pending = this.photoSlots().filter(
+      (s): s is Extract<PoiPhotoSlot, { kind: 'pending' }> =>
+        s.kind === 'pending'
     );
+    for (const slot of pending) {
+      await lastValueFrom(
+        this.#poisService.uploadPoiImage(poiId, slot.file)
+      );
+    }
+
+    this.photoSlots.update((slots) => {
+      const next: PoiPhotoSlot[] = [];
+      for (const s of slots) {
+        if (s.kind === 'pending') {
+          this.#revokeBlobUrl(s.previewUrl);
+        } else {
+          next.push(s);
+        }
+      }
+      return next;
+    });
   }
 
-  getPhotoUrl(path: string | undefined | null): string | null {
-    return naaviMediaDisplayUrl(path, this.#imagesBaseUrl);
-  }
-
-  removePhoto(index: number) {
-    this.photos.update((photos) => photos.filter((_, i) => i !== index));
+  #revokeBlobUrl(url: string): void {
+    const revoke = URL.revokeObjectURL;
+    if (typeof revoke === 'function') {
+      revoke.call(URL, url);
+    }
   }
 
   async savePOI(form?: NgForm) {
@@ -260,7 +415,6 @@ export class PoiUpsertComponent {
       description: this.description(),
       comment: this.comment(),
       categories: this.types(),
-      photos: this.photos(),
       latitude: this.latitude(),
       longitude: this.longitude(),
       source: this.source(),
@@ -281,6 +435,21 @@ export class PoiUpsertComponent {
     try {
       if (this.isEditMode()) {
         await this.#poisStore.update(poiData);
+        const id = this.poiId();
+        if (id) {
+          try {
+            await this.#uploadPendingImages(id);
+          } catch {
+            this.#messageService.add({
+              severity: 'error',
+              summary: this.#translateService.instant('COMMON.ERROR'),
+              detail: this.#translateService.instant(
+                'POI.ERROR.PHOTO_UPLOAD_FAILED'
+              ),
+            });
+            return;
+          }
+        }
         this.#messageService.add({
           severity: 'success',
           summary: this.#translateService.instant('COMMON.SUCCESS'),
@@ -288,11 +457,29 @@ export class PoiUpsertComponent {
         });
       } else {
         const createdPOI = await this.#poisStore.create(poiData);
-        if (createdPOI?.id) {
-          await this.#poisStore.update(
-            this.toPublishedPayload(createdPOI, 'PUBLISHED')
-          );
+        if (!createdPOI?.id) {
+          this.#messageService.add({
+            severity: 'error',
+            summary: this.#translateService.instant('COMMON.ERROR'),
+            detail: this.#translateService.instant('POI.ERROR.SAVE_FAILED'),
+          });
+          return;
         }
+        try {
+          await this.#uploadPendingImages(String(createdPOI.id));
+        } catch {
+          this.#messageService.add({
+            severity: 'error',
+            summary: this.#translateService.instant('COMMON.ERROR'),
+            detail: this.#translateService.instant(
+              'POI.ERROR.PHOTO_UPLOAD_FAILED'
+            ),
+          });
+          return;
+        }
+        await this.#poisStore.update(
+          this.toPublishedPayload(createdPOI, 'PUBLISHED')
+        );
         this.#messageService.add({
           severity: 'success',
           summary: this.#translateService.instant('COMMON.SUCCESS'),
@@ -419,7 +606,6 @@ export class PoiUpsertComponent {
       name: poi.name,
       description: poi.description,
       categories: poi.types,
-      photos: poi.photos,
       latitude: poi.latitude,
       longitude: poi.longitude,
       comment: poi.comment,
