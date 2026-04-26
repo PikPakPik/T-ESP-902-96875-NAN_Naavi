@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: backoffice
-          image: registry.gitlab.com/epitech-msc-2026/frontend/web/backoffice:linux-v1-0-0
+          image: registry.gitlab.com/epitech-msc-2026/frontend/web/backoffice:linux-v1-1-2
           imagePullPolicy: Always
           ports:
             - containerPort: 4200
