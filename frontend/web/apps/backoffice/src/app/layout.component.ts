@@ -7,6 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { IMAGES_BASE_URL } from '@web/shared/http-client';
 import { Subscription } from 'rxjs';
 import { POIsStore } from '@web/pois/data-access';
+import { naaviMediaDisplayUrl } from '@web/shared/util';
 
 @Component({
   imports: [RouterModule, NavbarComponent],
@@ -26,13 +27,9 @@ export class LayoutComponent implements OnDestroy {
 
   userProfilePictureUrl = computed(() => {
     const path = this.user()?.profilePicture;
-    const base = this.#imagesBaseUrl?.trim().replace(/\/$/, '') ?? '';
-    if (!path || !base) return undefined;
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-      return path;
-    }
-    const cleanPath = path.replace(/^\//, '');
-    return `${base}/${cleanPath}`;
+    return (
+      naaviMediaDisplayUrl(path ?? null, this.#imagesBaseUrl) ?? undefined
+    );
   });
 
   menuItems = computed<MenuItem[]>(() => {

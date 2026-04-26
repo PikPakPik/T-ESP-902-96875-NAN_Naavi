@@ -163,6 +163,16 @@
                   {{ poi.photos.length }} {{ 'POI.PHOTOS' | translate }}
                 </div>
                 }
+                <div class="text-xs text-gray-500 flex items-center gap-3 mt-1">
+                  <span class="flex items-center gap-1">
+                    <i class="pi pi-thumbs-up"></i>
+                    {{ poi.likes }}
+                  </span>
+                  <span class="flex items-center gap-1">
+                    <i class="pi pi-thumbs-down"></i>
+                    {{ poi.dislikes }}
+                  </span>
+                </div>
               </div>
             </div>
           </td>
@@ -348,7 +358,7 @@
       </div>
       @if (poi.photos.length > 0) {
       <img
-        [src]="poi.photos[0]"
+        [src]="getPOIPhotoUrl(poi.photos[0])"
         [alt]="poi.name"
         class="h-64 w-full rounded-xl object-cover bg-gray-100"
       />
@@ -391,6 +401,19 @@
           [severity]="getSeverity(poi.status)"
           [rounded]="true"
         />
+      </div>
+      <div>
+        <div class="mb-2 text-sm font-semibold text-gray-500">Réactions</div>
+        <div class="flex items-center gap-4 text-sm text-gray-800">
+          <span class="inline-flex items-center gap-1">
+            <i class="pi pi-thumbs-up text-green-600"></i>
+            {{ poi.likes }}
+          </span>
+          <span class="inline-flex items-center gap-1">
+            <i class="pi pi-thumbs-down text-red-500"></i>
+            {{ poi.dislikes }}
+          </span>
+        </div>
       </div>
       <div>
         <div class="mb-2 text-sm font-semibold text-gray-500">

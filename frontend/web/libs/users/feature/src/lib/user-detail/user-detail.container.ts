@@ -2,6 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { UserDetailsStore } from '@web/users/data-access';
 import { IMAGES_BASE_URL } from '@web/shared/http-client';
+import { naaviMediaDisplayUrl } from '@web/shared/util';
 import { UserDetailComponent } from './user-detail.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
@@ -47,15 +48,8 @@ export class UserDetailContainer {
   loading = this.userDetailsStore.isPending;
 
   profilePictureUrl = computed(() => {
-    const user = this.userDetailsStore.user();
-    const path = user?.profilePicture;
-    const base = this.#imagesBaseUrl?.trim().replace(/\/$/, '') ?? '';
-    if (!path || !base) return null;
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-      return path;
-    }
-    const cleanPath = path.replace(/^\//, '');
-    return `${base}/${cleanPath}`;
+    const path = this.userDetailsStore.user()?.profilePicture;
+    return naaviMediaDisplayUrl(path ?? null, this.#imagesBaseUrl);
   });
 
   onBack() {

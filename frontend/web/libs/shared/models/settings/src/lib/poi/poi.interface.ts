@@ -18,6 +18,8 @@ export interface IDB_POI {
   latitude: number;
   longitude: number;
   comment?: string;
+  likes?: number;
+  dislikes?: number;
   createdAt: string;
   updatedAt: string;
   status: string;

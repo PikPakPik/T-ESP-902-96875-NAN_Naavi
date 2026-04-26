@@ -32,6 +32,8 @@ import {
   getPOICategoryIconPath,
   getPOICategoryTranslationKey,
 } from '@web/pois/data-access';
+import { IMAGES_BASE_URL } from '@web/shared/http-client';
+import { naaviMediaDisplayUrl } from '@web/shared/util';
 import { UsersService } from '@web/users/data-access';
 import { lastValueFrom } from 'rxjs';
 import { PoiMapComponent } from './poi-map/poi-map.component';
@@ -71,6 +73,7 @@ export class Pois {
   #confirmationService = inject(ConfirmationService);
   #translateService = inject(TranslateService);
   #usersService = inject(UsersService);
+  #imagesBaseUrl = inject(IMAGES_BASE_URL, { optional: true });
   rows = input<POI[]>([]);
   columns = input<ColumnDef[]>([]);
   loading = input<boolean>(false);
@@ -198,6 +201,10 @@ export class Pois {
 
   getCategoryIconPath(category: string | null | undefined): string {
     return getPOICategoryIconPath(category);
+  }
+
+  getPOIPhotoUrl(path: string | undefined | null): string | null {
+    return naaviMediaDisplayUrl(path, this.#imagesBaseUrl);
   }
 
   displayPOIMap(event: MouseEvent, poi: POI) {

@@ -269,7 +269,7 @@
                 @for (photo of photos(); track photo; let i = $index) {
                 <div class="relative group">
                   <img
-                    [src]="photo"
+                    [src]="getPhotoUrl(photo)"
                     alt="Photo du POI"
                     class="w-full h-36 object-cover rounded-xl border border-gray-200"
                   />

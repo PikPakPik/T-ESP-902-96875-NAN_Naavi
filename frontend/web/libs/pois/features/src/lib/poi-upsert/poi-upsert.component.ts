@@ -11,6 +11,8 @@ import { SelectModule } from 'primeng/select';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { IMAGES_BASE_URL } from '@web/shared/http-client';
+import { naaviMediaDisplayUrl } from '@web/shared/util';
 import { MapComponent, MarkerComponent } from 'ngx-mapbox-gl';
 import {
   POIsStore,
@@ -53,6 +55,7 @@ export class PoiUpsertComponent {
   #messageService = inject(MessageService);
   #translateService = inject(TranslateService);
   #usersService = inject(UsersService);
+  #imagesBaseUrl = inject(IMAGES_BASE_URL, { optional: true });
 
   // Form data
   name = signal('');
@@ -213,6 +216,10 @@ export class PoiUpsertComponent {
     this.photos.update((photos) =>
       photos.includes(trimmed) ? photos : [...photos, trimmed]
     );
+  }
+
+  getPhotoUrl(path: string | undefined | null): string | null {
+    return naaviMediaDisplayUrl(path, this.#imagesBaseUrl);
   }
 
   removePhoto(index: number) {

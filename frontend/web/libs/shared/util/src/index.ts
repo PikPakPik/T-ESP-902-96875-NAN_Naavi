@@ -1,5 +1,6 @@
 export * from './lib/dynamic-import-translate-loader';
 export * from './lib/get-base-url/get-base-url';
+export * from './lib/naavi-media-display-url/naavi-media-display-url';
 export * from './lib/local-storage-service/localstorage.service';
 export * from './lib/cookie-service';
 export * from './lib/mapbox.service';

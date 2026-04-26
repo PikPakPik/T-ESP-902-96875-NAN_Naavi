@@ -16,6 +16,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { UsersStore } from '@web/users/data-access';
 import { User, Role, Status } from '@web/shared/models/settings';
 import { IMAGES_BASE_URL } from '@web/shared/http-client';
+import { naaviMediaDisplayUrl } from '@web/shared/util';
 import { DividerModule } from 'primeng/divider';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
@@ -103,14 +104,9 @@ export class UserUpsertComponent {
   selectedRoles = computed(() => this.userModel().selectedRoles);
   status = computed(() => this.userModel().status);
 
-  profilePictureUrl = computed(() => {
-    const path = this.profilePicture();
-    const base = this.#imagesBaseUrl?.trim().replace(/\/$/, '') ?? '';
-    if (!path || !base) return null;
-    if (path.startsWith('http://') || path.startsWith('https://')) return path;
-    const cleanPath = path.replace(/^\//, '');
-    return `${base}/${cleanPath}`;
-  });
+  profilePictureUrl = computed(() =>
+    naaviMediaDisplayUrl(this.profilePicture(), this.#imagesBaseUrl)
+  );
 
   onRolesChange(selectedRoles: Role[]) {
     this.userModel.update((model) => ({

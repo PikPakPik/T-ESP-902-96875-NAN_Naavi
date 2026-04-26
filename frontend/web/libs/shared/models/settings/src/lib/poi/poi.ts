@@ -12,6 +12,8 @@ export class POI {
   latitude: number;
   longitude: number;
   comment?: string;
+  likes: number;
+  dislikes: number;
   createdAt: Date;
   updatedAt: Date;
   status: string;
@@ -37,6 +39,8 @@ export class POI {
     this.latitude = poi.latitude;
     this.longitude = poi.longitude;
     this.comment = poi.comment;
+    this.likes = poi.likes ?? 0;
+    this.dislikes = poi.dislikes ?? 0;
     this.createdAt = new Date(poi.createdAt);
     this.updatedAt = new Date(poi.updatedAt);
     this.status = poi.status;

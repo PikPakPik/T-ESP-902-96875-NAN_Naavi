@@ -6,6 +6,7 @@ import { DividerModule } from 'primeng/divider';
 import { CardModule } from 'primeng/card';
 import { Router } from '@angular/router';
 import { IMAGES_BASE_URL } from '@web/shared/http-client';
+import { naaviMediaDisplayUrl } from '@web/shared/util';
 import {
   HikeDetailStore,
   getDifficultySeverity,
@@ -61,11 +62,7 @@ export class HikeDetailComponent {
   }
 
   getHikeImageUrl(path: string | undefined | null): string | null {
-    const base = this.#imagesBaseUrl?.trim().replace(/\/$/, '') ?? '';
-    if (!path || !base) return null;
-    if (path.startsWith('http://') || path.startsWith('https://')) return path;
-    const cleanPath = path.replace(/^\//, '');
-    return `${base}/${cleanPath}`;
+    return naaviMediaDisplayUrl(path, this.#imagesBaseUrl);
   }
 
   getPrimaryImageUrl(): string {

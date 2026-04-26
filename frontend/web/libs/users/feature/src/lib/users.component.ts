@@ -4,6 +4,7 @@ import { User } from '@web/shared/models/settings';
 import { Component, inject, input, output, signal } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { IMAGES_BASE_URL } from '@web/shared/http-client';
+import { naaviMediaDisplayUrl } from '@web/shared/util';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 
@@ -205,16 +206,7 @@ export class Users {
   }
 
   getProfilePictureUrl(user: User): string | null {
-    const path = user.profilePicture;
-    const base = this.#imagesBaseUrl?.trim().replace(/\/$/, '') ?? '';
-    console.log('path', path);
-    console.log('base', base);
-    if (!path || !base) return null;
-    if (path.startsWith('http://') || path.startsWith('https://')) return path;
-    const cleanPath = path.replace(/^\//, '');
-    console.log('base', base);
-    console.log('cleanPath', cleanPath);
-    return `${base}/${cleanPath}`;
+    return naaviMediaDisplayUrl(user.profilePicture, this.#imagesBaseUrl);
   }
 
   getSeverity(status: string | null | undefined): Tag['severity'] {
