@@ -1,5 +1,175 @@
 [
   {
+    "package": "Hike",
+    "version": "1.0.6",
+    "date": "2026-04-26",
+    "entries": [
+      { "type": "improvement", "text": "Rendre le type des éléments de carte en attente optionnel" },
+      { "type": "feature", "text": "Ajout d'un endpoint pour les éléments de carte en attente des utilisateurs" },
+      { "type": "feature", "text": "Endpoint d'administration pour lister les points d'intérêt avec pagination" },
+      { "type": "feature", "text": "Système de vote UP/DOWN pour les randonnées et éléments de carte" },
+      { "type": "improvement", "text": "Amélioration de la gestion de propriété dans MapElementService" },
+      { "type": "feature", "text": "Gestion de la source et de la propriété utilisateur pour les MapElements" },
+      { "type": "feature", "text": "Signalement d'anomalies sur les parcours" }
+    ]
+  },
+  {
+    "package": "Identity",
+    "version": "1.1.4",
+    "date": "2026-04-09",
+    "entries": [
+      { "type": "fix", "text": "Mise à jour de l'instanciation UserDto pour refléter le statut utilisateur" },
+      { "type": "fix", "text": "Mise à jour du message d'erreur pour les téléchargements de fichiers image invalides avec spécification des formats autorisés" },
+      { "type": "improvement", "text": "Mise à jour de naavi.core.version vers 1.1.4" },
+      { "type": "fix", "text": "Amélioration du message d'erreur pour les téléchargements d'images de profil invalides" },
+      { "type": "feature", "text": "Ajout de la fonctionnalité de téléchargement et suppression de photo de profil utilisateur" }
+    ]
+  },
+  {
+    "package": "Hike",
+    "version": "1.0.5",
+    "date": "2026-03-21",
+    "entries": [
+      { "type": "feature", "text": "Endpoint pour récupérer l'historique des randonnées d'un utilisateur avec pagination" },
+      { "type": "fix", "text": "Correction du tri et de la pagination de l'historique avec createdAt explicite" },
+      { "type": "feature", "text": "Ajout de la visibilité des randonnées avec enum et logique associée" },
+      { "type": "feature", "text": "Système de réputation pour modérer les POIs" },
+      { "type": "feature", "text": "Upload et suppression d'images pour les randonnées et points d'intérêt" }
+    ]
+  },
+  {
+    "package": "Hike",
+    "version": "1.0.4",
+    "date": "2026-03-06",
+    "entries": [
+      { "type": "chore", "text": "Mise à jour de naavi.core.version vers 1.1.4" },
+      { "type": "feature", "text": "Endpoint admin pour récupérer toutes les randonnées avec pagination" },
+      { "type": "improvement", "text": "Désactivation de l'export des métriques OTLP en CI/dev" }
+    ]
+  },
+  {
+    "package": "Hike",
+    "version": "1.0.3",
+    "date": "2026-02-12",
+    "entries": [
+      { "type": "improvement", "text": "Refactorisation AbstractHikeImporter pour améliorer la lisibilité" },
+      { "type": "feature", "text": "Ajout de randonnée via fichier externe (GPX/KML)" },
+      { "type": "chore", "text": "Mise à jour vers naavi.core 1.1.2 et Spring Boot 4.0.2" }
+    ]
+  },
+  {
+    "package": "Identity",
+    "version": "1.1.2",
+    "date": "2026-01-30",
+    "entries": [
+      { "type": "improvement", "text": "Mise à jour de naavi.core.version vers 1.1.2 et upgrade de Spring Boot vers 4.0.2" },
+      { "type": "feature", "text": "Implémentation du système d'autorisation avec confirmation par email et gestion des tokens" },
+      { "type": "feature", "text": "Ajout de règles de validation de mot de passe fort" },
+      { "type": "feature", "text": "URL frontend configurable pour les templates d'email" }
+    ]
+  },
+  {
+    "package": "Hike",
+    "version": "1.0.2",
+    "date": "2026-01-20",
+    "entries": [
+      { "type": "feature", "text": "Ajout de la durée dans HikeDTO" },
+      { "type": "improvement", "text": "Refactorisation des tests" }
+    ]
+  },
+  {
+    "package": "Hike",
+    "version": "1.0.1",
+    "date": "2025-12-12",
+    "entries": [
+      { "type": "improvement", "text": "Configuration dédiée RestClient pour Nominatim dans OpenStreetMapService" },
+      { "type": "chore", "text": "Migration de Spring Boot 3.5.5 vers 4.0.0" },
+      { "type": "feature", "text": "API CRUD POI sécurisée" },
+      { "type": "improvement", "text": "Ajout de validations pour wkbGeometry et wkbWaypoints" },
+      { "type": "feature", "text": "Ajout du champ wkbWaypoints au modèle Hike" }
+    ]
+  },
+  {
+    "package": "Identity",
+    "version": "1.0.10",
+    "date": "2025-12-11",
+    "entries": [
+      { "type": "fix", "text": "Correction de l'ordre de réponse dans SecurityController pour les vérifications de disponibilité d'email" },
+      { "type": "improvement", "text": "Upgrade de Spring Boot 3.5.5 vers 4.0.0 et ajout de IsAvailableEmailDTO" },
+      { "type": "improvement", "text": "Refactorisation de la méthode generateGuestToken pour initialiser InternalAuthTokenDTO avec rôles et permissions vides" },
+      { "type": "improvement", "text": "Refactorisation de ValidateAuthController pour utiliser InternalAuthTokenDTO" },
+      { "type": "improvement", "text": "Mise à jour de la configuration mail et amélioration de MailerService avec SmtpProperties" },
+      { "type": "improvement", "text": "Mise à jour de naavi.core.version vers 1.0.10" }
+    ]
+  },
+  {
+    "package": "Identity",
+    "version": "1.0.9",
+    "date": "2025-11-28",
+    "entries": [
+      { "type": "improvement", "text": "Mise à jour de naavi.core.version vers 1.0.9" },
+      { "type": "improvement", "text": "Ajout de la variable d'environnement PGDATA à la configuration PostgreSQL" }
+    ]
+  },
+  {
+    "package": "Hike",
+    "version": "1.0.0",
+    "date": "2025-11-27",
+    "entries": [
+      { "type": "feature", "text": "Intégration de l'API /hikes/histories pour charger l'historique" },
+      { "type": "feature", "text": "Ajout des saisons et sources au modèle de randonnée" }
+    ]
+  },
+  {
+    "package": "Identity",
+    "version": "1.0.8",
+    "date": "2025-11-07",
+    "entries": [
+      { "type": "improvement", "text": "Mise à jour de naavi.core.version vers 1.0.8" },
+      { "type": "fix", "text": "Mise à jour de UserController pour retourner une erreur de conflit en cas de problème d'enregistrement" }
+    ]
+  },
+  {
+    "package": "Identity",
+    "version": "1.0.6",
+    "date": "2025-09-27",
+    "entries": [
+      { "type": "feature", "text": "Ajout de la création d'utilisateur et mise à jour du statut utilisateur" },
+      { "type": "improvement", "text": "Suppression du logging de debug et optimisation de la génération de tokens" },
+      { "type": "improvement", "text": "Mise à jour de naavi.core.version vers 1.0.6" },
+      { "type": "improvement", "text": "Refactorisation des DTOs pour standardiser les conventions de nommage" },
+      { "type": "feature", "text": "Implémentation du CRUD administrateur utilisateur et refactorisation du code" },
+      { "type": "feature", "text": "Implémentation des tests" }
+    ]
+  },
+  {
+    "package": "Hike",
+    "version": "0.9.0",
+    "date": "2025-08-18",
+    "entries": [
+      { "type": "feature", "text": "Implémentation de l'authentification et autorisation JWT intermédiaire avec la Gateway" }
+    ]
+  },
+  {
+    "package": "Identity",
+    "version": "1.0.0",
+    "date": "2025-08-18",
+    "entries": [
+      { "type": "fix", "text": "Mise à jour des DTOs pour validation de la taille du mot de passe et correction de la configuration CI" },
+      { "type": "feature", "text": "Amélioration de la configuration JWT et implémentation de la gestion des clés pour l'authentification" },
+      { "type": "feature", "text": "Implémentation des tâches récurrentes et du changement de mot de passe" },
+      { "type": "feature", "text": "Implémentation de la gestion des utilisateurs et authentification JWT (accessToken, refreshToken)" }
+    ]
+  },
+  {
+    "package": "Hike",
+    "version": "0.1.0",
+    "date": "2025-07-28",
+    "entries": [
+      { "type": "feature", "text": "Structure initiale du projet Naavi Hike service" }
+    ]
+  },
+  {
     "version": "0.0.1",
     "date": "2025-02-27",
     "entries": [
